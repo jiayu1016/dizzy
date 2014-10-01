@@ -11,9 +11,7 @@ import android.widget.Button;
 public class MainActivity extends Activity {
     static {
         // don't need these if we use gnustl_static
-        //System.loadLibrary("gnustl_shared");
-        //System.loadLibrary("dzy");
-        //System.loadLibrary("sviewer");
+        System.loadLibrary("gnustl_shared");
     }
 
     @Override
