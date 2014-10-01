@@ -1,6 +1,8 @@
 #ifndef NATIVE_APP_H
 #define NATIVE_APP_H
 
+#include <memory>
+
 namespace dzy {
 
 class NativeApp {
@@ -11,11 +13,10 @@ public:
     virtual bool releaseView() { return true; };
 
     virtual bool drawScene() { return true; };
-
 };
 
-extern NativeApp* initSystem();
+extern NativeApp* nativeInit();
 
-} // namespace
+} // namespace dzy
 
 #endif

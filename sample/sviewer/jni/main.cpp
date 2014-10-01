@@ -7,7 +7,12 @@ using namespace std;
 class SViewApp : public NativeApp {
 };
 
-NativeApp *initSystem() {
-    std::shared_ptr<NativeApp> sp;
-    return new SViewApp();
+namespace dzy {
+
+NativeApp* nativeInit() {
+    //shared_ptr<NativeApp> napp(new SViewApp);
+    //return napp.get();
+    return new SViewApp;
 }
+
+} // namespace dzy

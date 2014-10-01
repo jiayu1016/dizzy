@@ -7,7 +7,6 @@ LOCAL_C_INCLUDES:= $(LOCAL_PATH)/../../include
 LOCAL_CPPFLAGS  := -std=c++11
 LOCAL_LDLIBS    := -llog -landroid
 LOCAL_STATIC_LIBRARIES := android_native_app_glue
-# don't link unresolved symbols
 LOCAL_ALLOW_UNDEFINED_SYMBOLS := true
 include $(BUILD_SHARED_LIBRARY)
 
