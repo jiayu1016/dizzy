@@ -1,15 +1,23 @@
 #ifndef APP_CONTEXT_H
 #define APP_CONTEXT_H
 
+#include <android_native_app_glue.h>
 #include <memory>
+#include <EGL/egl.h>
+#include <GLES/gl.h>
+
+class AInputEvent;
+struct android_app;
 
 namespace dzy {
 
 class NativeApp;
 class AppContext {
 public:
-    AppContext(struct android_app *app);
+    AppContext(std::shared_ptr<NativeApp> nativeApp);
     ~AppContext();
+
+    void mainLoop();
 
     // gfx system
     bool initDisplay();
@@ -43,7 +51,6 @@ private:
     const char* eglStatusStr() const;
 
     std::shared_ptr<NativeApp> mNativeApp;
-    struct android_app *mApp;
     bool mRequestQuit;
     bool mRequestRender;
 

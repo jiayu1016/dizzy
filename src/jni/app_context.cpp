@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <android/sensor.h>
-#include <android_native_app_glue.h>
 #include <EGL/egl.h>
 #include <GLES/gl.h>
 #include "log.h"
@@ -11,18 +10,14 @@ using namespace std;
 
 namespace dzy {
 
-AppContext::AppContext(struct android_app *app) :
+AppContext::AppContext(shared_ptr<NativeApp> nativeApp) :
     mRequestQuit(false),
     mRequestRender(false),
-    mApp(app),
-    mNativeApp(nativeInit()),
+    mNativeApp(nativeApp),
     mDisplay(EGL_NO_DISPLAY),
     mEglContext(EGL_NO_CONTEXT),
     mSurface(EGL_NO_SURFACE) {
-    mApp->userData = this;
-    mApp->onAppCmd = AppContext::handleAppCmd;
-    mApp->onInputEvent = AppContext::handleInputEvent;
-
+    mNativeApp->registerCallback(this, AppContext::handleAppCmd, AppContext::handleInputEvent);
     if (!mNativeApp->initApp()) {
         ALOGE("Init NativeApp class failed\n");
         exit(-1);
@@ -51,9 +46,9 @@ bool AppContext::initDisplay() {
     eglInitialize(display, 0, 0);
     eglChooseConfig(display, attribs, &config, 1, &numConfigs);
     eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
-    ANativeWindow_setBuffersGeometry(mApp->window, 0, 0, format);
+    ANativeWindow_setBuffersGeometry(mNativeApp->mApp->window, 0, 0, format);
 
-    surface = eglCreateWindowSurface(display, config, mApp->window, NULL);
+    surface = eglCreateWindowSurface(display, config, mNativeApp->mApp->window, NULL);
     context = eglCreateContext(display, config, NULL, NULL);
 
     if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE) {
@@ -250,32 +245,29 @@ bool AppContext::needRender() {
     return mRequestRender;
 }
 
-
-} // namespace dzy
-
-using namespace dzy;
-void android_main(struct android_app* app) {
-    app_dummy();
-
-    shared_ptr<AppContext> context(new AppContext(app));
-
+void AppContext::mainLoop() {
     int ident;
     int events;
     struct android_poll_source* source;
+
+    app_dummy();
 
     while (1) {
         while ((ident = ALooper_pollAll(-1, NULL, &events, (void**)&source)) >= 0) {
             if (ident == LOOPER_ID_MAIN || ident == LOOPER_ID_INPUT) {
                 if (source != NULL) {
-                    source->process(app, source);
+                    source->process(mNativeApp->mApp, source);
                 }
             }
 
-            if (app->destroyRequested != 0) {
+            if (mNativeApp->mApp->destroyRequested != 0) {
                 ALOGD("destroy request received");
-                context->releaseDisplay();
+                releaseDisplay();
                 return;
             }
         }
     }
+
 }
+
+} // namespace dzy

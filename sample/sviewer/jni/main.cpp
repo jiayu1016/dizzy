@@ -1,5 +1,6 @@
 #include <memory>
 #include "log.h"
+#include "app_context.h"
 #include "native_app.h"
 
 using namespace dzy;
@@ -7,12 +8,19 @@ using namespace std;
 
 class SViewApp : public NativeApp {
 public:
+    SViewApp(struct android_app *app);
+
     virtual bool initApp();
     virtual bool releaseApp();
     virtual bool initView();
     virtual bool releaseView();
     virtual bool drawScene();
 };
+
+SViewApp::SViewApp(struct android_app *app) :
+    NativeApp(app) {
+}
+
 
 bool SViewApp::initApp() {
     ALOGD("SViewapp::initApp()");
@@ -39,11 +47,8 @@ bool SViewApp::drawScene() {
     return true;
 }
 
-namespace dzy {
-
-shared_ptr<NativeApp> nativeInit() {
-    shared_ptr<NativeApp> na(new SViewApp);
-    return na;
+void android_main(struct android_app* app) {
+    shared_ptr<dzy::NativeApp> nativeApp(new SViewApp(app));
+    shared_ptr<dzy::AppContext> context(new dzy::AppContext(nativeApp));
+    context->mainLoop();
 }
-
-} // namespace dzy
