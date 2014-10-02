@@ -40,6 +40,8 @@ private:
     int32_t inputKeyEvent(int action, int code);
     int32_t inputMotionEvent(int action);
 
+    const char* eglStatusStr() const;
+
     std::shared_ptr<NativeApp> mNativeApp;
     struct android_app *mApp;
     bool mRequestQuit;
