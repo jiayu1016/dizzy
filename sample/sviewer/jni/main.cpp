@@ -47,5 +47,8 @@ bool SViewApp::drawScene() {
 
 void android_main(struct android_app* app) {
     shared_ptr<dzy::NativeApp> nativeApp(new SViewApp(app));
+    if (!nativeApp->init())
+        return;
     nativeApp->mainLoop();
+    nativeApp->fini();
 }

@@ -1,4 +1,3 @@
-#include "stdlib.h"
 #include "log.h"
 #include "app_context.h"
 #include "native_app.h"
@@ -11,10 +10,6 @@ NativeApp::NativeApp(struct android_app* app) :
     mApp(app) {
     ALOGD("NativeApp::NativeApp()");
     mAppContext.reset(new AppContext(this));
-    if (!initApp()) {
-        ALOGE("Init NativeApp class failed\n");
-        exit(-1);
-    }
     mApp->userData = this;
     mApp->onAppCmd = NativeApp::handleAppCmd;
     mApp->onInputEvent = NativeApp::handleInputEvent;
@@ -22,6 +17,15 @@ NativeApp::NativeApp(struct android_app* app) :
 
 NativeApp::~NativeApp() {
     ALOGD("NativeApp::~NativeApp()");
+}
+
+bool NativeApp::init() {
+    bool ret = initApp();
+    if (!ret) ALOGE("Init NativeApp class failed\n");
+    return ret;
+}
+
+void NativeApp::fini() {
     releaseApp();
 }
 
@@ -134,6 +138,31 @@ int32_t NativeApp::inputKeyEvent(int action, int code) {
 
 shared_ptr<AppContext> NativeApp::getAppContext() {
     return mAppContext;
+}
+
+bool NativeApp::initApp() {
+    ALOGD("NativeApp::initApp()");
+    return true;
+}
+
+bool NativeApp::releaseApp() {
+    ALOGD("NativeApp::releaseApp()");
+    return true;
+}
+
+bool NativeApp::initView() {
+    ALOGD("NativeApp::initView()");
+    return true;
+}
+
+bool NativeApp::releaseView() {
+    ALOGD("NativeApp::releaseView()");
+    return true;
+}
+
+bool NativeApp::drawScene() {
+    ALOGD("NativeApp::drawScene()");
+    return true;
 }
 
 void NativeApp::mainLoop() {
