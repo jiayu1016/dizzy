@@ -17,7 +17,13 @@ public:
 
     bool update();
     static void handleAppCmd(struct android_app* app, int32_t cmd);    
+
+    /*
+     * return 0, the framework will continue to handle the event
+     * return 1, the framework will stop to handle the event
+     */
     static int32_t handleInputEvent(struct android_app* app, AInputEvent* event);
+
     void requestQuit();
     bool needQuit();
     void requestRender();

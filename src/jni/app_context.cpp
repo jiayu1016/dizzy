@@ -107,7 +107,6 @@ int32_t AppContext::inputKeyEvent(int action, int code) {
             case AKEYCODE_BACK:
                 ALOGD("AKEYCODE_BACK");
                 requestQuit();
-                ret = 1;
                 break;
             default:
                 ALOGD("Not supported key code: %d", code);
