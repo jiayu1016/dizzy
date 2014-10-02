@@ -41,6 +41,9 @@ public:
 
     friend class AppContext;
 private:
+    NativeApp(NativeApp const &);
+    NativeApp & operator=(NativeApp const &);
+
     std::shared_ptr<AppContext> mAppContext;
     struct android_app * mApp;
 };
