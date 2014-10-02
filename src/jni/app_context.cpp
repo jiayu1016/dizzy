@@ -1,4 +1,8 @@
-#include <android/sensor.h>
+#include <android/asset_manager.h>
+#include <sstream>
+#include <fstream>
+#include <sys/types.h>
+#include <unistd.h>
 #include <EGL/egl.h>
 #include <GLES/gl.h>
 #include "log.h"
@@ -13,6 +17,7 @@ AppContext::AppContext(NativeApp* nativeApp) :
     mRequestQuit(false),
     mRequestRender(false),
     mNativeApp(nativeApp),
+    mAssetManager(nativeApp->mApp->activity->assetManager),
     mDisplay(EGL_NO_DISPLAY),
     mEglContext(EGL_NO_CONTEXT),
     mSurface(EGL_NO_SURFACE) {
@@ -115,6 +120,62 @@ bool AppContext::update() {
 
 NativeApp* AppContext::getNativeApp() {
     return mNativeApp;
+}
+
+size_t AppContext::loadAsset(const string &file,
+    char *buf, size_t size) {
+    bool ret = false;
+
+    AAsset* asset = AAssetManager_open(mAssetManager,
+        file.c_str(), AASSET_MODE_BUFFER);
+    if (asset) {
+        off_t length = AAsset_getLength(asset);
+        if(length) {
+            size_t sz = AAsset_read(asset, buf, length);
+            if (sz >= 0) ret = true;
+        }
+        AAsset_close(asset);
+    }
+    return ret;
+}
+
+const string AppContext::getAppName() {
+    getAppName(getpid());
+}
+
+const string AppContext::getAppName(pid_t pid) {
+    stringstream ss;
+    ss << "/proc/" << pid << "/cmdline";
+
+    ifstream ifs(ss.str(), ifstream::in);
+    ss.clear();
+    char c = ifs.get();
+    while (ifs.good()) {
+        ss << c;
+        c = ifs.get();
+    }
+    ifs.close();
+    
+    return ss.str();
+
+}
+
+
+const string AppContext::getExternalDataDir() {
+    stringstream ss;
+    ss << "/sdcard/" << getAppName();
+    return ss.str();
+}
+
+const string AppContext::getInternalDataDir() {
+    const char *idp = mNativeApp->mApp->activity->internalDataPath;
+    if (!idp) {
+        string appName = getAppName();
+        ALOGW("app's internal data path set to /data/data/%s",
+            appName.c_str());
+        return "/data/data/" + appName;
+    }
+    return idp;
 }
 
 void AppContext::requestQuit() {

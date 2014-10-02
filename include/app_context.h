@@ -3,10 +3,12 @@
 
 #include <android_native_app_glue.h>
 #include <memory>
+#include <string>
 #include <EGL/egl.h>
 #include <GLES/gl.h>
 
 class AInputEvent;
+class AAssetManager;
 struct android_app;
 
 namespace dzy {
@@ -14,8 +16,15 @@ namespace dzy {
 class NativeApp;
 class AppContext {
 public:
-    AppContext(NativeApp* nativeApp);
+    explicit AppContext(NativeApp* nativeApp);
     ~AppContext();
+
+    // OS specific
+    std::size_t loadAsset(const std::string &file, char *buf, std::size_t size);
+    static const std::string getAppName();
+    static const std::string getAppName(pid_t pid);
+    const std::string getExternalDataDir();
+    const std::string getInternalDataDir();
 
     NativeApp* getNativeApp();
 
@@ -38,6 +47,8 @@ private:
     const char* eglStatusStr() const;
 
     NativeApp* mNativeApp;
+    AAssetManager* mAssetManager;
+
     bool mRequestQuit;
     bool mRequestRender;
 

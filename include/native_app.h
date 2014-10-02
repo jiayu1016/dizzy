@@ -9,7 +9,7 @@ namespace dzy {
 class AppContext;
 class NativeApp {
 public:
-    NativeApp(struct android_app* app);
+    explicit NativeApp(struct android_app* app);
     ~NativeApp();
 
     bool init();
