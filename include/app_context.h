@@ -14,23 +14,16 @@ namespace dzy {
 class NativeApp;
 class AppContext {
 public:
-    AppContext(std::shared_ptr<NativeApp> nativeApp);
+    AppContext(NativeApp* nativeApp);
     ~AppContext();
 
-    void mainLoop();
+    NativeApp* getNativeApp();
 
     // gfx system
     bool initDisplay();
     void releaseDisplay();
 
     bool update();
-    static void handleAppCmd(struct android_app* app, int32_t cmd);    
-
-    /*
-     * return 0, the framework will continue to handle the event
-     * return 1, the framework will stop to handle the event
-     */
-    static int32_t handleInputEvent(struct android_app* app, AInputEvent* event);
 
     void requestQuit();
     bool needQuit();
@@ -42,15 +35,9 @@ private:
     AppContext(AppContext const &);
     AppContext& operator=(AppContext const &);
 
-    // event processing
-    void appCmd(int32_t cmd);
-    int32_t inputEvent(AInputEvent* event);
-    int32_t inputKeyEvent(int action, int code);
-    int32_t inputMotionEvent(int action);
-
     const char* eglStatusStr() const;
 
-    std::shared_ptr<NativeApp> mNativeApp;
+    NativeApp* mNativeApp;
     bool mRequestQuit;
     bool mRequestRender;
 

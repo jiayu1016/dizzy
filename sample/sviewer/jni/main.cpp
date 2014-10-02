@@ -1,6 +1,5 @@
 #include <memory>
 #include "log.h"
-#include "app_context.h"
 #include "native_app.h"
 
 using namespace dzy;
@@ -20,7 +19,6 @@ public:
 SViewApp::SViewApp(struct android_app *app) :
     NativeApp(app) {
 }
-
 
 bool SViewApp::initApp() {
     ALOGD("SViewapp::initApp()");
@@ -49,6 +47,5 @@ bool SViewApp::drawScene() {
 
 void android_main(struct android_app* app) {
     shared_ptr<dzy::NativeApp> nativeApp(new SViewApp(app));
-    shared_ptr<dzy::AppContext> context(new dzy::AppContext(nativeApp));
-    context->mainLoop();
+    nativeApp->mainLoop();
 }
