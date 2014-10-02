@@ -14,8 +14,6 @@ public:
 
     bool init();
     void fini();
-
-    std::shared_ptr<AppContext> getAppContext();
     void mainLoop();
 
     // event processing
@@ -23,12 +21,14 @@ public:
     virtual int32_t inputKeyEvent(int action, int code);
     virtual int32_t inputMotionEvent(int action);
 
-    // subclass interface
-    virtual bool initApp();
-    virtual bool releaseApp();
-    virtual bool initView();
-    virtual bool releaseView();
-    virtual bool drawScene();
+    // main interface for derived class
+    virtual bool initApp() = 0;
+    virtual bool releaseApp() = 0;
+    virtual bool initView() = 0;
+    virtual bool releaseView() = 0;
+    virtual bool drawScene() = 0;
+
+    std::shared_ptr<AppContext> getAppContext();
 
     friend class AppContext;
 private:

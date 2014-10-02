@@ -140,31 +140,6 @@ shared_ptr<AppContext> NativeApp::getAppContext() {
     return mAppContext;
 }
 
-bool NativeApp::initApp() {
-    ALOGD("NativeApp::initApp()");
-    return true;
-}
-
-bool NativeApp::releaseApp() {
-    ALOGD("NativeApp::releaseApp()");
-    return true;
-}
-
-bool NativeApp::initView() {
-    ALOGD("NativeApp::initView()");
-    return true;
-}
-
-bool NativeApp::releaseView() {
-    ALOGD("NativeApp::releaseView()");
-    return true;
-}
-
-bool NativeApp::drawScene() {
-    ALOGD("NativeApp::drawScene()");
-    return true;
-}
-
 void NativeApp::mainLoop() {
     int ident;
     int events;
