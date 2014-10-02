@@ -11,7 +11,7 @@ LOCAL_SRC_FILES := main.cpp               \
 	$(MY_SRC_DIR)/are.cpp
 LOCAL_C_INCLUDES:= $(LOCAL_PATH)/../../../include
 LOCAL_CPPFLAGS  := -std=c++11
-LOCAL_LDLIBS    := -llog -landroid
+LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv2
 LOCAL_STATIC_LIBRARIES := android_native_app_glue
 
 include $(BUILD_SHARED_LIBRARY)

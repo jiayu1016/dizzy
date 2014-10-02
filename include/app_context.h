@@ -8,8 +8,12 @@ namespace dzy {
 class NativeApp;
 class AppContext {
 public:
-    AppContext();
+    AppContext(struct android_app *app);
     ~AppContext();
+
+    // gfx system
+    bool initDisplay();
+    void releaseDisplay();
 
     bool update();
     static void handleAppCmd(struct android_app* app, int32_t cmd);    
@@ -24,16 +28,23 @@ private:
     AppContext(AppContext const &);
     AppContext& operator=(AppContext const &);
 
+    // event processing
     void appCmd(int32_t cmd);
     int32_t inputEvent(AInputEvent* event);
-    void inputKeyEvent(int action, int code);
-    void inputMotionEvent(int action);
+    int32_t inputKeyEvent(int action, int code);
+    int32_t inputMotionEvent(int action);
 
-    //std::shared_ptr<NativeApp> mNativeApp;
-    NativeApp *mNativeApp;
-
+    std::shared_ptr<NativeApp> mNativeApp;
+    struct android_app *mApp;
     bool mRequestQuit;
     bool mRequestRender;
+
+    // egl
+    EGLDisplay mDisplay;
+    EGLContext mEglContext;
+    EGLSurface mSurface;
+    EGLint mWidth;
+    EGLint mHeight;
 };
 
 } // namespace dzy

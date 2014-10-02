@@ -15,7 +15,7 @@ public:
     virtual bool drawScene() { return true; };
 };
 
-extern NativeApp* nativeInit();
+extern std::shared_ptr<NativeApp> nativeInit();
 
 } // namespace dzy
 
