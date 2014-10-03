@@ -1,5 +1,6 @@
 dizzy
 =====
 
-aol: aos abstraction layer
+src: main dizzy code
+
 sample/sviewer: scene viewer
