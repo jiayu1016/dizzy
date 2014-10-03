@@ -6,9 +6,10 @@ include $(CLEAR_VARS)
 include $(CLEAR_VARS)
 LOCAL_MODULE    := sviewer
 LOCAL_SRC_FILES := main.cpp               \
-	$(MY_SRC_DIR)/app_context.cpp         \
-	$(MY_SRC_DIR)/native_app.cpp          \
-	$(MY_SRC_DIR)/are.cpp
+    $(MY_SRC_DIR)/app_context.cpp         \
+    $(MY_SRC_DIR)/native_app.cpp          \
+    $(MY_SRC_DIR)/are.cpp                 \
+    $(MY_SRC_DIR)/scene.cpp
 LOCAL_C_INCLUDES:= $(LOCAL_PATH)/../../../include
 LOCAL_CPPFLAGS  := -std=c++11
 LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv2

@@ -13,11 +13,12 @@ using namespace std;
 
 namespace dzy {
 
-AppContext::AppContext(NativeApp* nativeApp) :
+AppContext::AppContext(NativeApp* nativeApp, shared_ptr<Scene> scene) :
     mRequestQuit(false),
     mRequestRender(false),
     mNativeApp(nativeApp),
     mAssetManager(nativeApp->mApp->activity->assetManager),
+    mScene(scene),
     mDisplay(EGL_NO_DISPLAY),
     mEglContext(EGL_NO_CONTEXT),
     mSurface(EGL_NO_SURFACE) {
@@ -122,21 +123,8 @@ NativeApp* AppContext::getNativeApp() {
     return mNativeApp;
 }
 
-size_t AppContext::loadAsset(const string &file,
-    char *buf, size_t size) {
-    bool ret = false;
-
-    AAsset* asset = AAssetManager_open(mAssetManager,
-        file.c_str(), AASSET_MODE_BUFFER);
-    if (asset) {
-        off_t length = AAsset_getLength(asset);
-        if(length) {
-            size_t sz = AAsset_read(asset, buf, length);
-            if (sz >= 0) ret = true;
-        }
-        AAsset_close(asset);
-    }
-    return ret;
+AAssetManager* AppContext::getAssetManager() {
+    return mAssetManager;
 }
 
 const string AppContext::getAppName() {

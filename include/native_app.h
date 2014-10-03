@@ -7,12 +7,13 @@
 namespace dzy {
 
 class AppContext;
+class Scene;
 class NativeApp {
 public:
-    explicit NativeApp(struct android_app* app);
+    explicit NativeApp();
     ~NativeApp();
 
-    bool init();
+    bool init(struct android_app* app, std::shared_ptr<Scene>);
     void fini();
     void mainLoop();
 
@@ -29,6 +30,7 @@ public:
     virtual bool drawScene() = 0;
 
     std::shared_ptr<AppContext> getAppContext();
+    std::shared_ptr<Scene> getCurrentScene();
 
     friend class AppContext;
 private:
@@ -44,6 +46,8 @@ private:
     int32_t inputEvent(AInputEvent* event);
 
     std::shared_ptr<AppContext> mAppContext;
+    std::shared_ptr<Scene> mCurrentScene;
+
     struct android_app * mApp;
 };
 

@@ -1,13 +1,16 @@
 #include <memory>
+#include <string>
 #include "log.h"
 #include "native_app.h"
+#include "scene.h"
 
 using namespace dzy;
 using namespace std;
 
 class SViewApp : public NativeApp {
 public:
-    SViewApp(struct android_app *app);
+    SViewApp() { ALOGD("SViewApp::SViewApp()"); };
+    virtual ~SViewApp() { ALOGD("SViewApp::~SViewApp()"); };
 
     virtual bool initApp();
     virtual bool releaseApp();
@@ -16,13 +19,20 @@ public:
     virtual bool drawScene();
 };
 
-SViewApp::SViewApp(struct android_app *app) :
-    NativeApp(app) {
-}
-
 bool SViewApp::initApp() {
     ALOGD("SViewapp::initApp()");
-    return true;
+    bool ret = false;
+
+    ret = getCurrentScene()->loadAsset(getAppContext(), "test.scene");
+    if (!ret) return ret;
+
+    ret = getCurrentScene()->loadAsset(getAppContext(), "mesh/test.mesh");
+    if (!ret) return ret;
+
+    ret = getCurrentScene()->load(getAppContext(), "/sdcard/dzy/data.anim");
+    if (!ret) return ret;
+
+    return ret;
 }
 
 bool SViewApp::releaseApp() {
@@ -46,8 +56,10 @@ bool SViewApp::drawScene() {
 }
 
 void android_main(struct android_app* app) {
-    shared_ptr<dzy::NativeApp> nativeApp(new SViewApp(app));
-    if (!nativeApp->init())
+    shared_ptr<dzy::NativeApp> nativeApp(new SViewApp);
+    shared_ptr<dzy::Scene> scene(
+        SceneManager::createScene(SceneManager::SCENE_TYPE_FLAT));
+    if (!nativeApp->init(app, scene))
         return;
     nativeApp->mainLoop();
     nativeApp->fini();

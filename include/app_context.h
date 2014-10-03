@@ -14,19 +14,20 @@ struct android_app;
 namespace dzy {
 
 class NativeApp;
+class Scene;
 class AppContext {
 public:
-    explicit AppContext(NativeApp* nativeApp);
+    explicit AppContext(NativeApp* nativeApp, std::shared_ptr<Scene> scene);
     ~AppContext();
 
     // OS specific
-    std::size_t loadAsset(const std::string &file, char *buf, std::size_t size);
     static const std::string getAppName();
     static const std::string getAppName(pid_t pid);
     const std::string getExternalDataDir();
     const std::string getInternalDataDir();
 
     NativeApp* getNativeApp();
+    AAssetManager* getAssetManager();
 
     // gfx system
     bool initDisplay();
@@ -48,6 +49,7 @@ private:
 
     NativeApp* mNativeApp;
     AAssetManager* mAssetManager;
+    std::shared_ptr<Scene> mScene;
 
     bool mRequestQuit;
     bool mRequestRender;

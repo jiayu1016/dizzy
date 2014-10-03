@@ -1,25 +1,29 @@
+#include <memory>
 #include "log.h"
 #include "app_context.h"
+#include "scene.h"
 #include "native_app.h"
 
 using namespace std;
 
 namespace dzy {
 
-NativeApp::NativeApp(struct android_app* app) :
-    mApp(app) {
+NativeApp::NativeApp() {
     ALOGD("NativeApp::NativeApp()");
-    mAppContext.reset(new AppContext(this));
-    mApp->userData = this;
-    mApp->onAppCmd = NativeApp::handleAppCmd;
-    mApp->onInputEvent = NativeApp::handleInputEvent;
 }
 
 NativeApp::~NativeApp() {
     ALOGD("NativeApp::~NativeApp()");
 }
 
-bool NativeApp::init() {
+bool NativeApp::init(struct android_app* app, shared_ptr<Scene> scene) {
+    mApp = app;
+    mApp->userData = this;
+    mApp->onAppCmd = NativeApp::handleAppCmd;
+    mApp->onInputEvent = NativeApp::handleInputEvent;
+    mAppContext.reset(new AppContext(this, scene));
+    mCurrentScene = scene;
+
     bool ret = initApp();
     if (!ret) ALOGE("Init NativeApp class failed\n");
     return ret;
@@ -138,6 +142,10 @@ int32_t NativeApp::inputKeyEvent(int action, int code) {
 
 shared_ptr<AppContext> NativeApp::getAppContext() {
     return mAppContext;
+}
+
+shared_ptr<Scene> NativeApp::getCurrentScene() {
+    return mCurrentScene;
 }
 
 void NativeApp::mainLoop() {
