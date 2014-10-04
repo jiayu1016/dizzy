@@ -25,16 +25,22 @@ bool SViewApp::initApp() {
 
     shared_ptr<AppContext> appContext(getAppContext());
     shared_ptr<Scene> currentScene(getCurrentScene());
-    ret = currentScene->loadAsset(appContext, "test.scene");
+    currentScene->listAssetFiles(appContext, "");
+    currentScene->listAssetFiles(appContext, "mesh");
+
+    ret = currentScene->loadAsset(appContext, "cube_triangulate.dae");
     if (!ret) return ret;
 
-    ret = currentScene->loadAsset(appContext, "mesh/test.mesh");
+    ret = currentScene->loadAsset(appContext, "Cinema4D.dae");
+    if (!ret) return ret;
+
+    ret = currentScene->loadAsset(appContext, "ConcavePolygon.dae");
+    if (!ret) return ret;
+
+    ret = currentScene->loadAsset(appContext, "mesh/duck.dae");
     if (!ret) return ret;
 
     ret = currentScene->load(appContext, "/sdcard/dzy/data.anim");
-    if (!ret) return ret;
-
-    ret = currentScene->listAssetFiles(appContext);
     if (!ret) return ret;
 
     return ret;

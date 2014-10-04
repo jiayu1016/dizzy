@@ -1,8 +1,11 @@
 #include <android/asset_manager.h>
 #include <fstream>
 #include <assert.h>
-#include "log.h"
 #include "app_context.h"
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include "log.h"
 #include "scene.h"
 
 using namespace std;
@@ -24,8 +27,7 @@ FlatScene::~FlatScene() {
 }
 
 bool FlatScene::loadAsset(shared_ptr<AppContext> appContext,
-    const string assetFile) {    
-    bool ret = false;
+    const string &assetFile) {    
     AAssetManager *assetManager = appContext->getAssetManager();
     assert(assetManager != NULL);
 
@@ -34,35 +36,45 @@ bool FlatScene::loadAsset(shared_ptr<AppContext> appContext,
 
     if (!asset) {
         ALOGE("Failed to open asset: %s", assetFile.c_str());
-        return ret;
+        return false;
     }
 
     off_t length = AAsset_getLength(asset);
     char * buffer = new char[length];
     size_t sz = AAsset_read(asset, buffer, length);
     AAsset_close(asset);
-    if (sz == length) ret = true;
-    else {
+    if (sz != length) {
         ALOGE("Partial read %d bytes", sz);
         delete[] buffer;
-        return ret;
+        return false;
     }
 
-    // process the buffer
-    buffer[length - 1] = 0;
-    ALOGD("%s: %s", assetFile.c_str(), buffer);
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFileFromMemory(
+        buffer, length,
+        aiProcess_Triangulate |
+        aiProcess_JoinIdenticalVertices |
+        aiProcess_SortByPType);
+    if (!scene) {
+        ALOGE("assimp failed to load %s: %s", assetFile.c_str(),
+            importer.GetErrorString());
+        delete[] buffer;
+        return false;
+    }
+
+    // parse aiScene to FlatScene
+
     delete[] buffer;
 
-    return ret;
+    return true;
 }
 
 bool FlatScene::load(shared_ptr<AppContext> appContext,
-    const string file) {
-    bool ret = false;
+    const string &file) {
     ifstream ifs(file.c_str(), ifstream::binary);
     if (!ifs) {
-        ALOGE("ifs ctor failed for %s", file.c_str());
-        return ret;
+        ALOGE("ifstream ctor failed for %s", file.c_str());
+        return false;
     }
 
     ifs.seekg(0, ifs.end);
@@ -71,11 +83,10 @@ bool FlatScene::load(shared_ptr<AppContext> appContext,
     char * buffer = new char[length];
     ifs.read(buffer, length);
     ifs.close();
-    if (ifs) ret = true;
-    else {
+    if (!ifs) {
         ALOGE("Partial read %d bytes", ifs.gcount());
         delete[] buffer;
-        return ret;
+        return false;
     }
 
     // process the buffer
@@ -83,19 +94,18 @@ bool FlatScene::load(shared_ptr<AppContext> appContext,
     ALOGD("%s: %s", file.c_str(), buffer);
     delete[] buffer;
 
-    return ret;
+    return true;
 }
 
-bool FlatScene::listAssetFiles(shared_ptr<AppContext> appContext) {
-    bool ret = false;
+bool FlatScene::listAssetFiles(shared_ptr<AppContext> appContext,
+    const string &dir) {
     AAssetManager *assetManager = appContext->getAssetManager();
     assert(assetManager != NULL);
 
-    AAssetDir* assetDir = AAssetManager_openDir(assetManager, "");
-
+    AAssetDir* assetDir = AAssetManager_openDir(assetManager, dir.c_str());
     if (!assetDir) {
         ALOGE("Failed to open asset root dir");
-        return ret;
+        return false;
     }
 
     const char * assetFile = NULL;
@@ -105,8 +115,7 @@ bool FlatScene::listAssetFiles(shared_ptr<AppContext> appContext) {
 
     AAssetDir_close(assetDir);
 
-    ret = true;
-    return ret;
+    return true;
 }
 
 SceneManager::SceneManager() {
