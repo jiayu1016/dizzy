@@ -2,8 +2,6 @@ LOCAL_PATH := $(call my-dir)
 MY_SRC_DIR := ../../../src/jni
 
 include $(CLEAR_VARS)
-
-include $(CLEAR_VARS)
 LOCAL_MODULE    := sviewer
 LOCAL_SRC_FILES := main.cpp               \
     $(MY_SRC_DIR)/app_context.cpp         \
