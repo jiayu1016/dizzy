@@ -28,16 +28,16 @@ bool SViewApp::initApp() {
     currentScene->listAssetFiles(appContext, "");
     currentScene->listAssetFiles(appContext, "mesh");
 
-    ret = currentScene->loadAsset(appContext, "cube_triangulate.dae");
+    ret = currentScene->loadColladaAsset(appContext, "cube_triangulate.dae");
     if (!ret) return ret;
 
-    ret = currentScene->loadAsset(appContext, "Cinema4D.dae");
+    ret = currentScene->loadColladaAsset(appContext, "Cinema4D.dae");
     if (!ret) return ret;
 
-    ret = currentScene->loadAsset(appContext, "ConcavePolygon.dae");
+    ret = currentScene->loadColladaAsset(appContext, "ConcavePolygon.dae");
     if (!ret) return ret;
 
-    ret = currentScene->loadAsset(appContext, "mesh/duck.dae");
+    ret = currentScene->loadColladaAsset(appContext, "mesh/duck.dae");
     if (!ret) return ret;
 
     ret = currentScene->load(appContext, "/sdcard/dzy/data.anim");

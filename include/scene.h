@@ -13,7 +13,7 @@ public:
     Scene();
     virtual ~Scene();
 
-    virtual bool loadAsset(std::shared_ptr<AppContext> appContext,
+    virtual bool loadColladaAsset(std::shared_ptr<AppContext> appContext,
         const std::string &assetFile) = 0;
     virtual bool load(std::shared_ptr<AppContext> appContext,
         const std::string &file) = 0;
@@ -35,7 +35,7 @@ public:
     explicit FlatScene();
     virtual ~FlatScene();
 
-    virtual bool loadAsset(std::shared_ptr<AppContext> appContext, const std::string &asset);
+    virtual bool loadColladaAsset(std::shared_ptr<AppContext> appContext, const std::string &asset);
     virtual bool load(std::shared_ptr<AppContext> appContext, const std::string &file);
     virtual bool listAssetFiles(std::shared_ptr<AppContext> appContext,
         const std::string &dir);

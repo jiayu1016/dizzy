@@ -27,7 +27,7 @@ FlatScene::FlatScene() {
 FlatScene::~FlatScene() {
 }
 
-bool FlatScene::loadAsset(shared_ptr<AppContext> appContext,
+bool FlatScene::loadColladaAsset(shared_ptr<AppContext> appContext,
     const string &assetFile) {    
     AAssetManager *assetManager = appContext->getAssetManager();
     assert(assetManager != NULL);
