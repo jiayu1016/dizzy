@@ -6,6 +6,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include "log.h"
+#include "utils.h"
 #include "scene.h"
 
 using namespace std;
@@ -40,31 +41,28 @@ bool FlatScene::loadAsset(shared_ptr<AppContext> appContext,
     }
 
     off_t length = AAsset_getLength(asset);
-    char * buffer = new char[length];
-    size_t sz = AAsset_read(asset, buffer, length);
+    unique_ptr<char, RawBufferDeleter> buffer(
+        new char[length], RawBufferDeleter());
+    size_t sz = AAsset_read(asset, buffer.get(), length);
     AAsset_close(asset);
     if (sz != length) {
         ALOGE("Partial read %d bytes", sz);
-        delete[] buffer;
         return false;
     }
 
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFileFromMemory(
-        buffer, length,
+        buffer.get(), length,
         aiProcess_Triangulate |
         aiProcess_JoinIdenticalVertices |
         aiProcess_SortByPType);
     if (!scene) {
         ALOGE("assimp failed to load %s: %s", assetFile.c_str(),
             importer.GetErrorString());
-        delete[] buffer;
         return false;
     }
 
     // parse aiScene to FlatScene
-
-    delete[] buffer;
 
     return true;
 }
@@ -80,19 +78,19 @@ bool FlatScene::load(shared_ptr<AppContext> appContext,
     ifs.seekg(0, ifs.end);
     int length = ifs.tellg();
     ifs.seekg(0, ifs.beg);
-    char * buffer = new char[length];
-    ifs.read(buffer, length);
+
+    unique_ptr<char, RawBufferDeleter> buffer(
+        new char[length], RawBufferDeleter());
+    ifs.read(buffer.get(), length);
     ifs.close();
     if (!ifs) {
         ALOGE("Partial read %d bytes", ifs.gcount());
-        delete[] buffer;
         return false;
     }
 
     // process the buffer
-    buffer[length - 1] = 0;
-    ALOGD("%s: %s", file.c_str(), buffer);
-    delete[] buffer;
+    buffer.get()[length - 1] = 0;
+    ALOGD("%s: %s", file.c_str(), buffer.get());
 
     return true;
 }
