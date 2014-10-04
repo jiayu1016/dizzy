@@ -23,13 +23,18 @@ bool SViewApp::initApp() {
     ALOGD("SViewapp::initApp()");
     bool ret = false;
 
-    ret = getCurrentScene()->loadAsset(getAppContext(), "test.scene");
+    shared_ptr<AppContext> appContext(getAppContext());
+    shared_ptr<Scene> currentScene(getCurrentScene());
+    ret = currentScene->loadAsset(appContext, "test.scene");
     if (!ret) return ret;
 
-    ret = getCurrentScene()->loadAsset(getAppContext(), "mesh/test.mesh");
+    ret = currentScene->loadAsset(appContext, "mesh/test.mesh");
     if (!ret) return ret;
 
-    ret = getCurrentScene()->load(getAppContext(), "/sdcard/dzy/data.anim");
+    ret = currentScene->load(appContext, "/sdcard/dzy/data.anim");
+    if (!ret) return ret;
+
+    ret = currentScene->listAssetFiles(appContext);
     if (!ret) return ret;
 
     return ret;

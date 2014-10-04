@@ -12,6 +12,9 @@ public class MainActivity extends Activity {
     static {
         // don't need these if we use gnustl_static
         System.loadLibrary("gnustl_shared");
+        System.loadLibrary("assimp");
+        // libsviewer.so will be load by framework, load it here for consistency
+        System.loadLibrary("sviewer");
     }
 
     @Override

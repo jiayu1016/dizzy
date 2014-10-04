@@ -86,6 +86,29 @@ bool FlatScene::load(shared_ptr<AppContext> appContext,
     return ret;
 }
 
+bool FlatScene::listAssetFiles(shared_ptr<AppContext> appContext) {
+    bool ret = false;
+    AAssetManager *assetManager = appContext->getAssetManager();
+    assert(assetManager != NULL);
+
+    AAssetDir* assetDir = AAssetManager_openDir(assetManager, "");
+
+    if (!assetDir) {
+        ALOGE("Failed to open asset root dir");
+        return ret;
+    }
+
+    const char * assetFile = NULL;
+    while (assetFile = AAssetDir_getNextFileName(assetDir)) {
+        ALOGD("%s", assetFile);
+    }
+
+    AAssetDir_close(assetDir);
+
+    ret = true;
+    return ret;
+}
+
 SceneManager::SceneManager() {
 }
 

@@ -1,0 +1,34 @@
+dizzy
+=====
+
+*** Directories ***
+
+src: main dizzy code
+sample/sviewer: scene viewer
+
+*** Build assimp 3.1.1 ***
+0. environment
+android-ndk-r9d x86_64 on ubuntu 14.04 64bit, assimp 3.1.1
+
+1.  make toolchain
+$ cd $ANDROID_NDK/build/tools
+$ ./make-standalone-toolchain.sh --platform=android-19 --ndk-dir=$ANDROID_NDK --install-dir=/home/wayne/android/mytoolchain --toolchain=arm-linux-androideabi-4.8 --system=linux-x86_64
+
+2. download android-cmake, set environment variable ANDROID_CMAKE_TOOLCHAIN to android.toolchain.cmake
+
+3. generate makefile
+$ mkdir buildandroid
+$ cd buildandroid
+$ cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_CMAKE_TOOLCHAIN -DENABLE_BOOST_WORKAROUND=ON -DCMAKE_INSTALL_PREFIX=$PWD -DANDROID_STL=gnustl_shared -DANDROID_ABI=armeabi-v7a _DANDROID_NATIVE_API_LEVEL=android-19 -DANDROID_FORCE_ARM_BUILD=TRUE ..
+
+4. modify soname, otherwise System.loadLibrary will fail
+modify file buildandroid => code => cMakeFiles => assimp.dir => link.txt
+search for the string -soname, libassimp.so.3 and remove the .3 from the extension of the library
+
+5. build
+$ make
+$ make install
+
+6. rename and copy
+$ cp libassimp.so.3.1.1 $(PROJECT_TOP_DIR)/libs/armeabi-v7a/libassimp.so
+$ cp -a include/assimp $(PROJECT_TOP_DIR)/include

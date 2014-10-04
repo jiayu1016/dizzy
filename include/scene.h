@@ -17,6 +17,7 @@ public:
         const std::string assetFile) = 0;
     virtual bool load(std::shared_ptr<AppContext> appContext,
         const std::string file) = 0;
+    virtual bool listAssetFiles(std::shared_ptr<AppContext> appContext) = 0;
 
 protected:
 
@@ -35,6 +36,7 @@ public:
 
     virtual bool loadAsset(std::shared_ptr<AppContext> appContext, const std::string asset);
     virtual bool load(std::shared_ptr<AppContext> appContext, const std::string file);
+    virtual bool listAssetFiles(std::shared_ptr<AppContext> appContext);
 
     friend class SceneManager;
 
