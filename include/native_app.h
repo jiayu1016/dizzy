@@ -3,12 +3,13 @@
 
 #include <memory>
 #include <android_native_app_glue.h>
+#include "utils.h"
 
 namespace dzy {
 
 class AppContext;
 class Scene;
-class NativeApp {
+class NativeApp : private noncopyable {
 public:
     explicit NativeApp();
     ~NativeApp();
@@ -34,9 +35,6 @@ public:
 
     friend class AppContext;
 private:
-    NativeApp(NativeApp const &);
-    NativeApp & operator=(NativeApp const &);
-
     /*
      * return 0, the framework will continue to handle the event
      * return 1, the framework will stop to handle the event

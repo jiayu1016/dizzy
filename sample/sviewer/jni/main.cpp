@@ -37,6 +37,9 @@ bool SViewApp::initApp() {
     ret = currentScene->loadColladaAsset(appContext, "ConcavePolygon.dae");
     if (!ret) return ret;
 
+    ret = currentScene->loadColladaAsset(appContext, "astroboy_walk.dae");
+    if (!ret) return ret;
+
     ret = currentScene->loadColladaAsset(appContext, "mesh/duck.dae");
     if (!ret) return ret;
 

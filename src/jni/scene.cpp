@@ -41,8 +41,8 @@ bool FlatScene::loadColladaAsset(shared_ptr<AppContext> appContext,
     }
 
     off_t length = AAsset_getLength(asset);
-    unique_ptr<char, RawBufferDeleter> buffer(
-        new char[length], RawBufferDeleter());
+    unique_ptr<char, ArrayDeleter<char> > buffer(
+        new char[length], ArrayDeleter<char>());
     size_t sz = AAsset_read(asset, buffer.get(), length);
     AAsset_close(asset);
     if (sz != length) {
@@ -51,11 +51,11 @@ bool FlatScene::loadColladaAsset(shared_ptr<AppContext> appContext,
     }
 
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFileFromMemory(
+    const aiScene *scene(importer.ReadFileFromMemory(
         buffer.get(), length,
         aiProcess_Triangulate |
         aiProcess_JoinIdenticalVertices |
-        aiProcess_SortByPType);
+        aiProcess_SortByPType));
     if (!scene) {
         ALOGE("assimp failed to load %s: %s", assetFile.c_str(),
             importer.GetErrorString());
@@ -63,6 +63,20 @@ bool FlatScene::loadColladaAsset(shared_ptr<AppContext> appContext,
     }
 
     // parse aiScene to FlatScene
+    if (scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE) {
+        ALOGE("%s: incomplete scene data loaded", assetFile.c_str());
+        return false;
+    }
+    if (scene->mRootNode == NULL) {
+        ALOGE("%s: root node null", assetFile.c_str());
+        return false;
+    }
+    ALOGD("%s: %u meshes found",     assetFile.c_str(), scene->mNumMeshes);
+    ALOGD("%s: %u materials found",  assetFile.c_str(), scene->mNumMaterials);
+    ALOGD("%s: %u animations found", assetFile.c_str(), scene->mNumAnimations);
+    ALOGD("%s: %u textures found",   assetFile.c_str(), scene->mNumTextures);
+    ALOGD("%s: %u lights found",     assetFile.c_str(), scene->mNumLights);
+    ALOGD("%s: %u cameras found",    assetFile.c_str(), scene->mNumCameras);
 
     return true;
 }
@@ -79,8 +93,8 @@ bool FlatScene::load(shared_ptr<AppContext> appContext,
     int length = ifs.tellg();
     ifs.seekg(0, ifs.beg);
 
-    unique_ptr<char, RawBufferDeleter> buffer(
-        new char[length], RawBufferDeleter());
+    unique_ptr<char, ArrayDeleter<char> > buffer(
+        new char[length], ArrayDeleter<char>());
     ifs.read(buffer.get(), length);
     ifs.close();
     if (!ifs) {

@@ -6,6 +6,7 @@
 #include <string>
 #include <EGL/egl.h>
 #include <GLES/gl.h>
+#include "utils.h"
 
 class AInputEvent;
 class AAssetManager;
@@ -15,7 +16,7 @@ namespace dzy {
 
 class NativeApp;
 class Scene;
-class AppContext {
+class AppContext : private noncopyable {
 public:
     explicit AppContext(NativeApp* nativeApp, std::shared_ptr<Scene> scene);
     ~AppContext();
@@ -42,9 +43,6 @@ public:
     bool needRender();
 
 private:
-    AppContext(AppContext const &);
-    AppContext& operator=(AppContext const &);
-
     const char* eglStatusStr() const;
 
     NativeApp* mNativeApp;
