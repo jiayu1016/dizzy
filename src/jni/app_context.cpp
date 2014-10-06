@@ -13,15 +13,15 @@ using namespace std;
 
 namespace dzy {
 
-AppContext::AppContext(NativeApp* nativeApp, shared_ptr<Scene> scene) :
-    mRequestQuit(false),
-    mRequestRender(false),
-    mNativeApp(nativeApp),
-    mAssetManager(nativeApp->mApp->activity->assetManager),
-    mScene(scene),
-    mDisplay(EGL_NO_DISPLAY),
-    mEglContext(EGL_NO_CONTEXT),
-    mSurface(EGL_NO_SURFACE) {
+AppContext::AppContext(NativeApp* nativeApp, shared_ptr<Scene> scene)
+    : mRequestQuit  (false)
+    , mRequestRender(false)
+    , mNativeApp    (nativeApp)
+    , mAssetManager (nativeApp->mApp->activity->assetManager)
+    , mScene        (scene)
+    , mDisplay      (EGL_NO_DISPLAY)
+    , mEglContext   (EGL_NO_CONTEXT)
+    , mSurface      (EGL_NO_SURFACE) {
     ALOGD("AppContext::AppContext()");
 }
 

@@ -1,8 +1,11 @@
 #ifndef ASSIMP_ADAPTER_H
 #define ASSIMP_ADAPTER_H
 
+#include <memory>
 #include <assimp/IOStream.hpp>
 #include <assimp/IOSystem.hpp>
+#include <assimp/scene.h>
+#include <vecmath.h>
 
 namespace dzy {
 
@@ -43,6 +46,25 @@ public:
     }
     void Close(AssetIOStream* file) { delete file; }
 };
+
+class Camera;
+class Light;
+class Texture;
+class Animation;
+class Material;
+class Mesh;
+class Node;
+std::shared_ptr<Camera>     assimpTypeCast(aiCamera *camera);
+std::shared_ptr<Light>      assimpTypeCast(aiLight *light);
+std::shared_ptr<Texture>    assimpTypeCast(aiTexture *texture);
+std::shared_ptr<Animation>  assimpTypeCast(aiAnimation *animation);
+std::shared_ptr<Material>   assimpTypeCast(aiMaterial *material);
+std::shared_ptr<Mesh>       assimpTypeCast(aiMesh *mesh);
+std::shared_ptr<Node>       assimpTypeCast(aiNode *node);
+ndk_helper::Vec3            assimpTypeCast(const aiVector3D &vec3d);
+ndk_helper::Vec3            assimpTypeCast(const aiColor3D &color3d);
+std::string                 assimpTypeCast(const aiString &str);
+
 
 }
 

@@ -1,11 +1,13 @@
 #include <android/asset_manager.h>
 #include <fstream>
 #include <assert.h>
+#include <math.h>
 #include "app_context.h"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include "log.h"
+#include "assimp_adapter.h"
 #include "utils.h"
 #include "scene.h"
 
@@ -13,15 +15,73 @@ using namespace std;
 
 namespace dzy {
 
-Scene::Scene() :
-    mSceneData(NULL),
-    mSceneSize(0) {
+Camera::Camera()
+    : mUp               (0.f,1.f,0.f)
+    , mLookAt           (0.f,0.f,1.f)
+    , mHorizontalFOV    (0.25f * (float)M_PI)
+    , mClipPlaneNear    (0.1f)
+    , mClipPlaneFar     (1000.f)
+    , mAspect           (0.f) {
+
+}
+
+Camera::Camera(
+    ndk_helper::Vec3    position,
+    ndk_helper::Vec3    up,
+    ndk_helper::Vec3    lookAt,
+    float               horizontalFOV,
+    float               clipPlaneNear,
+    float               clipPlaneFar,
+    float               aspect)
+    : mPosition         (position)
+    , mUp               (up)
+    , mLookAt           (lookAt)
+    , mHorizontalFOV    (horizontalFOV)
+    , mClipPlaneNear    (clipPlaneNear)
+    , mClipPlaneFar     (clipPlaneFar)
+    , mAspect           (aspect) {
+
+}
+
+Light::Light()
+    : mType                 (LIGHT_SOURCE_UNDEFINED)
+    , mAttenuationConstant  (0.f)
+    , mAttenuationLinear    (1.f)
+    , mAttenuationQuadratic (0.f)
+    , mAngleInnerCone       ((float)M_PI)
+    , mAngleOuterCone       ((float)M_PI) {
+}
+
+Light::Light(
+    LightSourceType type,
+    float attenuationConstant,
+    float attenuationLinear,
+    float attenuationQuadratic,
+    float angleInnerCone,
+    float angleOuterCone)
+    : mType                 (type)
+    , mAttenuationConstant  (attenuationConstant)
+    , mAttenuationLinear    (attenuationLinear)
+    , mAttenuationQuadratic (attenuationQuadratic)
+    , mAngleInnerCone       (angleInnerCone)
+    , mAngleOuterCone       (angleOuterCone) {
+} 
+
+ndk_helper::Mat4 getMatrix() {
+    return ndk_helper::Mat4();
+};
+
+Scene::Scene()
+    : mSceneData(NULL)
+    , mSceneSize(0) {
 }
 
 Scene::~Scene() {
 }
 
-FlatScene::FlatScene() {
+FlatScene::FlatScene()
+    : mFlags(0)
+    , mNumNode(0) {
 }
 
 FlatScene::~FlatScene() {
@@ -77,6 +137,33 @@ bool FlatScene::loadColladaAsset(shared_ptr<AppContext> appContext,
     ALOGD("%s: %u textures found",   assetFile.c_str(), scene->mNumTextures);
     ALOGD("%s: %u lights found",     assetFile.c_str(), scene->mNumLights);
     ALOGD("%s: %u cameras found",    assetFile.c_str(), scene->mNumCameras);
+
+    for (int i=0; i<scene->mNumCameras; i++) {
+        shared_ptr<Camera> camera(assimpTypeCast(scene->mCameras[i]));
+        mCameras.push_back(camera);
+    }
+    for (int i=0; i<scene->mNumLights; i++) {
+        shared_ptr<Light> light(assimpTypeCast(scene->mLights[i]));
+        mLights.push_back(light);
+    }
+    for (int i=0; i<scene->mNumTextures; i++) {
+        shared_ptr<Texture> texture(assimpTypeCast(scene->mTextures[i]));
+        mTextures.push_back(texture);
+    }
+    for (int i=0; i<scene->mNumAnimations; i++) {
+        shared_ptr<Animation> animation(assimpTypeCast(scene->mAnimations[i]));
+        mAnimations.push_back(animation);
+    }
+    for (int i=0; i<scene->mNumMaterials; i++) {
+        shared_ptr<Material> material(assimpTypeCast(scene->mMaterials[i]));
+        mMaterials.push_back(material);
+    }
+    for (int i=0; i<scene->mNumMeshes; i++) {
+        shared_ptr<Mesh> mesh(assimpTypeCast(scene->mMeshes[i]));
+        mMeshes.push_back(mesh);
+    }
+
+    
 
     return true;
 }
