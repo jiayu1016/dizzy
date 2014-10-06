@@ -167,7 +167,8 @@ shared_ptr<Mesh> assimpTypeCast(aiMesh *mesh) {
     }
     // Attention: support triange faces only
     if (mesh->HasFaces()) {
-        // TODO: track mNumFaces, consider optimizing
+        ALOGD("mNumFaces: %u", me->mNumFaces);
+        // TODO:  consider optimizing
         for (int i=0; i< me->mNumFaces; i++) {
             MeshData meshData;
             meshData.set(MeshData::MESH_DATA_TYPE_INT,
