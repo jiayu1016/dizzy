@@ -1,4 +1,5 @@
-// this file is designed to hide everything about assimp
+// designed to hide data structures of assimp,  type conversion
+// is implemented in overloaded functions in other files
 #ifndef SCENE_H
 #define SCENE_H
 
@@ -10,8 +11,6 @@
 #include "utils.h"
 
 namespace dzy {
-
-// definitions of scene elements  copied from assimp
 
 class Camera {
 public:
@@ -75,8 +74,91 @@ class Material {
 };
 class Animation {
 };
-class Mesh {
+
+/*
+ * Used to hold raw buffer data of Mesh
+ */
+class MeshData {
+public:
+    enum MeshDataType {
+        MESH_DATA_TYPE_NONE,
+        MESH_DATA_TYPE_FLOAT,
+        MESH_DATA_TYPE_INT,
+        MESH_DATA_TYPE_UNSIGNED_SHORT,
+        MESH_DATA_TYPE_FIXED16_16,
+        MESH_DATA_TYPE_UNSIGNED_BYTE,
+        MESH_DATA_TYPE_SHORT,
+        MESH_DATA_TYPE_SHORT_NORM,
+        MESH_DATA_TYPE_BYTE,
+        MESH_DATA_TYPE_BYTE_NORM,
+        MESH_DATA_TYPE_UNSIGNED_BYTE_NORM,
+        MESH_DATA_TYPE_UNSIGNED_SHORT_NORM,
+        MESH_DATA_TYPE_UNSIGNED_INT,
+        MESH_DATA_TYPE_RGBA,
+        MESH_DATA_TYPE_ARGB,
+        MESH_DATA_TYPE_ABGR,
+    };
+
+    MeshData();
+    inline bool hasData() const { return mBuffer.get() != NULL; }
+    void reset();
+    void set(MeshDataType type, unsigned int numComponents,
+        unsigned int stride, unsigned int numVertices,
+        unsigned char *rawBuffer);
+
+public:
+    MeshDataType                    mType;
+    unsigned int                    mNumComponents;
+    unsigned int                    mStride;
+    // c++11 shared_ptr doesn't support array, must explicitly set deleter
+    std::shared_ptr<unsigned char>  mBuffer;
 };
+
+typedef std::vector<std::shared_ptr<MeshData> > MeshDataPtrContainer;
+class Mesh {
+public:
+    enum {
+        MAX_COLOR_SETS          = 0x8,
+        MAX_TEXTURECOORDS       = 0x8,
+    };
+
+    enum PrimitiveType {
+        PRIMITIVE_TYPE_TRIANGLES = 0,
+        PRIMITIVE_TYPE_NUM
+    };
+
+    Mesh();
+
+    bool hasPositions() const;
+    bool hasFaces() const;
+    bool hasNormals() const;
+    bool hasTangentsAndBitangents() const;
+    bool hasVertexColors(unsigned int index) const;
+    bool hasTextureCoords(unsigned int index) const;
+    unsigned int getNumUVChannels() const;
+    unsigned int getNumColorChannels() const;
+
+public:
+    std::string                     mName;
+    PrimitiveType                   mPrimitiveType;
+
+    unsigned int                    mNumVertices;
+    unsigned int                    mNumFaces;
+    unsigned int                    mNumUVComponents[MAX_TEXTURECOORDS];
+
+    MeshData                        mVertices;
+    MeshData                        mNormals;
+    MeshData                        mTangents;
+    MeshData                        mBitangents;
+    MeshDataPtrContainer            mTriangleFaces;
+
+    std::vector<ndk_helper::Vec4>   mColors         [MAX_COLOR_SETS];
+    std::vector<ndk_helper::Vec3>   mTextureCoords  [MAX_TEXTURECOORDS];
+
+    // A mesh use only ONE material, otherwise it is splitted to multiple meshes
+    unsigned int                    mMaterialIndex;
+};
+
 class Node {
 };
 

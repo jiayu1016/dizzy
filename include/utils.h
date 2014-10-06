@@ -4,11 +4,6 @@
 namespace dzy {
 
 template <typename T>
-struct ArrayDeleter {
-    void operator ()(T *p) { delete[] p; }
-};
-
-template <typename T>
 class Singleton {
 public:
     static T *get() {

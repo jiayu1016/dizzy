@@ -70,41 +70,126 @@ shared_ptr<Light> assimpTypeCast(aiLight *light) {
         return NULL;
     }
 
-    shared_ptr<Light> ret(new Light(
+    shared_ptr<Light> lt(new Light(
         type,
         light->mAttenuationConstant,
         light->mAttenuationLinear,
         light->mAttenuationQuadratic,
         light->mAngleInnerCone,
         light->mAngleOuterCone));
-    ret->mName          = assimpTypeCast(light->mName);
-    ret->mPosition      = assimpTypeCast(light->mPosition);
-    ret->mDirection     = assimpTypeCast(light->mDirection);
-    ret->mColorDiffuse  = assimpTypeCast(light->mColorDiffuse);
-    ret->mColorSpecular = assimpTypeCast(light->mColorSpecular);
-    ret->mColorAmbient  = assimpTypeCast(light->mColorAmbient);
+    lt->mName          = assimpTypeCast(light->mName);
+    lt->mPosition      = assimpTypeCast(light->mPosition);
+    lt->mDirection     = assimpTypeCast(light->mDirection);
+    lt->mColorDiffuse  = assimpTypeCast(light->mColorDiffuse);
+    lt->mColorSpecular = assimpTypeCast(light->mColorSpecular);
+    lt->mColorAmbient  = assimpTypeCast(light->mColorAmbient);
 
-    return ret;
+    return lt;
 }
 
 shared_ptr<Texture> assimpTypeCast(aiTexture *texture) {
-    shared_ptr<Texture> ret(new Texture);
-    return ret;
+    shared_ptr<Texture> tex(new Texture);
+    return tex;
 }
 
 shared_ptr<Animation> assimpTypeCast(aiAnimation *animation) {
-    shared_ptr<Animation> ret(new Animation);
-    return ret;
+    shared_ptr<Animation> anim(new Animation);
+    return anim;
 }
 
 shared_ptr<Material> assimpTypeCast(aiMaterial *material) {
-    shared_ptr<Material> ret(new Material);
-    return ret;
+    shared_ptr<Material> ma(new Material);
+    return ma;
 }
 
 shared_ptr<Mesh> assimpTypeCast(aiMesh *mesh) {
-    shared_ptr<Mesh> ret(new Mesh);
-    return ret;
+    bool hasPoint = false, hasLine = false, hasTriangle = false;
+    unsigned int type(mesh->mPrimitiveTypes);
+    if (type & aiPrimitiveType_POLYGON) {
+        ALOGE("polygon primivite type not supported");
+        return NULL;
+    }
+    if (type & aiPrimitiveType_POINT)       hasPoint    = true;
+    if (type & aiPrimitiveType_LINE)        hasLine     = true;
+    if (type & aiPrimitiveType_TRIANGLE)    hasTriangle = true;
+
+    if (!(hasPoint || hasLine || hasTriangle)) {
+        ALOGE("no pritimive type found");
+        return NULL;
+    }
+
+    // assimp document says "SortByPrimitiveType" can be used to
+    // make sure output meshes contain only one primitive type each
+    if ((hasPoint && hasLine) ||
+        (hasPoint && hasTriangle) ||
+        (hasLine && hasTriangle)) {
+        ALOGE("mixed pritimive type not allowed, consider using assimp with different options");
+        return NULL;
+    }
+
+    shared_ptr<Mesh> me(new Mesh);
+    me->mName = assimpTypeCast(mesh->mName);
+    // TODO: support point and line pritmive types
+    me->mPrimitiveType = Mesh::PRIMITIVE_TYPE_TRIANGLES;
+    me->mNumVertices = mesh->mNumVertices;
+    me->mNumFaces = mesh->mNumFaces;
+
+    for (int i=0; i< mesh->GetNumUVChannels(); i++) {
+        me->mNumUVComponents[i] = mesh->mNumUVComponents[i];
+        ALOGD("mesh->mNumUVComponents[%d]: %u", i, mesh->mNumUVComponents[i]);
+        // TODO: consider optimizing
+        for (int j=0; j < mesh->mNumVertices; j++) {
+            me->mTextureCoords[i].push_back(ndk_helper::Vec3(
+                mesh->mTextureCoords[i][j].x,
+                mesh->mTextureCoords[i][j].y,
+                mesh->mTextureCoords[i][j].z));
+        }
+    }
+
+    for (int i=0; i< mesh->GetNumColorChannels(); i++) {
+        for (int j=0; j < mesh->mNumVertices; j++) {
+            me->mColors[i].push_back(ndk_helper::Vec4(
+                mesh->mColors[i][j].r,
+                mesh->mColors[i][j].g,
+                mesh->mColors[i][j].b,
+                mesh->mColors[i][j].a));
+        }
+    }
+
+    // Attention: rely on continuous memory layout of vertices in assimp
+    if (mesh->HasPositions()) {
+        me->mVertices.set(MeshData::MESH_DATA_TYPE_FLOAT, 3, 3 * sizeof(float),
+            me->mNumVertices, reinterpret_cast<unsigned char*>(mesh->mVertices));
+    }
+    if (mesh->HasNormals()) {
+        me->mNormals.set(MeshData::MESH_DATA_TYPE_FLOAT,
+            3, 3 * sizeof(float), me->mNumVertices,
+            reinterpret_cast<unsigned char*>(mesh->mNormals));
+    }
+    if (mesh->HasTangentsAndBitangents()) {
+        me->mTangents.set(MeshData::MESH_DATA_TYPE_FLOAT,
+            3, 3 * sizeof(float), me->mNumVertices,
+            reinterpret_cast<unsigned char*>(mesh->mTangents));
+        me->mBitangents.set(MeshData::MESH_DATA_TYPE_FLOAT,
+            3, 3 * sizeof(float), me->mNumVertices,
+            reinterpret_cast<unsigned char*>(mesh->mBitangents));
+    }
+    // Attention: support triange faces only
+    if (mesh->HasFaces()) {
+        // TODO: track mNumFaces, consider optimizing
+        for (int i=0; i< me->mNumFaces; i++) {
+            MeshData *meshData = new MeshData;
+            meshData->set(MeshData::MESH_DATA_TYPE_INT,
+                1, 1 * sizeof(int), mesh->mFaces[i].mNumIndices,
+                reinterpret_cast<unsigned char*>(mesh->mFaces[i].mIndices));
+            me->mTriangleFaces.push_back(shared_ptr<MeshData>(meshData));
+        }
+    }
+
+    // TODO: rethink the material index
+    me->mMaterialIndex = mesh->mMaterialIndex;
+
+    return me;
 }
 
 shared_ptr<Node> assimpTypeCast(aiNode *node) {

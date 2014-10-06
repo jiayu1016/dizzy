@@ -15,6 +15,32 @@ using namespace std;
 
 namespace dzy {
 
+MeshData::MeshData()
+    : mType(MESH_DATA_TYPE_FLOAT)
+    , mNumComponents(0)
+    , mStride(0)
+    , mBuffer(NULL, std::default_delete<unsigned char[]>()) {
+}
+
+void MeshData::reset() {
+    mType = MESH_DATA_TYPE_NONE;
+    mNumComponents = 0;
+    mStride = 0;
+    mBuffer.reset();
+}
+
+void MeshData::set(MeshDataType type, unsigned int numComponents,
+    unsigned int stride, unsigned int numVertices,
+    unsigned char *rawBuffer) {
+    unsigned int bufSize = numVertices * stride;
+    unsigned char *newBuf = new unsigned char[bufSize];
+    memcpy(newBuf, rawBuffer, bufSize);
+    mType = type;
+    mNumComponents = numComponents;
+    mStride = stride;
+    mBuffer.reset(newBuf, std::default_delete<unsigned char[]>());
+}
+
 Camera::Camera()
     : mUp               (0.f,1.f,0.f)
     , mLookAt           (0.f,0.f,1.f)
@@ -71,6 +97,56 @@ ndk_helper::Mat4 getMatrix() {
     return ndk_helper::Mat4();
 };
 
+Mesh::Mesh()
+    : mPrimitiveType    (PRIMITIVE_TYPE_TRIANGLES)
+    , mNumVertices      (0)
+    , mNumFaces         (0)
+    , mMaterialIndex    (0) {
+    memset(mNumUVComponents, 0, MAX_TEXTURECOORDS * sizeof(unsigned int));
+}
+
+bool Mesh::hasPositions() const {
+    return mVertices.hasData() && mNumVertices > 0;
+}
+
+bool Mesh::hasFaces() const {
+    return !mTriangleFaces.empty() && mNumFaces > 0;
+}
+
+bool Mesh::hasNormals() const {
+    return mNormals.hasData() && mNumVertices > 0;
+}
+
+bool Mesh::hasTangentsAndBitangents() const {
+    return mTangents.hasData() && mBitangents.hasData() && mNumVertices > 0;
+}
+
+bool Mesh::hasVertexColors(unsigned int index) const {
+    if( index >= MAX_COLOR_SETS)
+        return false;
+    else
+        return !mColors[index].empty() && mNumVertices > 0;
+}
+
+bool Mesh::hasTextureCoords(unsigned int index) const {
+    if( index >= MAX_TEXTURECOORDS)
+        return false;
+    else
+        return !mTextureCoords[index].empty() && mNumVertices > 0;
+}
+
+unsigned int Mesh::getNumUVChannels() const {
+    unsigned int n = 0;
+    while (n < MAX_TEXTURECOORDS && !mTextureCoords[n].empty()) ++n;
+    return n;
+}
+
+unsigned int Mesh::getNumColorChannels() const {
+    unsigned int n = 0;
+    while (n < MAX_COLOR_SETS && !mColors[n].empty()) ++n;
+    return n;
+}
+
 Scene::Scene()
     : mSceneData(NULL)
     , mSceneSize(0) {
@@ -101,8 +177,7 @@ bool FlatScene::loadColladaAsset(shared_ptr<AppContext> appContext,
     }
 
     off_t length = AAsset_getLength(asset);
-    unique_ptr<char, ArrayDeleter<char> > buffer(
-        new char[length], ArrayDeleter<char>());
+    unique_ptr<char[]> buffer(new char[length]);
     size_t sz = AAsset_read(asset, buffer.get(), length);
     AAsset_close(asset);
     if (sz != length) {
@@ -163,8 +238,6 @@ bool FlatScene::loadColladaAsset(shared_ptr<AppContext> appContext,
         mMeshes.push_back(mesh);
     }
 
-    
-
     return true;
 }
 
@@ -180,8 +253,7 @@ bool FlatScene::load(shared_ptr<AppContext> appContext,
     int length = ifs.tellg();
     ifs.seekg(0, ifs.beg);
 
-    unique_ptr<char, ArrayDeleter<char> > buffer(
-        new char[length], ArrayDeleter<char>());
+    unique_ptr<char[]> buffer(new char[length]);
     ifs.read(buffer.get(), length);
     ifs.close();
     if (!ifs) {
