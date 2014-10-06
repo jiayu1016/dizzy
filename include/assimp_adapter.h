@@ -63,6 +63,7 @@ std::shared_ptr<Mesh>       assimpTypeCast(aiMesh *mesh);
 std::shared_ptr<Node>       assimpTypeCast(aiNode *node);
 ndk_helper::Vec3            assimpTypeCast(const aiVector3D &vec3d);
 ndk_helper::Vec3            assimpTypeCast(const aiColor3D &color3d);
+ndk_helper::Vec4            assimpTypeCast(const aiColor4D &color4d);
 std::string                 assimpTypeCast(const aiString &str);
 
 

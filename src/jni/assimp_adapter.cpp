@@ -197,6 +197,10 @@ ndk_helper::Vec3 assimpTypeCast(const aiColor3D &color3d) {
     return ndk_helper::Vec3(color3d.r, color3d.g, color3d.b);
 }
 
+ndk_helper::Vec4 assimpTypeCast(const aiColor4D &color4d) {
+    return ndk_helper::Vec4(color4d.r, color4d.g, color4d.b, color4d.a);
+}
+
 string assimpTypeCast(const aiString &str) {
     return string(str.C_Str());
 }
