@@ -137,23 +137,15 @@ shared_ptr<Mesh> assimpTypeCast(aiMesh *mesh) {
     for (int i=0; i< mesh->GetNumUVChannels(); i++) {
         me->mNumUVComponents[i] = mesh->mNumUVComponents[i];
         ALOGD("mesh->mNumUVComponents[%d]: %u", i, mesh->mNumUVComponents[i]);
-        // TODO: consider optimizing
-        for (int j=0; j < mesh->mNumVertices; j++) {
-            me->mTextureCoords[i].push_back(ndk_helper::Vec3(
-                mesh->mTextureCoords[i][j].x,
-                mesh->mTextureCoords[i][j].y,
-                mesh->mTextureCoords[i][j].z));
-        }
+        me->mTextureCoords[i].set(MeshData::MESH_DATA_TYPE_FLOAT,
+            3, 3 * sizeof(float), me->mNumVertices,
+            reinterpret_cast<unsigned char*>(mesh->mTextureCoords[i]));
     }
 
     for (int i=0; i< mesh->GetNumColorChannels(); i++) {
-        for (int j=0; j < mesh->mNumVertices; j++) {
-            me->mColors[i].push_back(ndk_helper::Vec4(
-                mesh->mColors[i][j].r,
-                mesh->mColors[i][j].g,
-                mesh->mColors[i][j].b,
-                mesh->mColors[i][j].a));
-        }
+        me->mColors[i].set(MeshData::MESH_DATA_TYPE_FLOAT,
+            4, 4 * sizeof(float), me->mNumVertices,
+            reinterpret_cast<unsigned char*>(mesh->mColors[i]));
     }
 
     // Attention: rely on continuous memory layout of vertices in assimp
@@ -178,11 +170,11 @@ shared_ptr<Mesh> assimpTypeCast(aiMesh *mesh) {
     if (mesh->HasFaces()) {
         // TODO: track mNumFaces, consider optimizing
         for (int i=0; i< me->mNumFaces; i++) {
-            MeshData *meshData = new MeshData;
-            meshData->set(MeshData::MESH_DATA_TYPE_INT,
+            MeshData meshData;
+            meshData.set(MeshData::MESH_DATA_TYPE_INT,
                 1, 1 * sizeof(int), mesh->mFaces[i].mNumIndices,
                 reinterpret_cast<unsigned char*>(mesh->mFaces[i].mIndices));
-            me->mTriangleFaces.push_back(shared_ptr<MeshData>(meshData));
+            me->mTriangleFaces.push_back(meshData);
         }
     }
 

@@ -23,7 +23,7 @@ MeshData::MeshData()
 }
 
 void MeshData::reset() {
-    mType = MESH_DATA_TYPE_NONE;
+    mType = MESH_DATA_TYPE_FLOAT;
     mNumComponents = 0;
     mStride = 0;
     mBuffer.reset();
@@ -106,7 +106,7 @@ Mesh::Mesh()
 }
 
 bool Mesh::hasPositions() const {
-    return mVertices.hasData() && mNumVertices > 0;
+    return !mVertices.empty() && mNumVertices > 0;
 }
 
 bool Mesh::hasFaces() const {
@@ -114,11 +114,11 @@ bool Mesh::hasFaces() const {
 }
 
 bool Mesh::hasNormals() const {
-    return mNormals.hasData() && mNumVertices > 0;
+    return !mNormals.empty() && mNumVertices > 0;
 }
 
 bool Mesh::hasTangentsAndBitangents() const {
-    return mTangents.hasData() && mBitangents.hasData() && mNumVertices > 0;
+    return !mTangents.empty() && !mBitangents.empty() && mNumVertices > 0;
 }
 
 bool Mesh::hasVertexColors(unsigned int index) const {

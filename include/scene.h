@@ -100,7 +100,7 @@ public:
     };
 
     MeshData();
-    inline bool hasData() const { return mBuffer.get() != NULL; }
+    inline bool empty() const { return mBuffer.get() == NULL; }
     void reset();
     void set(MeshDataType type, unsigned int numComponents,
         unsigned int stride, unsigned int numVertices,
@@ -114,7 +114,7 @@ public:
     std::shared_ptr<unsigned char>  mBuffer;
 };
 
-typedef std::vector<std::shared_ptr<MeshData> > MeshDataPtrContainer;
+typedef std::vector<MeshData>       MeshDataContainer;
 class Mesh {
 public:
     enum {
@@ -139,24 +139,24 @@ public:
     unsigned int getNumColorChannels() const;
 
 public:
-    std::string                     mName;
-    PrimitiveType                   mPrimitiveType;
+    std::string             mName;
+    PrimitiveType           mPrimitiveType;
 
-    unsigned int                    mNumVertices;
-    unsigned int                    mNumFaces;
-    unsigned int                    mNumUVComponents[MAX_TEXTURECOORDS];
+    unsigned int            mNumVertices;
+    unsigned int            mNumFaces;
+    unsigned int            mNumUVComponents[MAX_TEXTURECOORDS];
 
-    MeshData                        mVertices;
-    MeshData                        mNormals;
-    MeshData                        mTangents;
-    MeshData                        mBitangents;
-    MeshDataPtrContainer            mTriangleFaces;
+    MeshData                mVertices;
+    MeshData                mNormals;
+    MeshData                mTangents;
+    MeshData                mBitangents;
+    MeshDataContainer       mTriangleFaces;
 
-    std::vector<ndk_helper::Vec4>   mColors         [MAX_COLOR_SETS];
-    std::vector<ndk_helper::Vec3>   mTextureCoords  [MAX_TEXTURECOORDS];
+    MeshData                mColors         [MAX_COLOR_SETS];
+    MeshData                mTextureCoords  [MAX_TEXTURECOORDS];
 
     // A mesh use only ONE material, otherwise it is splitted to multiple meshes
-    unsigned int                    mMaterialIndex;
+    unsigned int            mMaterialIndex;
 };
 
 class Node {
