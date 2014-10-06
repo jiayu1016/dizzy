@@ -136,7 +136,6 @@ shared_ptr<Mesh> assimpTypeCast(aiMesh *mesh) {
 
     for (int i=0; i< mesh->GetNumUVChannels(); i++) {
         me->mNumUVComponents[i] = mesh->mNumUVComponents[i];
-        ALOGD("mesh->mNumUVComponents[%d]: %u", i, mesh->mNumUVComponents[i]);
         me->mTextureCoords[i].set(MeshData::MESH_DATA_TYPE_FLOAT,
             3, 3 * sizeof(float), me->mNumVertices,
             reinterpret_cast<unsigned char*>(mesh->mTextureCoords[i]));
