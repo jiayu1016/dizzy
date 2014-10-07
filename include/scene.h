@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <functional>
+#include <algorithm>
 #include <vecmath.h>
 #include "utils.h"
 
@@ -159,8 +161,42 @@ public:
     unsigned int            mMaterialIndex;
 };
 
-class Node {
+class NodeTree;
+class Node : public std::enable_shared_from_this<Node> {
+public:
+    Node() { }
+    Node(const std::string& name) : mName(name) { }
+
+    void setParent(std::shared_ptr<Node> parent);
+    std::shared_ptr<Node> findNode(const std::string &name);
+
+    friend class NodeTree;
+
+private:
+    void insertChild(std::shared_ptr<Node> node);
+
+    std::string                             mName;
+    ndk_helper::Mat4                        mTransformation;
+    std::weak_ptr<Node>                     mParent;
+    std::vector<std::shared_ptr<Node> >     mChildren;
+    std::vector<int>                        mMeshes;
+
 };
+
+class NodeTree {
+public:
+    inline void setRoot(std::shared_ptr<Node> root) {
+        mRoot = root;
+    }
+    void dfsTraversal(std::function<void(std::shared_ptr<Node>)> visit);
+
+private:
+    void dfsTraversal(std::shared_ptr<Node> node,
+        std::function<void(std::shared_ptr<Node>)> visit);
+
+    std::shared_ptr<Node> mRoot;
+};
+
 
 class SceneManager;
 class AppContext;

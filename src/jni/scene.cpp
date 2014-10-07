@@ -147,6 +147,53 @@ unsigned int Mesh::getNumColorChannels() const {
     return n;
 }
 
+void Node::setParent(shared_ptr<Node> parent) {
+    shared_ptr<Node> oldParent(mParent.lock());
+    if (oldParent) {
+        if (oldParent != parent) {
+            // remove this node from original parent's children list
+            for (auto iter = oldParent->mChildren.begin();
+                iter != oldParent->mChildren.end();
+                iter++) {
+                if ((*iter).get() == this) {
+                    oldParent->mChildren.erase(iter);
+                    break;
+                }
+            }
+        } else {
+            ALOGD("double set, ignore");
+            return;
+        }
+    }
+
+    mParent = parent;
+    parent->insertChild(shared_from_this());
+}
+
+shared_ptr<Node> Node::findNode(const string &name) {
+    if (mName == name) return shared_from_this();
+    for (size_t i = 0; i < mChildren.size(); i++) {
+        shared_ptr<Node> node(mChildren[i]->findNode(name));
+        if (node) return node;
+    }
+    return NULL;
+}
+
+void Node::insertChild(shared_ptr<Node> node) {
+    mChildren.push_back(node);
+}
+
+void NodeTree::dfsTraversal(function<void(shared_ptr<Node>)> visit) {
+    dfsTraversal(mRoot, visit);
+}
+
+void NodeTree::dfsTraversal(shared_ptr<Node> node, function<void(shared_ptr<Node>)> visit) {
+    visit(node);
+    std::for_each(node->mChildren.begin(), node->mChildren.end(), [this, visit] (shared_ptr<Node> c) {
+        dfsTraversal(c, visit);
+    });
+}
+
 Scene::Scene()
     : mSceneData(NULL)
     , mSceneSize(0) {
