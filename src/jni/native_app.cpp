@@ -105,7 +105,7 @@ void NativeApp::appCmd(int32_t cmd) {
         case APP_CMD_INIT_WINDOW:
             ALOGD("APP_CMD_INIT_WINDOW");
             getAppContext()->initDisplay();
-            getAppContext()->updateDisplay();
+            getAppContext()->updateDisplay(getCurrentScene());
             break;
         case APP_CMD_TERM_WINDOW:
             ALOGD("APP_CMD_TERM_WINDOW");
@@ -183,7 +183,7 @@ void NativeApp::mainLoop() {
         if (appContext->isRendering() && !appContext->needQuit()) {
             // Drawing is throttled to the screen update rate, so there
             // is no need to do timing here.
-            getAppContext()->updateDisplay();
+            getAppContext()->updateDisplay(getCurrentScene());
         }
     }
 

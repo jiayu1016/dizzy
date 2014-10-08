@@ -33,7 +33,7 @@ public:
     // gfx system
     bool initDisplay();
     void releaseDisplay();
-    bool updateDisplay();
+    bool updateDisplay(std::shared_ptr<Scene> scene);
 
     void requestQuit();
     bool needQuit();

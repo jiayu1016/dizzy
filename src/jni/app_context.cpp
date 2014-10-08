@@ -72,7 +72,7 @@ bool AppContext::initDisplay() {
     glEnable(GL_DEPTH_TEST);
 
     mNativeApp->initView();
-    mNativeApp->drawScene();
+    mNativeApp->drawScene(mNativeApp->getCurrentScene());
 }
 
 const char* AppContext::eglStatusStr() const
@@ -115,8 +115,8 @@ void AppContext::releaseDisplay() {
     mSurface    = EGL_NO_SURFACE;
 }
 
-bool AppContext::updateDisplay() {
-    mNativeApp->drawScene();
+bool AppContext::updateDisplay(shared_ptr<Scene> scene) {
+    mNativeApp->drawScene(scene);
     return true;
 }
 
