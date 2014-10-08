@@ -14,6 +14,8 @@
 
 namespace dzy {
 
+class AIAdapter;
+
 class Camera {
 public:
     Camera();
@@ -27,7 +29,8 @@ public:
         float               aspect);
     ndk_helper::Mat4 getMatrix();
 
-public:
+    friend class AIAdapter;
+private:
     std::string         mName;
     ndk_helper::Vec3    mPosition;
     ndk_helper::Vec3    mUp;
@@ -56,6 +59,8 @@ public:
         float           angleInnerCone,
         float           angleOuterCone);
 
+    friend class AIAdapter;
+private:
     std::string         mName;
     LightSourceType     mType;
     ndk_helper::Vec3    mPosition;
@@ -108,7 +113,7 @@ public:
         unsigned int stride, unsigned int numVertices,
         unsigned char *rawBuffer);
 
-public:
+private:
     MeshDataType                    mType;
     unsigned int                    mNumComponents;
     unsigned int                    mStride;
@@ -139,8 +144,9 @@ public:
     bool hasTextureCoords(unsigned int index) const;
     unsigned int getNumUVChannels() const;
     unsigned int getNumColorChannels() const;
-
-public:
+    
+    friend class AIAdapter;
+private:
     std::string             mName;
     PrimitiveType           mPrimitiveType;
 
@@ -171,7 +177,7 @@ public:
     std::shared_ptr<Node> findNode(const std::string &name);
 
     friend class NodeTree;
-
+    friend class AIAdapter;
 private:
     void insertChild(std::shared_ptr<Node> node);
 
@@ -190,13 +196,13 @@ public:
     }
     void dfsTraversal(std::function<void(std::shared_ptr<Node>)> visit);
 
+    friend class AIAdapter;
 private:
     void dfsTraversal(std::shared_ptr<Node> node,
         std::function<void(std::shared_ptr<Node>)> visit);
 
     std::shared_ptr<Node> mRoot;
 };
-
 
 class SceneManager;
 class AppContext;

@@ -36,21 +36,21 @@ std::size_t AssetIOStream::FileSize() const {
 void AssetIOStream::Flush() {
 }
 
-shared_ptr<Camera> assimpTypeCast(aiCamera *camera) {
+shared_ptr<Camera> AIAdapter::typeCast(aiCamera *camera) {
     shared_ptr<Camera> ret(new Camera(
-        assimpTypeCast(camera->mPosition),
-        assimpTypeCast(camera->mUp),
-        assimpTypeCast(camera->mLookAt),
+        AIAdapter::typeCast(camera->mPosition),
+        AIAdapter::typeCast(camera->mUp),
+        AIAdapter::typeCast(camera->mLookAt),
         camera->mHorizontalFOV,
         camera->mClipPlaneNear,
         camera->mClipPlaneFar,
         camera->mAspect));
-    ret->mName = assimpTypeCast(camera->mName);
+    ret->mName = AIAdapter::typeCast(camera->mName);
 
     return ret;
 }
 
-shared_ptr<Light> assimpTypeCast(aiLight *light) {
+shared_ptr<Light> AIAdapter::typeCast(aiLight *light) {
     Light::LightSourceType type;
     switch(light->mType) {
     case aiLightSource_UNDEFINED:
@@ -77,32 +77,32 @@ shared_ptr<Light> assimpTypeCast(aiLight *light) {
         light->mAttenuationQuadratic,
         light->mAngleInnerCone,
         light->mAngleOuterCone));
-    lt->mName          = assimpTypeCast(light->mName);
-    lt->mPosition      = assimpTypeCast(light->mPosition);
-    lt->mDirection     = assimpTypeCast(light->mDirection);
-    lt->mColorDiffuse  = assimpTypeCast(light->mColorDiffuse);
-    lt->mColorSpecular = assimpTypeCast(light->mColorSpecular);
-    lt->mColorAmbient  = assimpTypeCast(light->mColorAmbient);
+    lt->mName          = AIAdapter::typeCast(light->mName);
+    lt->mPosition      = AIAdapter::typeCast(light->mPosition);
+    lt->mDirection     = AIAdapter::typeCast(light->mDirection);
+    lt->mColorDiffuse  = AIAdapter::typeCast(light->mColorDiffuse);
+    lt->mColorSpecular = AIAdapter::typeCast(light->mColorSpecular);
+    lt->mColorAmbient  = AIAdapter::typeCast(light->mColorAmbient);
 
     return lt;
 }
 
-shared_ptr<Texture> assimpTypeCast(aiTexture *texture) {
+shared_ptr<Texture>AIAdapter::typeCast(aiTexture *texture) {
     shared_ptr<Texture> tex(new Texture);
     return tex;
 }
 
-shared_ptr<Animation> assimpTypeCast(aiAnimation *animation) {
+shared_ptr<Animation> AIAdapter::typeCast(aiAnimation *animation) {
     shared_ptr<Animation> anim(new Animation);
     return anim;
 }
 
-shared_ptr<Material> assimpTypeCast(aiMaterial *material) {
+shared_ptr<Material> AIAdapter::typeCast(aiMaterial *material) {
     shared_ptr<Material> ma(new Material);
     return ma;
 }
 
-shared_ptr<Mesh> assimpTypeCast(aiMesh *mesh) {
+shared_ptr<Mesh> AIAdapter::typeCast(aiMesh *mesh) {
     bool hasPoint = false, hasLine = false, hasTriangle = false;
     unsigned int type(mesh->mPrimitiveTypes);
     if (type & aiPrimitiveType_POLYGON) {
@@ -128,7 +128,7 @@ shared_ptr<Mesh> assimpTypeCast(aiMesh *mesh) {
     }
 
     shared_ptr<Mesh> me(new Mesh);
-    me->mName = assimpTypeCast(mesh->mName);
+    me->mName = AIAdapter::typeCast(mesh->mName);
     // TODO: support point and line pritmive types
     me->mPrimitiveType = Mesh::PRIMITIVE_TYPE_TRIANGLES;
     me->mNumVertices = mesh->mNumVertices;
@@ -184,24 +184,37 @@ shared_ptr<Mesh> assimpTypeCast(aiMesh *mesh) {
     return me;
 }
 
-shared_ptr<Node> assimpTypeCast(aiNode *node) {
-    shared_ptr<Node> ret(new Node);
-    return ret;
+shared_ptr<Node> AIAdapter::typeCast(aiNode *node) {
+    shared_ptr<Node> n(new Node);
+    n->mName = AIAdapter::typeCast(node->mName);
+    n->mTransformation = AIAdapter::typeCast(node->mTransformation);
+    //n->mParent = node->mParent;
+    //n->mChildren = node->mChildren;
+    for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+        n->mMeshes.push_back(node->mMeshes[i]);
+    }
+    return n;
 }
 
-ndk_helper::Vec3 assimpTypeCast(const aiVector3D &vec3d) {
+ndk_helper::Vec3 AIAdapter::typeCast(const aiVector3D &vec3d) {
     return ndk_helper::Vec3(vec3d.x, vec3d.y, vec3d.z);
 }
 
-ndk_helper::Vec3 assimpTypeCast(const aiColor3D &color3d) {
+ndk_helper::Vec3 AIAdapter::typeCast(const aiColor3D &color3d) {
     return ndk_helper::Vec3(color3d.r, color3d.g, color3d.b);
 }
 
-ndk_helper::Vec4 assimpTypeCast(const aiColor4D &color4d) {
+ndk_helper::Vec4 AIAdapter::typeCast(const aiColor4D &color4d) {
     return ndk_helper::Vec4(color4d.r, color4d.g, color4d.b, color4d.a);
 }
 
-string assimpTypeCast(const aiString &str) {
+ndk_helper::Mat4 AIAdapter::typeCast(const aiMatrix4x4 &mat4) {
+    ndk_helper::Mat4 m;
+    memcpy(&m, &mat4, sizeof(aiMatrix4x4));
+    return m;
+}
+
+string AIAdapter::typeCast(const aiString &str) {
     return string(str.C_Str());
 }
 

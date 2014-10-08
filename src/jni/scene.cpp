@@ -261,27 +261,27 @@ bool FlatScene::loadColladaAsset(shared_ptr<AppContext> appContext,
     ALOGD("%s: %u cameras found",    assetFile.c_str(), scene->mNumCameras);
 
     for (int i=0; i<scene->mNumCameras; i++) {
-        shared_ptr<Camera> camera(assimpTypeCast(scene->mCameras[i]));
+        shared_ptr<Camera> camera(AIAdapter::typeCast(scene->mCameras[i]));
         mCameras.push_back(camera);
     }
     for (int i=0; i<scene->mNumLights; i++) {
-        shared_ptr<Light> light(assimpTypeCast(scene->mLights[i]));
+        shared_ptr<Light> light(AIAdapter::typeCast(scene->mLights[i]));
         mLights.push_back(light);
     }
     for (int i=0; i<scene->mNumTextures; i++) {
-        shared_ptr<Texture> texture(assimpTypeCast(scene->mTextures[i]));
+        shared_ptr<Texture> texture(AIAdapter::typeCast(scene->mTextures[i]));
         mTextures.push_back(texture);
     }
     for (int i=0; i<scene->mNumAnimations; i++) {
-        shared_ptr<Animation> animation(assimpTypeCast(scene->mAnimations[i]));
+        shared_ptr<Animation> animation(AIAdapter::typeCast(scene->mAnimations[i]));
         mAnimations.push_back(animation);
     }
     for (int i=0; i<scene->mNumMaterials; i++) {
-        shared_ptr<Material> material(assimpTypeCast(scene->mMaterials[i]));
+        shared_ptr<Material> material(AIAdapter::typeCast(scene->mMaterials[i]));
         mMaterials.push_back(material);
     }
     for (int i=0; i<scene->mNumMeshes; i++) {
-        shared_ptr<Mesh> mesh(assimpTypeCast(scene->mMeshes[i]));
+        shared_ptr<Mesh> mesh(AIAdapter::typeCast(scene->mMeshes[i]));
         mMeshes.push_back(mesh);
     }
 

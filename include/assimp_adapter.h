@@ -54,18 +54,21 @@ class Animation;
 class Material;
 class Mesh;
 class Node;
-std::shared_ptr<Camera>     assimpTypeCast(aiCamera *camera);
-std::shared_ptr<Light>      assimpTypeCast(aiLight *light);
-std::shared_ptr<Texture>    assimpTypeCast(aiTexture *texture);
-std::shared_ptr<Animation>  assimpTypeCast(aiAnimation *animation);
-std::shared_ptr<Material>   assimpTypeCast(aiMaterial *material);
-std::shared_ptr<Mesh>       assimpTypeCast(aiMesh *mesh);
-std::shared_ptr<Node>       assimpTypeCast(aiNode *node);
-ndk_helper::Vec3            assimpTypeCast(const aiVector3D &vec3d);
-ndk_helper::Vec3            assimpTypeCast(const aiColor3D &color3d);
-ndk_helper::Vec4            assimpTypeCast(const aiColor4D &color4d);
-std::string                 assimpTypeCast(const aiString &str);
-
+class AIAdapter {
+public:
+    static std::shared_ptr<Camera>     typeCast(aiCamera *camera);
+    static std::shared_ptr<Light>      typeCast(aiLight *light);
+    static std::shared_ptr<Texture>    typeCast(aiTexture *texture);
+    static std::shared_ptr<Animation>  typeCast(aiAnimation *animation);
+    static std::shared_ptr<Material>   typeCast(aiMaterial *material);
+    static std::shared_ptr<Mesh>       typeCast(aiMesh *mesh);
+    static std::shared_ptr<Node>       typeCast(aiNode *node);
+    static ndk_helper::Vec3            typeCast(const aiVector3D &vec3d);
+    static ndk_helper::Vec3            typeCast(const aiColor3D &color3d);
+    static ndk_helper::Vec4            typeCast(const aiColor4D &color4d);
+    static ndk_helper::Mat4            typeCast(const aiMatrix4x4 &mat4);
+    static std::string                 typeCast(const aiString &str);
+};
 
 }
 
