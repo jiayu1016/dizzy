@@ -2,6 +2,7 @@
 #include <string>
 #include "log.h"
 #include "native_app.h"
+#include "render.h"
 #include "scene.h"
 
 using namespace dzy;
@@ -56,17 +57,18 @@ bool SViewApp::releaseApp() {
 
 bool SViewApp::initView() {
     ALOGD("SViewapp::initView()");
-    return true;
+    return getCurrentRender()->init();
 }
 
 bool SViewApp::releaseView() {
     ALOGD("SViewapp::releaseView()");
-    return true;
+    return getCurrentRender()->release();
 }
 
 bool SViewApp::drawScene(shared_ptr<Scene> scene) {
-    ALOGD("SViewapp::drawScene()");
-    return true;
+    shared_ptr<Render> render(getCurrentRender());
+
+    return render->drawScene(scene);
 }
 
 void android_main(struct android_app* app) {

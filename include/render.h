@@ -7,8 +7,14 @@
 
 namespace dzy {
 
+class Scene;
+class Node;
 class Render {
-
+public:
+    bool init();
+    bool release();
+    bool drawScene(std::shared_ptr<Scene> scene);
+    void drawNode(std::shared_ptr<Node> node);
 };
 
 class RenderManager : public Singleton<RenderManager> {

@@ -179,6 +179,7 @@ public:
 
     friend class NodeTree;
     friend class AIAdapter;
+    friend class Render;
 private:
 
     std::string                             mName;
@@ -206,23 +207,6 @@ private:
 
 class SceneManager;
 class AppContext;
-class Scene {
-public:
-    Scene();
-    virtual ~Scene();
-
-    virtual bool loadColladaAsset(std::shared_ptr<AppContext> appContext,
-        const std::string &assetFile) = 0;
-    virtual bool load(std::shared_ptr<AppContext> appContext,
-        const std::string &file) = 0;
-    virtual bool listAssetFiles(std::shared_ptr<AppContext> appContext,
-        const std::string &dir) = 0;
-
-protected:
-
-    void * mSceneData;
-    std::size_t mSceneSize;
-};
 
 typedef std::vector<std::shared_ptr<Camera> >      CameraContainer;
 typedef std::vector<std::shared_ptr<Light> >       LightContainer;
@@ -230,18 +214,24 @@ typedef std::vector<std::shared_ptr<Animation> >   AnimationContainer;
 typedef std::vector<std::shared_ptr<Texture> >     TextureContainer;
 typedef std::vector<std::shared_ptr<Material> >    MaterialContainer;
 typedef std::vector<std::shared_ptr<Mesh> >        MeshContainer;
-class FlatScene : public Scene {
+class Scene {
 public:
-    explicit FlatScene();
-    virtual ~FlatScene();
-
     virtual bool loadColladaAsset(std::shared_ptr<AppContext> appContext, const std::string &asset);
     virtual bool load(std::shared_ptr<AppContext> appContext, const std::string &file);
     virtual bool listAssetFiles(std::shared_ptr<AppContext> appContext,
         const std::string &dir);
 
-    friend class SceneManager;
+    inline size_t getNumCameras() { return mCameras.size(); }
+    inline size_t getNumLights() { return mLights.size(); }
+    inline size_t getNumTextures() { return mTextures.size(); }
+    inline size_t getNumAnimations() { return mAnimations.size(); }
+    inline size_t getNumMaterials() { return mMaterials.size(); }
+    inline size_t getNumMeshes() { return mMeshes.size(); }
+    //inline size_t getNumNodes() { return mNodeTree.getNumNodes(); }
 
+    inline NodeTree& getNodeTree() { return mNodeTree;}
+    friend class SceneManager;
+    friend class Render;
 private:
     unsigned int        mFlags;
     CameraContainer     mCameras;
@@ -251,7 +241,6 @@ private:
     MaterialContainer   mMaterials;
     MeshContainer       mMeshes;
     NodeTree            mNodeTree;
-    std::size_t         mNumNode;
 };
 
 class SceneManager : public Singleton<SceneManager> {

@@ -214,23 +214,7 @@ void NodeTree::dfsTraversal(shared_ptr<Node> node, function<void(shared_ptr<Node
     });
 }
 
-Scene::Scene()
-    : mSceneData(NULL)
-    , mSceneSize(0) {
-}
-
-Scene::~Scene() {
-}
-
-FlatScene::FlatScene()
-    : mFlags(0)
-    , mNumNode(0) {
-}
-
-FlatScene::~FlatScene() {
-}
-
-bool FlatScene::loadColladaAsset(shared_ptr<AppContext> appContext,
+bool Scene::loadColladaAsset(shared_ptr<AppContext> appContext,
     const string &assetFile) {    
     AAssetManager *assetManager = appContext->getAssetManager();
     assert(assetManager != NULL);
@@ -318,7 +302,7 @@ bool FlatScene::loadColladaAsset(shared_ptr<AppContext> appContext,
     return true;
 }
 
-bool FlatScene::load(shared_ptr<AppContext> appContext,
+bool Scene::load(shared_ptr<AppContext> appContext,
     const string &file) {
     ifstream ifs(file.c_str(), ifstream::binary);
     if (!ifs) {
@@ -345,7 +329,7 @@ bool FlatScene::load(shared_ptr<AppContext> appContext,
     return true;
 }
 
-bool FlatScene::listAssetFiles(shared_ptr<AppContext> appContext,
+bool Scene::listAssetFiles(shared_ptr<AppContext> appContext,
     const string &dir) {
     AAssetManager *assetManager = appContext->getAssetManager();
     assert(assetManager != NULL);
@@ -373,9 +357,8 @@ SceneManager::~SceneManager() {
 }
 
 shared_ptr<Scene> SceneManager::createScene(SceneType sceneType) {
-    shared_ptr<Scene> scene(NULL);
-    if (sceneType == SCENE_TYPE_FLAT)
-        scene.reset(new FlatScene);
+    (void)sceneType;
+    shared_ptr<Scene> scene(new Scene);
     if (scene) {
         SceneManager::get()->addScene(scene);
         mCurrentScene = scene;
