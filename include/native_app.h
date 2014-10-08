@@ -15,7 +15,7 @@ public:
     explicit NativeApp();
     ~NativeApp();
 
-    bool init(struct android_app* app, std::shared_ptr<Scene>);
+    bool init(struct android_app* app);
     void fini();
     void mainLoop();
 

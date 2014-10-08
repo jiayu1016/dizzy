@@ -376,11 +376,19 @@ shared_ptr<Scene> SceneManager::createScene(SceneType sceneType) {
     shared_ptr<Scene> scene(NULL);
     if (sceneType == SCENE_TYPE_FLAT)
         scene.reset(new FlatScene);
+    if (scene) {
+        SceneManager::get()->addScene(scene);
+        mCurrentScene = scene;
+    }
     return scene;
 }
 
 void SceneManager::addScene(shared_ptr<Scene> scene) {
     mScenes.push_back(scene);
+}
+
+shared_ptr<Scene> SceneManager::getCurrentScene() {
+    return mCurrentScene;
 }
 
 

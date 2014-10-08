@@ -24,13 +24,13 @@ bool SViewApp::initApp() {
     bool ret = false;
 
     shared_ptr<AppContext> appContext(getAppContext());
-    shared_ptr<Scene> currentScene(getCurrentScene());
+    shared_ptr<Scene> currentScene(SceneManager::get()->getCurrentScene());
     currentScene->listAssetFiles(appContext, "");
     currentScene->listAssetFiles(appContext, "mesh");
 
     ret = currentScene->loadColladaAsset(appContext, "cube_triangulate.dae");
     if (!ret) return ret;
-
+/*
     ret = currentScene->loadColladaAsset(appContext, "Cinema4D.dae");
     if (!ret) return ret;
 
@@ -45,7 +45,7 @@ bool SViewApp::initApp() {
 
     ret = currentScene->load(appContext, "/sdcard/dzy/data.anim");
     if (!ret) return ret;
-
+*/
     return ret;
 }
 
@@ -72,8 +72,8 @@ bool SViewApp::drawScene() {
 void android_main(struct android_app* app) {
     shared_ptr<dzy::NativeApp> nativeApp(new SViewApp);
     shared_ptr<dzy::Scene> scene(
-        SceneManager::createScene(SceneManager::SCENE_TYPE_FLAT));
-    if (!nativeApp->init(app, scene))
+        SceneManager::get()->createScene(SceneManager::SCENE_TYPE_FLAT));
+    if (!nativeApp->init(app))
         return;
     nativeApp->mainLoop();
     nativeApp->fini();

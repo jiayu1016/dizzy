@@ -18,7 +18,7 @@ class NativeApp;
 class Scene;
 class AppContext : private noncopyable {
 public:
-    explicit AppContext(NativeApp* nativeApp, std::shared_ptr<Scene> scene);
+    explicit AppContext(NativeApp* nativeApp);
     ~AppContext();
 
     // OS specific
@@ -27,9 +27,8 @@ public:
     const std::string getExternalDataDir();
     const std::string getInternalDataDir();
 
-    NativeApp* getNativeApp();
-    AAssetManager* getAssetManager();
-    std::shared_ptr<Scene> getCurrentScene();
+    NativeApp*                  getNativeApp();
+    AAssetManager*              getAssetManager();
 
     // gfx system
     bool initDisplay();
@@ -46,19 +45,17 @@ public:
 private:
     const char* eglStatusStr() const;
 
-    NativeApp* mNativeApp;
-    AAssetManager* mAssetManager;
-    std::shared_ptr<Scene> mCurrentScene;
-
-    bool mRequestQuit;
-    bool mRequestRender;
+    NativeApp*              mNativeApp;
+    AAssetManager*          mAssetManager;
+    bool                    mRequestQuit;
+    bool                    mRequestRender;
 
     // egl
-    EGLDisplay mDisplay;
-    EGLContext mEglContext;
-    EGLSurface mSurface;
-    EGLint mWidth;
-    EGLint mHeight;
+    EGLDisplay              mDisplay;
+    EGLContext              mEglContext;
+    EGLSurface              mSurface;
+    EGLint                  mWidth;
+    EGLint                  mHeight;
 };
 
 } // namespace dzy

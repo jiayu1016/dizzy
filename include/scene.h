@@ -260,14 +260,16 @@ public:
         SCENE_TYPE_FLAT,
     };
     ~SceneManager();
-    static std::shared_ptr<Scene> createScene(SceneType);
+    std::shared_ptr<Scene> createScene(SceneType);
     void addScene(std::shared_ptr<Scene> scene);
+    std::shared_ptr<Scene> getCurrentScene();
 
     friend class Singleton<SceneManager>;
 private:    
     explicit SceneManager();
 
-    std::vector<std::shared_ptr<Scene> > mScenes;
+    std::vector<std::shared_ptr<Scene> >    mScenes;
+    std::shared_ptr<Scene>                  mCurrentScene;
 };
 
 } // namespace dzy

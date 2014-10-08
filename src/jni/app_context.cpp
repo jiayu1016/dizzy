@@ -8,24 +8,23 @@
 #include "log.h"
 #include "native_app.h"
 #include "scene.h"
+#include "render.h"
 #include "app_context.h"
 
 using namespace std;
 
 namespace dzy {
 
-AppContext::AppContext(NativeApp* nativeApp, shared_ptr<Scene> scene)
+AppContext::AppContext(NativeApp* nativeApp)
     : mRequestQuit  (false)
     , mRequestRender(false)
     , mNativeApp    (nativeApp)
     , mAssetManager (nativeApp->mApp->activity->assetManager)
-    , mCurrentScene (scene)
     , mDisplay      (EGL_NO_DISPLAY)
     , mEglContext   (EGL_NO_CONTEXT)
     , mSurface      (EGL_NO_SURFACE) {
     ALOGD("AppContext::AppContext()");
-    if (mCurrentScene)
-        SceneManager::get()->addScene(mCurrentScene);
+    RenderManager::get()->createDefaultRender();
 }
 
 AppContext::~AppContext() {
@@ -130,12 +129,8 @@ AAssetManager* AppContext::getAssetManager() {
     return mAssetManager;
 }
 
-shared_ptr<Scene> AppContext::getCurrentScene() {
-    return mCurrentScene;
-}
-
 const string AppContext::getAppName() {
-    getAppName(getpid());
+    return getAppName(getpid());
 }
 
 const string AppContext::getAppName(pid_t pid) {

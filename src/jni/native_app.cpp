@@ -2,6 +2,7 @@
 #include "log.h"
 #include "app_context.h"
 #include "scene.h"
+#include "render.h"
 #include "native_app.h"
 
 using namespace std;
@@ -16,12 +17,12 @@ NativeApp::~NativeApp() {
     ALOGD("NativeApp::~NativeApp()");
 }
 
-bool NativeApp::init(struct android_app* app, shared_ptr<Scene> scene) {
+bool NativeApp::init(struct android_app* app) {
     mApp = app;
     mApp->userData = this;
     mApp->onAppCmd = NativeApp::handleAppCmd;
     mApp->onInputEvent = NativeApp::handleInputEvent;
-    mAppContext.reset(new AppContext(this, scene));
+    mAppContext.reset(new AppContext(this));
 
     bool ret = initApp();
     if (!ret) ALOGE("Init NativeApp class failed\n");
@@ -144,7 +145,7 @@ shared_ptr<AppContext> NativeApp::getAppContext() {
 }
 
 shared_ptr<Scene> NativeApp::getCurrentScene() {
-    return getAppContext()->getCurrentScene();
+    return SceneManager::get()->getCurrentScene();
 }
 
 shared_ptr<Render> NativeApp::getCurrentRender() {
