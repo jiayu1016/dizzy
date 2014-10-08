@@ -9,6 +9,7 @@ namespace dzy {
 
 class AppContext;
 class Scene;
+class Render;
 class NativeApp : private noncopyable {
 public:
     explicit NativeApp();
@@ -31,7 +32,8 @@ public:
     virtual bool drawScene() = 0;
 
     std::shared_ptr<AppContext> getAppContext();
-    std::shared_ptr<Scene> getCurrentScene();
+    std::shared_ptr<Scene>      getCurrentScene();
+    std::shared_ptr<Render>     getCurrentRender();
 
     friend class AppContext;
 private:
@@ -44,7 +46,6 @@ private:
     int32_t inputEvent(AInputEvent* event);
 
     std::shared_ptr<AppContext> mAppContext;
-    std::shared_ptr<Scene> mCurrentScene;
 
     struct android_app * mApp;
 };

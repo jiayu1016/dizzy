@@ -29,6 +29,7 @@ public:
 
     NativeApp* getNativeApp();
     AAssetManager* getAssetManager();
+    std::shared_ptr<Scene> getCurrentScene();
 
     // gfx system
     bool initDisplay();
@@ -47,7 +48,7 @@ private:
 
     NativeApp* mNativeApp;
     AAssetManager* mAssetManager;
-    std::shared_ptr<Scene> mScene;
+    std::shared_ptr<Scene> mCurrentScene;
 
     bool mRequestQuit;
     bool mRequestRender;

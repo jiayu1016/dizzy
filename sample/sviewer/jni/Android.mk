@@ -11,8 +11,8 @@ LOCAL_MODULE    := sviewer
 LOCAL_SRC_FILES := main.cpp               \
     $(MY_SRC_DIR)/app_context.cpp         \
     $(MY_SRC_DIR)/native_app.cpp          \
-    $(MY_SRC_DIR)/are.cpp                 \
     $(MY_SRC_DIR)/scene.cpp               \
+    $(MY_SRC_DIR)/render.cpp              \
     $(MY_SRC_DIR)/assimp_adapter.cpp
 LOCAL_C_INCLUDES:= $(LOCAL_PATH)/../../../include
 LOCAL_CPPFLAGS  := -std=c++11

@@ -7,6 +7,7 @@
 #include <GLES/gl.h>
 #include "log.h"
 #include "native_app.h"
+#include "scene.h"
 #include "app_context.h"
 
 using namespace std;
@@ -18,11 +19,13 @@ AppContext::AppContext(NativeApp* nativeApp, shared_ptr<Scene> scene)
     , mRequestRender(false)
     , mNativeApp    (nativeApp)
     , mAssetManager (nativeApp->mApp->activity->assetManager)
-    , mScene        (scene)
+    , mCurrentScene (scene)
     , mDisplay      (EGL_NO_DISPLAY)
     , mEglContext   (EGL_NO_CONTEXT)
     , mSurface      (EGL_NO_SURFACE) {
     ALOGD("AppContext::AppContext()");
+    if (mCurrentScene)
+        SceneManager::get()->addScene(mCurrentScene);
 }
 
 AppContext::~AppContext() {
@@ -125,6 +128,10 @@ NativeApp* AppContext::getNativeApp() {
 
 AAssetManager* AppContext::getAssetManager() {
     return mAssetManager;
+}
+
+shared_ptr<Scene> AppContext::getCurrentScene() {
+    return mCurrentScene;
 }
 
 const string AppContext::getAppName() {

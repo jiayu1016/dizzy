@@ -5,8 +5,17 @@
 
 namespace dzy {
 
+class noncopyable {
+public:
+    noncopyable() {};
+    ~noncopyable() {};
+private:
+    noncopyable(noncopyable const &);
+    noncopyable & operator=(noncopyable const &);
+};
+
 template <typename T>
-class Singleton {
+class Singleton : private noncopyable {
 public:
     static T *get() {
         if (!mInstance) mInstance = new T;
@@ -17,14 +26,8 @@ protected:
     static T *mInstance;
 };
 
-class noncopyable {
-public:
-    noncopyable() {};
-    ~noncopyable() {};
-private:
-    noncopyable(noncopyable const &);
-    noncopyable & operator=(noncopyable const &);
-};
+template <typename T>
+T *Singleton<T>::mInstance = NULL;
 
 class MeasureDuration {
 public:

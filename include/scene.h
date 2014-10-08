@@ -254,16 +254,20 @@ private:
     std::size_t         mNumNode;
 };
 
-class SceneManager : Singleton<SceneManager> {
+class SceneManager : public Singleton<SceneManager> {
 public:
     enum SceneType {
         SCENE_TYPE_FLAT,
     };
     ~SceneManager();
     static std::shared_ptr<Scene> createScene(SceneType);
+    void addScene(std::shared_ptr<Scene> scene);
 
+    friend class Singleton<SceneManager>;
 private:    
     explicit SceneManager();
+
+    std::vector<std::shared_ptr<Scene> > mScenes;
 };
 
 } // namespace dzy

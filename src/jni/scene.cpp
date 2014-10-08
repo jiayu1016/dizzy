@@ -379,4 +379,9 @@ shared_ptr<Scene> SceneManager::createScene(SceneType sceneType) {
     return scene;
 }
 
+void SceneManager::addScene(shared_ptr<Scene> scene) {
+    mScenes.push_back(scene);
+}
+
+
 } // namespace dzy

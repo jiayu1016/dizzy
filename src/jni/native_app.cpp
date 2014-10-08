@@ -22,7 +22,6 @@ bool NativeApp::init(struct android_app* app, shared_ptr<Scene> scene) {
     mApp->onAppCmd = NativeApp::handleAppCmd;
     mApp->onInputEvent = NativeApp::handleInputEvent;
     mAppContext.reset(new AppContext(this, scene));
-    mCurrentScene = scene;
 
     bool ret = initApp();
     if (!ret) ALOGE("Init NativeApp class failed\n");
@@ -145,8 +144,12 @@ shared_ptr<AppContext> NativeApp::getAppContext() {
 }
 
 shared_ptr<Scene> NativeApp::getCurrentScene() {
-    return mCurrentScene;
+    return getAppContext()->getCurrentScene();
 }
+
+shared_ptr<Render> NativeApp::getCurrentRender() {
+}
+
 
 void NativeApp::mainLoop() {
     int ident;
