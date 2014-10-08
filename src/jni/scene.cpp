@@ -252,6 +252,7 @@ bool FlatScene::loadColladaAsset(shared_ptr<AppContext> appContext,
         return false;
     }
 
+    MeasureDuration importDuration;
     Assimp::Importer importer;
     const aiScene *scene(importer.ReadFileFromMemory(
         buffer.get(), length,
@@ -273,6 +274,8 @@ bool FlatScene::loadColladaAsset(shared_ptr<AppContext> appContext,
         ALOGE("%s: root node null", assetFile.c_str());
         return false;
     }
+    long long importTime = importDuration.getMilliSeconds();
+
     ALOGD("%s: %u meshes found",     assetFile.c_str(), scene->mNumMeshes);
     ALOGD("%s: %u materials found",  assetFile.c_str(), scene->mNumMaterials);
     ALOGD("%s: %u animations found", assetFile.c_str(), scene->mNumAnimations);
@@ -280,6 +283,7 @@ bool FlatScene::loadColladaAsset(shared_ptr<AppContext> appContext,
     ALOGD("%s: %u lights found",     assetFile.c_str(), scene->mNumLights);
     ALOGD("%s: %u cameras found",    assetFile.c_str(), scene->mNumCameras);
 
+    MeasureDuration cvtDuration;
     for (int i=0; i<scene->mNumCameras; i++) {
         shared_ptr<Camera> camera(AIAdapter::typeCast(scene->mCameras[i]));
         mCameras.push_back(camera);
@@ -306,6 +310,11 @@ bool FlatScene::loadColladaAsset(shared_ptr<AppContext> appContext,
     }
 
     AIAdapter::buildNodeTree(scene->mRootNode, mNodeTree);
+
+    long long cvtTime = cvtDuration.getMicroSeconds();
+
+    ALOGD("assimp load: %lld ms, conversion: %lld us", importTime, cvtTime);
+
     return true;
 }
 
