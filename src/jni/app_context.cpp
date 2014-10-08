@@ -29,7 +29,7 @@ AppContext::~AppContext() {
     ALOGD("AppContext::~AppContext()");
 }
 
-bool AppContext::initDisplay() {                                                                      
+bool AppContext::initDisplay() {
     const EGLint attribs[] = {
             EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
             EGL_BLUE_SIZE, 8,
