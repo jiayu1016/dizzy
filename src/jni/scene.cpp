@@ -147,6 +147,29 @@ unsigned int Mesh::getNumColorChannels() const {
     return n;
 }
 
+void Node::addChild(shared_ptr<Node> node) {
+    // no duplicate Node in children list
+    bool exist = false;
+    for (auto iter = mChildren.begin(); iter != mChildren.end(); iter++) {
+        if (*iter == node) {
+            exist = true;
+            ALOGW("avoid inserting duplicate Node");
+            break;
+        }
+    }
+
+    if (!exist) {
+        mChildren.push_back(node);
+        node->mParent = shared_from_this();
+        shared_ptr<Node> oldParent(node->mParent.lock());
+        if (oldParent) {
+            // remove node from oldParent
+            remove(oldParent->mChildren.begin(), oldParent->mChildren.end(), node);
+        }
+    }
+}
+
+/*
 void Node::setParent(shared_ptr<Node> parent) {
     shared_ptr<Node> oldParent(mParent.lock());
     if (oldParent) {
@@ -169,6 +192,7 @@ void Node::setParent(shared_ptr<Node> parent) {
     mParent = parent;
     parent->insertChild(shared_from_this());
 }
+*/
 
 shared_ptr<Node> Node::findNode(const string &name) {
     if (mName == name) return shared_from_this();
@@ -177,10 +201,6 @@ shared_ptr<Node> Node::findNode(const string &name) {
         if (node) return node;
     }
     return NULL;
-}
-
-void Node::insertChild(shared_ptr<Node> node) {
-    mChildren.push_back(node);
 }
 
 void NodeTree::dfsTraversal(function<void(shared_ptr<Node>)> visit) {
@@ -285,6 +305,7 @@ bool FlatScene::loadColladaAsset(shared_ptr<AppContext> appContext,
         mMeshes.push_back(mesh);
     }
 
+    AIAdapter::buildNodeTree(scene->mRootNode, mNodeTree);
     return true;
 }
 

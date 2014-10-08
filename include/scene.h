@@ -173,13 +173,13 @@ public:
     Node() { }
     Node(const std::string& name) : mName(name) { }
 
-    void setParent(std::shared_ptr<Node> parent);
+    void addChild(std::shared_ptr<Node> node);
+    //void setParent(std::shared_ptr<Node> parent);
     std::shared_ptr<Node> findNode(const std::string &name);
 
     friend class NodeTree;
     friend class AIAdapter;
 private:
-    void insertChild(std::shared_ptr<Node> node);
 
     std::string                             mName;
     ndk_helper::Mat4                        mTransformation;
@@ -230,8 +230,6 @@ typedef std::vector<std::shared_ptr<Animation> >   AnimationContainer;
 typedef std::vector<std::shared_ptr<Texture> >     TextureContainer;
 typedef std::vector<std::shared_ptr<Material> >    MaterialContainer;
 typedef std::vector<std::shared_ptr<Mesh> >        MeshContainer;
-typedef std::list<std::shared_ptr<Node> >          NodeContainer;
-
 class FlatScene : public Scene {
 public:
     explicit FlatScene();
@@ -252,7 +250,7 @@ private:
     AnimationContainer  mAnimations;
     MaterialContainer   mMaterials;
     MeshContainer       mMeshes;
-    NodeContainer       mNodes;
+    NodeTree            mNodeTree;
     std::size_t         mNumNode;
 };
 

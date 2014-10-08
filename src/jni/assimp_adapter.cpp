@@ -38,14 +38,14 @@ void AssetIOStream::Flush() {
 
 shared_ptr<Camera> AIAdapter::typeCast(aiCamera *camera) {
     shared_ptr<Camera> ret(new Camera(
-        AIAdapter::typeCast(camera->mPosition),
-        AIAdapter::typeCast(camera->mUp),
-        AIAdapter::typeCast(camera->mLookAt),
+        typeCast(camera->mPosition),
+        typeCast(camera->mUp),
+        typeCast(camera->mLookAt),
         camera->mHorizontalFOV,
         camera->mClipPlaneNear,
         camera->mClipPlaneFar,
         camera->mAspect));
-    ret->mName = AIAdapter::typeCast(camera->mName);
+    ret->mName = typeCast(camera->mName);
 
     return ret;
 }
@@ -77,12 +77,12 @@ shared_ptr<Light> AIAdapter::typeCast(aiLight *light) {
         light->mAttenuationQuadratic,
         light->mAngleInnerCone,
         light->mAngleOuterCone));
-    lt->mName          = AIAdapter::typeCast(light->mName);
-    lt->mPosition      = AIAdapter::typeCast(light->mPosition);
-    lt->mDirection     = AIAdapter::typeCast(light->mDirection);
-    lt->mColorDiffuse  = AIAdapter::typeCast(light->mColorDiffuse);
-    lt->mColorSpecular = AIAdapter::typeCast(light->mColorSpecular);
-    lt->mColorAmbient  = AIAdapter::typeCast(light->mColorAmbient);
+    lt->mName          = typeCast(light->mName);
+    lt->mPosition      = typeCast(light->mPosition);
+    lt->mDirection     = typeCast(light->mDirection);
+    lt->mColorDiffuse  = typeCast(light->mColorDiffuse);
+    lt->mColorSpecular = typeCast(light->mColorSpecular);
+    lt->mColorAmbient  = typeCast(light->mColorAmbient);
 
     return lt;
 }
@@ -128,7 +128,7 @@ shared_ptr<Mesh> AIAdapter::typeCast(aiMesh *mesh) {
     }
 
     shared_ptr<Mesh> me(new Mesh);
-    me->mName = AIAdapter::typeCast(mesh->mName);
+    me->mName = typeCast(mesh->mName);
     // TODO: support point and line pritmive types
     me->mPrimitiveType = Mesh::PRIMITIVE_TYPE_TRIANGLES;
     me->mNumVertices = mesh->mNumVertices;
@@ -186,8 +186,8 @@ shared_ptr<Mesh> AIAdapter::typeCast(aiMesh *mesh) {
 
 shared_ptr<Node> AIAdapter::typeCast(aiNode *node) {
     shared_ptr<Node> n(new Node);
-    n->mName = AIAdapter::typeCast(node->mName);
-    n->mTransformation = AIAdapter::typeCast(node->mTransformation);
+    n->mName = typeCast(node->mName);
+    n->mTransformation = typeCast(node->mTransformation);
     //n->mParent = node->mParent;
     //n->mChildren = node->mChildren;
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
@@ -216,6 +216,20 @@ ndk_helper::Mat4 AIAdapter::typeCast(const aiMatrix4x4 &mat4) {
 
 string AIAdapter::typeCast(const aiString &str) {
     return string(str.C_Str());
+}
+
+void AIAdapter::buildNodeTree(aiNode *aroot, NodeTree &tree) {
+    shared_ptr<Node> root = typeCast(aroot);
+    linkNodeTree(root, aroot);
+    tree.setRoot(root);
+}
+
+void AIAdapter::linkNodeTree(shared_ptr<Node> node, aiNode *anode) {
+    for (unsigned int i = 0; i < anode->mNumChildren; i++) {
+        shared_ptr<Node> c = typeCast(anode->mChildren[i]);
+        node->addChild(c);
+        linkNodeTree(c, anode->mChildren[i]);
+    }
 }
 
 

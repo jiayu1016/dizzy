@@ -54,6 +54,7 @@ class Animation;
 class Material;
 class Mesh;
 class Node;
+class NodeTree;
 class AIAdapter {
 public:
     static std::shared_ptr<Camera>     typeCast(aiCamera *camera);
@@ -68,6 +69,10 @@ public:
     static ndk_helper::Vec4            typeCast(const aiColor4D &color4d);
     static ndk_helper::Mat4            typeCast(const aiMatrix4x4 &mat4);
     static std::string                 typeCast(const aiString &str);
+
+    static void buildNodeTree(aiNode *root, NodeTree &tree);
+private:
+    static void linkNodeTree(std::shared_ptr<Node> node, aiNode *anode);
 };
 
 }
