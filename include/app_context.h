@@ -22,10 +22,10 @@ public:
     ~AppContext();
 
     // OS specific
-    static const std::string getAppName();
-    static const std::string getAppName(pid_t pid);
-    const std::string getExternalDataDir();
-    const std::string getInternalDataDir();
+    static const std::string    getAppName();
+    static const std::string    getAppName(pid_t pid);
+    const std::string           getExternalDataDir();
+    const std::string           getInternalDataDir();
 
     NativeApp*                  getNativeApp();
     AAssetManager*              getAssetManager();
@@ -33,14 +33,12 @@ public:
     // gfx system
     bool initDisplay();
     void releaseDisplay();
-
-    bool update();
+    bool updateDisplay();
 
     void requestQuit();
     bool needQuit();
-    void requestRender();
-    void stopRender();
-    bool needRender();
+    void setRenderState(bool rendering);
+    bool isRendering();
 
 private:
     const char* eglStatusStr() const;
@@ -48,7 +46,7 @@ private:
     NativeApp*              mNativeApp;
     AAssetManager*          mAssetManager;
     bool                    mRequestQuit;
-    bool                    mRequestRender;
+    bool                    mRendering;
 
     // egl
     EGLDisplay              mDisplay;

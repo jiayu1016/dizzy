@@ -17,7 +17,7 @@ namespace dzy {
 
 AppContext::AppContext(NativeApp* nativeApp)
     : mRequestQuit  (false)
-    , mRequestRender(false)
+    , mRendering    (false)
     , mNativeApp    (nativeApp)
     , mAssetManager (nativeApp->mApp->activity->assetManager)
     , mDisplay      (EGL_NO_DISPLAY)
@@ -72,6 +72,7 @@ bool AppContext::initDisplay() {
     glEnable(GL_DEPTH_TEST);
 
     mNativeApp->initView();
+    mNativeApp->drawScene();
 }
 
 const char* AppContext::eglStatusStr() const
@@ -114,10 +115,8 @@ void AppContext::releaseDisplay() {
     mSurface    = EGL_NO_SURFACE;
 }
 
-bool AppContext::update() {
-    if (needQuit())
-        return false;
-
+bool AppContext::updateDisplay() {
+    mNativeApp->drawScene();
     return true;
 }
 
@@ -150,7 +149,6 @@ const string AppContext::getAppName(pid_t pid) {
 
 }
 
-
 const string AppContext::getExternalDataDir() {
     stringstream ss;
     ss << "/sdcard/" << getAppName();
@@ -176,16 +174,12 @@ bool AppContext::needQuit() {
     return mRequestQuit;
 }
 
-void AppContext::requestRender() {
-    mRequestRender = true;
+void AppContext::setRenderState(bool rendering) {
+    mRendering = rendering;
 }
 
-void AppContext::stopRender() {
-    mRequestRender = false;
-}
-
-bool AppContext::needRender() {
-    return mRequestRender;
+bool AppContext::isRendering() {
+    return mRendering;
 }
 
 } // namespace dzy

@@ -85,7 +85,7 @@ void NativeApp::appCmd(int32_t cmd) {
             break;
         case APP_CMD_GAINED_FOCUS:
             ALOGD("APP_CMD_GAINED_FOCUS");
-            getAppContext()->requestRender();
+            getAppContext()->setRenderState(true);
             break;
 
         case APP_CMD_PAUSE:
@@ -93,7 +93,7 @@ void NativeApp::appCmd(int32_t cmd) {
             break;
         case APP_CMD_LOST_FOCUS:
             ALOGD("APP_CMD_LOST_FOCUS");
-            getAppContext()->stopRender();
+            getAppContext()->setRenderState(false);
             break;
         case APP_CMD_SAVE_STATE:
             ALOGD("APP_CMD_SAVE_STATE");
@@ -105,6 +105,7 @@ void NativeApp::appCmd(int32_t cmd) {
         case APP_CMD_INIT_WINDOW:
             ALOGD("APP_CMD_INIT_WINDOW");
             getAppContext()->initDisplay();
+            getAppContext()->updateDisplay();
             break;
         case APP_CMD_TERM_WINDOW:
             ALOGD("APP_CMD_TERM_WINDOW");
@@ -149,18 +150,23 @@ shared_ptr<Scene> NativeApp::getCurrentScene() {
 }
 
 shared_ptr<Render> NativeApp::getCurrentRender() {
+    return RenderManager::get()->getCurrentRender();
 }
-
 
 void NativeApp::mainLoop() {
     int ident;
     int events;
     struct android_poll_source* source;
-
+    shared_ptr<AppContext> appContext(getAppContext());
     app_dummy();
 
-    while (1) {
-        while ((ident = ALooper_pollAll(-1, NULL, &events, (void**)&source)) >= 0) {
+    while (true) {
+        // If not animating, block forever waiting for events.
+        // otherwise,  loop until all events are read, then continue
+        // to draw the next frame of animation.
+        while ((ident = ALooper_pollAll(
+                    appContext->isRendering() ? 0 : -1,
+                    NULL, &events, (void**)&source)) >= 0) {
             if (ident == LOOPER_ID_MAIN || ident == LOOPER_ID_INPUT) {
                 if (source != NULL) {
                     source->process(mApp, source);
@@ -171,6 +177,13 @@ void NativeApp::mainLoop() {
                 ALOGD("destroy request received");
                 return;
             }
+        }
+
+        // check needQuit() to give an early chance to stop drawing.
+        if (appContext->isRendering() && !appContext->needQuit()) {
+            // Drawing is throttled to the screen update rate, so there
+            // is no need to do timing here.
+            getAppContext()->updateDisplay();
         }
     }
 
