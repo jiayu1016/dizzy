@@ -203,14 +203,14 @@ shared_ptr<Node> Node::findNode(const string &name) {
     return NULL;
 }
 
-void NodeTree::dfsTraversal(function<void(shared_ptr<Node>)> visit) {
-    dfsTraversal(mRoot, visit);
+void NodeTree::dfsTraversal(shared_ptr<Scene> scene, VisitFunc visit) {
+    dfsTraversal(scene, mRoot, visit);
 }
 
-void NodeTree::dfsTraversal(shared_ptr<Node> node, function<void(shared_ptr<Node>)> visit) {
-    visit(node);
-    std::for_each(node->mChildren.begin(), node->mChildren.end(), [this, visit] (shared_ptr<Node> c) {
-        dfsTraversal(c, visit);
+void NodeTree::dfsTraversal(shared_ptr<Scene> scene, shared_ptr<Node> node, VisitFunc visit) {
+    visit(scene, node);
+    std::for_each(node->mChildren.begin(), node->mChildren.end(), [&] (shared_ptr<Node> c) {
+        dfsTraversal(scene, c, visit);
     });
 }
 

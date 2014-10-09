@@ -19,12 +19,12 @@ bool Render::release() {
 bool Render::drawScene(shared_ptr<Scene> scene) {
     NodeTree &tree = scene->getNodeTree();
     using namespace std::placeholders;
-    tree.dfsTraversal(bind(&Render::drawNode, this, _1));
+    tree.dfsTraversal(scene, bind(&Render::drawNode, this, _1, _2));
     return true;
 }
 
-void Render::drawNode(std::shared_ptr<Node> node) {
-    ALOGD("Node: %s", node->mName.c_str());
+void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
+    ALOGD("Node %s has %d meshes", node->mName.c_str(), node->mMeshes.size());
 }
 
 } // namespace dzy

@@ -14,7 +14,7 @@ public:
     bool init();
     bool release();
     bool drawScene(std::shared_ptr<Scene> scene);
-    void drawNode(std::shared_ptr<Node> node);
+    void drawNode(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node);
 };
 
 class RenderManager : public Singleton<RenderManager> {

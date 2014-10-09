@@ -190,17 +190,18 @@ private:
 
 };
 
+class Scene;
 class NodeTree {
 public:
+    typedef std::function<void(std::shared_ptr<Scene>, std::shared_ptr<Node>)> VisitFunc;
     inline void setRoot(std::shared_ptr<Node> root) {
         mRoot = root;
     }
-    void dfsTraversal(std::function<void(std::shared_ptr<Node>)> visit);
+    void dfsTraversal(std::shared_ptr<Scene> scene, VisitFunc visit);
 
     friend class AIAdapter;
 private:
-    void dfsTraversal(std::shared_ptr<Node> node,
-        std::function<void(std::shared_ptr<Node>)> visit);
+    void dfsTraversal(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node, VisitFunc visit);
 
     std::shared_ptr<Node> mRoot;
 };
