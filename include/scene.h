@@ -121,6 +121,7 @@ private:
     std::shared_ptr<unsigned char>  mBuffer;
 };
 
+class Render;
 typedef std::vector<MeshData>       MeshDataContainer;
 class Mesh {
 public:
@@ -136,16 +137,19 @@ public:
 
     Mesh();
 
-    bool hasPositions() const;
-    bool hasFaces() const;
-    bool hasNormals() const;
-    bool hasTangentsAndBitangents() const;
-    bool hasVertexColors(unsigned int index) const;
-    bool hasTextureCoords(unsigned int index) const;
-    unsigned int getNumUVChannels() const;
-    unsigned int getNumColorChannels() const;
-    
+    bool            hasPositions() const;
+    bool            hasFaces() const;
+    bool            hasNormals() const;
+    bool            hasTangentsAndBitangents() const;
+    bool            hasVertexColors(unsigned int index) const;
+    bool            hasTextureCoords(unsigned int index) const;
+    unsigned int    getNumUVChannels() const;
+    unsigned int    getNumColorChannels() const;
+
+    void            draw(const Render &);
+
     friend class AIAdapter;
+    friend class Render;
 private:
     std::string             mName;
     PrimitiveType           mPrimitiveType;

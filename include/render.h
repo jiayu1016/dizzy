@@ -3,9 +3,65 @@
 
 #include <memory>
 #include <vector>
+#include <GLES2/gl2.h>
+#include <shader.h>
 #include "utils.h"
 
 namespace dzy {
+
+class Shader {
+public:
+    Shader(GLenum type)
+        : mShaderType(type)
+        , mShaderId(0) { }
+
+    GLenum getShaderType() {return mShaderType;}
+    GLuint getShaderID() {return mShaderId;}
+
+    bool compileFromMemory(std::vector<uint8_t>& data) {
+        return ndk_helper::shader::CompileShader(&mShaderId, mShaderType, data);
+    }
+
+    bool compileFromMemory(const GLchar *source, const int32_t size) {
+        return ndk_helper::shader::CompileShader(&mShaderId, mShaderType, source, size);
+    }
+
+    bool compileFromFile(const char *strFileName) {
+        return ndk_helper::shader::CompileShader(&mShaderId, mShaderType, strFileName);
+    }
+
+    bool linkProgram(const GLuint prog) {
+        return true;
+    }
+
+private:
+    GLuint mShaderId;
+    GLenum mShaderType;
+};
+
+class Program {
+public:
+    Program() { };
+    ~Program() { };
+
+    bool isValid() const { return true; }
+
+    // bind program
+    void use() { };
+
+    GLuint getAttrib(const char* name) const;
+    GLint getUniform(const char* name) const;
+
+private:
+    GLuint mProgram;
+    GLuint mVertexShader;
+    GLuint mFragmentShader;
+    GLint mProjectionMatrixLoc;
+    GLint mColorMatrixLoc;
+    GLint mTextureMatrixLoc;
+    GLint mSamplerLoc;
+    GLint mColorLoc;
+};
 
 class Scene;
 class Node;

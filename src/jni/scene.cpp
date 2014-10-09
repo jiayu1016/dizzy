@@ -9,6 +9,7 @@
 #include "log.h"
 #include "assimp_adapter.h"
 #include "utils.h"
+#include "render.h"
 #include "scene.h"
 
 using namespace std;
@@ -145,6 +146,9 @@ unsigned int Mesh::getNumColorChannels() const {
     unsigned int n = 0;
     while (n < MAX_COLOR_SETS && !mColors[n].empty()) ++n;
     return n;
+}
+
+void Mesh::draw(const Render &) {
 }
 
 void Node::addChild(shared_ptr<Node> node) {

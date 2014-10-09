@@ -5,7 +5,6 @@
 #include <memory>
 #include <string>
 #include <EGL/egl.h>
-#include <GLES/gl.h>
 #include "utils.h"
 
 class AInputEvent;
