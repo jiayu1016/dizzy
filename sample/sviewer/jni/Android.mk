@@ -16,7 +16,7 @@ LOCAL_SRC_FILES := main.cpp               \
     $(MY_SRC_DIR)/assimp_adapter.cpp
 LOCAL_C_INCLUDES:= $(LOCAL_PATH)/../../../include
 LOCAL_CPPFLAGS  := -std=c++11
-LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv2
+LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv3
 LOCAL_STATIC_LIBRARIES := android_native_app_glue ndk_helper
 LOCAL_SHARED_LIBRARIES := assimp
 include $(BUILD_SHARED_LIBRARY)

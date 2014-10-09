@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <EGL/egl.h>
-#include <GLES/gl.h>
+#include <GLES3/gl3.h>
 #include "log.h"
 #include "native_app.h"
 #include "scene.h"
