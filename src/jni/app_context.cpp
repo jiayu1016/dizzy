@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <EGL/egl.h>
+#include <EGL/eglext.h>
 #include <GLES3/gl3.h>
 #include "log.h"
 #include "native_app.h"
@@ -32,28 +33,59 @@ AppContext::~AppContext() {
 }
 
 bool AppContext::initDisplay() {
-    const EGLint attribs[] = {
-            EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-            EGL_BLUE_SIZE, 8,
-            EGL_GREEN_SIZE, 8,
-            EGL_RED_SIZE, 8,
-            EGL_NONE
-    };
-    EGLint w, h, format;
-    EGLint numConfigs;
-    EGLConfig config;
-    EGLSurface surface;
-    EGLContext context;
+    EGLint      w, h, format, numConfigs;
+    EGLConfig   config;
+    EGLSurface  surface;
+    EGLContext  context;
+    EGLint      majorVersion;
+    EGLint      minorVersion;
 
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    eglInitialize(display, 0, 0);
-    eglChooseConfig(display, attribs, &config, 1, &numConfigs);
+    if (display == EGL_DEFAULT_DISPLAY) {
+        ALOGE("Unable to connect window system: %s", eglStatusStr());
+        return false;
+    }
+    if (!eglInitialize(display, &majorVersion, &minorVersion)) {
+        ALOGE("Unable to initialize egl: %s", eglStatusStr());
+        return false;
+    }
+
+    const EGLint configAttribs[] = {
+        EGL_SURFACE_TYPE,       EGL_WINDOW_BIT,
+        EGL_BLUE_SIZE,          8,
+        EGL_GREEN_SIZE,         8,
+        EGL_RED_SIZE,           8,
+        EGL_ALPHA_SIZE,         8,
+        EGL_DEPTH_SIZE,         8,
+        EGL_STENCIL_SIZE,       8,
+        EGL_SAMPLE_BUFFERS,     1,
+        EGL_RENDERABLE_TYPE,    EGL_OPENGL_ES2_BIT,
+        EGL_NONE
+    };
+
+    if (!eglChooseConfig(display, configAttribs, &config, 1, &numConfigs)
+        && numConfigs < 1){
+        ALOGE("Unable to choose egl config: %s", eglStatusStr());
+        return false;
+    }
+
     eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
     ANativeWindow_setBuffersGeometry(mNativeApp->mApp->window, 0, 0, format);
 
     surface = eglCreateWindowSurface(display, config, mNativeApp->mApp->window, NULL);
-    context = eglCreateContext(display, config, NULL, NULL);
-
+    if (surface == EGL_NO_SURFACE) {
+        ALOGW("Unable to create surface: %s", eglStatusStr());
+        return false;
+    }
+    EGLint contextAttrs[] = {
+        EGL_CONTEXT_CLIENT_VERSION, 3,
+        EGL_NONE
+    };
+    context = eglCreateContext(display, config, NULL, contextAttrs);
+    if (context == EGL_NO_CONTEXT) {
+        ALOGW("Unable to create context: %s", eglStatusStr());
+        return false;
+    }
     if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE) {
         ALOGW("Unable to eglMakeCurrent");
         return false;
@@ -62,11 +94,11 @@ bool AppContext::initDisplay() {
     eglQuerySurface(display, surface, EGL_WIDTH, &w);
     eglQuerySurface(display, surface, EGL_HEIGHT, &h);
 
-    mDisplay = display;
+    mDisplay    = display;
     mEglContext = context;
-    mSurface = surface;
-    mWidth = w;
-    mHeight = h;
+    mSurface    = surface;
+    mWidth      = w;
+    mHeight     = h;
 
     mNativeApp->initView(mNativeApp->getCurrentScene());
     mNativeApp->drawScene(mNativeApp->getCurrentScene());

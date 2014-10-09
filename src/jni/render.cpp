@@ -76,8 +76,7 @@ Program::Program()
 }
 
 Program::~Program() {
-    if (mProgramId)
-        glDeleteProgram(mProgramId);
+    if (mProgramId) glDeleteProgram(mProgramId);
 }
 
 void Program::use() {
@@ -91,8 +90,8 @@ bool Program::link(std::shared_ptr<Shader> vtxShader, std::shared_ptr<Shader> fr
     }
 
     // vertex always slot 0, fragment always slot 1
-    mShaders[0] = vtxShader;
-    mShaders[1] = fragShader;
+    mShaders.push_back(vtxShader);
+    mShaders.push_back(fragShader);
 
     // in order to support other shaders in future
     for (auto iter = mShaders.begin(); iter != mShaders.end(); iter++) {
@@ -142,14 +141,16 @@ bool Render::init(shared_ptr<Scene> scene) {
         return false;
     }
     shared_ptr<Program> program(new Program());
-    if (!mProgram->link(vtxShader, fragShader)) {
+    if (!program->link(vtxShader, fragShader)) {
         ALOGE("error link program");
         return false;
     }
-    if (!mProgram->load(scene)) {
+    if (!program->load(scene)) {
         ALOGE("error load data");
         return false;
     }
+    mProgram = program;
+    return true;
 }
 
 bool Render::release() {
