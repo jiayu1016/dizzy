@@ -68,10 +68,7 @@ bool AppContext::initDisplay() {
     mWidth = w;
     mHeight = h;
 
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
-
-    mNativeApp->initView();
+    mNativeApp->initView(mNativeApp->getCurrentScene());
     mNativeApp->drawScene(mNativeApp->getCurrentScene());
 }
 

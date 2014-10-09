@@ -15,7 +15,7 @@ public:
 
     virtual bool initApp();
     virtual bool releaseApp();
-    virtual bool initView();
+    virtual bool initView(std::shared_ptr<Scene> scene);
     virtual bool releaseView();
     virtual bool drawScene(std::shared_ptr<Scene> scene);
 };
@@ -55,9 +55,9 @@ bool SViewApp::releaseApp() {
     return true;
 }
 
-bool SViewApp::initView() {
+bool SViewApp::initView(shared_ptr<Scene> scene) {
     ALOGD("SViewapp::initView()");
-    return getCurrentRender()->init();
+    return getCurrentRender()->init(scene);
 }
 
 bool SViewApp::releaseView() {

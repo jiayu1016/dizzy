@@ -27,7 +27,7 @@ public:
     // main interface for derived class
     virtual bool initApp() = 0;
     virtual bool releaseApp() = 0;
-    virtual bool initView() = 0;
+    virtual bool initView(std::shared_ptr<Scene> scene) = 0;
     virtual bool releaseView() = 0;
     virtual bool drawScene(std::shared_ptr<Scene> scene) = 0;
 

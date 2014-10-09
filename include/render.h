@@ -11,66 +11,57 @@ namespace dzy {
 
 class Shader {
 public:
-    Shader(GLenum type)
-        : mShaderType(type)
-        , mShaderId(0) { }
+    Shader(GLenum type);
+    ~Shader();
+    GLenum getShaderType();
+    GLuint getShaderID();
 
-    GLenum getShaderType() {return mShaderType;}
-    GLuint getShaderID() {return mShaderId;}
-
-    bool compileFromMemory(std::vector<uint8_t>& data) {
-        return ndk_helper::shader::CompileShader(&mShaderId, mShaderType, data);
-    }
-
-    bool compileFromMemory(const GLchar *source, const int32_t size) {
-        return ndk_helper::shader::CompileShader(&mShaderId, mShaderType, source, size);
-    }
-
-    bool compileFromFile(const char *strFileName) {
-        return ndk_helper::shader::CompileShader(&mShaderId, mShaderType, strFileName);
-    }
-
-    bool linkProgram(const GLuint prog) {
-        return true;
-    }
+    bool compileFromMemory(std::vector<uint8_t>& data);
+    bool compileFromMemory(const GLchar *source, const int32_t size);
+    bool compileFromFile(const char *strFileName);
 
 private:
-    GLuint mShaderId;
-    GLenum mShaderType;
+    bool        mInitialized;
+    GLuint      mShaderId;
+    GLenum      mShaderType;
 };
 
 class Program {
 public:
-    Program() { };
-    ~Program() { };
+    enum {
+        MAX_SHADERS = 2,
+    };
+    Program();
+    ~Program();
 
-    bool isValid() const { return true; }
-
+    bool isValid() const { return mInitialized; }
     // bind program
-    void use() { };
-
+    void use();
+    bool link(std::shared_ptr<Shader> vtxShader, std::shared_ptr<Shader> fragShader);
+    bool load(std::shared_ptr<Scene> scene);
     GLuint getAttrib(const char* name) const;
     GLint getUniform(const char* name) const;
 
+    friend class Shader;
 private:
-    GLuint mProgram;
-    GLuint mVertexShader;
-    GLuint mFragmentShader;
-    GLint mProjectionMatrixLoc;
-    GLint mColorMatrixLoc;
-    GLint mTextureMatrixLoc;
-    GLint mSamplerLoc;
-    GLint mColorLoc;
+    bool                                        mInitialized;
+    GLuint                                      mProgramId;
+    std::vector<std::shared_ptr<Shader> >       mShaders;
+    GLint                                       mProjectionMatrixLoc;
+    GLint                                       mColorMatrixLoc;
+    GLint                                       mColorLoc;
 };
 
 class Scene;
 class Node;
 class Render {
 public:
-    bool init();
+    bool init(std::shared_ptr<Scene> scene);
     bool release();
     bool drawScene(std::shared_ptr<Scene> scene);
     void drawNode(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node);
+private:
+    std::shared_ptr<Program> mProgram;
 };
 
 class RenderManager : public Singleton<RenderManager> {
