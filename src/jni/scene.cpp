@@ -159,13 +159,37 @@ unsigned int Mesh::getNumColorChannels() const {
     while (n < MAX_COLOR_SETS && !mColors[n].empty()) ++n;
     return n;
 }
+unsigned int Mesh::getNumVertices() const {
+    return mNumVertices;
+}
+
+unsigned int Mesh::getNumFaces() const {
+    return mNumFaces;
+}
+
+unsigned int Mesh::getVertexNumComponent() {
+    return mVertices.getNumComponents();
+}
 
 unsigned int Mesh::getVertexBufSize() {
     return mVertices.getBufSize();
 }
+unsigned int Mesh::getVertexBufStride() {
+    return mVertices.getBufStride();
+}
 
 void * Mesh::getVertexBuf() {
     return mVertices.getBuf();
+}
+
+unsigned int Mesh::getIndexBufSize() {
+    return getNumFaces() * 3;
+}
+
+void * Mesh::getIndexBuf() {
+    if (mTriangleFaces.empty()) return NULL;
+    // Attention: 
+    return &mTriangleFaces[0];
 }
 
 void Node::addChild(shared_ptr<Node> node) {

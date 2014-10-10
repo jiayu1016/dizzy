@@ -34,13 +34,14 @@ public:
     Program();
     ~Program();
 
+    GLuint  getId() const { return mProgramId; }
     bool    isValid() const { return mLinked; }
     // bind program
     void    use();
+    void    bindBufferObjects(int meshIdx);
     bool    link(std::shared_ptr<Shader> vtxShader, std::shared_ptr<Shader> fragShader);
     bool    load(std::shared_ptr<Scene> scene);
-    GLint   getAttrib(const char* name) const;
-    GLint   getUniform(const char* name) const;
+    GLint   getLocation(const char* name);
 
     friend class Shader;
 private:
@@ -52,7 +53,8 @@ private:
     GLint                                       mColorMatrixLoc;
     GLint                                       mColorLoc;
     // the order must be consistent with the mesh vector in scene
-    std::vector<GLuint>                         mVBOs;
+    std::vector<GLuint>                         mVertexBOs;
+    std::vector<GLuint>                         mIndexBOs;
 };
 
 class Scene;
@@ -64,7 +66,7 @@ public:
     bool release();
     bool drawScene(std::shared_ptr<Scene> scene);
     void drawNode(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node);    
-    void drawMesh(std::shared_ptr<Mesh> mesh);
+    void drawMesh(std::shared_ptr<Mesh> mesh, int idxInMesh);
 
 private:
     std::shared_ptr<Program> mProgram;

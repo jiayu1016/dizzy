@@ -83,6 +83,11 @@ void Program::use() {
     glUseProgram(mProgramId);
 }
 
+void Program::bindBufferObjects(int meshIdx) {
+    glBindBuffer(GL_ARRAY_BUFFER, mVertexBOs[meshIdx]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBOs[meshIdx]);
+}
+
 bool Program::link(std::shared_ptr<Shader> vtxShader, std::shared_ptr<Shader> fragShader) {
     if (isValid()) {
         ALOGW("Program already linked");
@@ -115,7 +120,7 @@ bool Program::link(std::shared_ptr<Shader> vtxShader, std::shared_ptr<Shader> fr
 
 bool Program::load(std::shared_ptr<Scene> scene) {
     if (scene->atLeastOneMeshHasVertexPosition()) {
-        GLint attribLoc = getAttrib("aPos");
+        GLint attribLoc = glGetAttribLocation(mProgramId, "aPos");
         if (attribLoc == -1) {
             ALOGE("shader not compatible with scene: vertex position");
             return false;
@@ -123,7 +128,7 @@ bool Program::load(std::shared_ptr<Scene> scene) {
         mLocations["aPos"] = attribLoc;
     }
     if (scene->atLeastOneMeshHasVertexColor()) {
-        GLint attribLoc = getAttrib("aColor");
+        GLint attribLoc = glGetAttribLocation(mProgramId, "aColor");
         if (attribLoc == -1) {
             ALOGE("shader not compatible with scene: vertex color");
             return false;
@@ -131,38 +136,45 @@ bool Program::load(std::shared_ptr<Scene> scene) {
         mLocations["aColor"] = attribLoc;
     }
 
-    GLint uniformLoc = getUniform("uMVP");
-    if (uniformLoc == -1) {
+    GLint mvpLoc = glGetUniformLocation(mProgramId, "uMVP");
+    if (mvpLoc == -1) {
         ALOGE("shader not compatible with scene: mvp matrix");
         return false;
     }
-    mLocations["aColor"] = uniformLoc;
+    mLocations["aColor"] = mvpLoc;
 
     // TODO: check other attributes
 
     size_t numMeshes = scene->getNumMeshes();
-    mVBOs.resize(numMeshes);
+    mVertexBOs.resize(numMeshes);
+    mIndexBOs.resize(numMeshes);
     for(size_t i = 0; i < numMeshes; ++i) {
-        // Load vertex data into buffer object
+        // Load vertex and index data into buffer object
         shared_ptr<Mesh> mesh(scene->mMeshes[i]);
-        glGenBuffers(1, &mVBOs[i]);
-        glBindBuffer(GL_ARRAY_BUFFER, mVBOs[i]);
+        glGenBuffers(1, &mVertexBOs[i]);
+        glGenBuffers(1, &mIndexBOs[i]);
+        glBindBuffer(GL_ARRAY_BUFFER, mVertexBOs[i]);
         glBufferData(GL_ARRAY_BUFFER, mesh->getVertexBufSize(),
             mesh->getVertexBuf(), GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBOs[i]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->getIndexBufSize(),
+            mesh->getIndexBuf(), GL_STATIC_DRAW);
     }
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     return true;
 }
 
-GLint Program::getAttrib(const char* name) const {
-    if (!isValid()) return -1;
-    return glGetAttribLocation(mProgramId, name);
-}
-
-GLint Program::getUniform(const char* name) const {
-    if (!isValid()) return -1;
-    return glGetUniformLocation(mProgramId, name);
+GLint Program::getLocation(const char* name) {
+    if (!isValid()) {
+        ALOGE("Program not valid");
+        return -1;
+    }
+    if (mLocations.find(name) == mLocations.end()) {
+        ALOGE("%s not found in shader", name);
+        return -1;
+    }
+    return mLocations[name];
 }
 
 bool Render::init(shared_ptr<Scene> scene) {
@@ -188,6 +200,9 @@ bool Render::init(shared_ptr<Scene> scene) {
         return false;
     }
     mProgram = program;
+
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
     return true;
 }
 
@@ -209,11 +224,46 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
         //ALOGD("meshIdx: %d", meshIdx);
         shared_ptr<Mesh> mesh(scene->mMeshes[meshIdx]);
         //ALOGD("mesh name: %s", mesh->mName.c_str());
-        drawMesh(mesh);
+        drawMesh(mesh, i);
     }
 }
 
-void Render::drawMesh(shared_ptr<Mesh> mesh) {
+void Render::drawMesh(shared_ptr<Mesh> mesh, int meshIdx) {
+    glClear(GL_COLOR_BUFFER_BIT);
+    mProgram->use();
+    mProgram->bindBufferObjects(meshIdx);
+    if (mesh->hasPositions()) {
+        glEnableVertexAttribArray(mProgram->getLocation("aPos"));
+        glVertexAttribPointer(
+            mProgram->getLocation("aPos"),
+            mesh->getVertexNumComponent(),  // size 
+            GL_FLOAT,                       // type 
+            GL_FALSE,                       // normalized? 
+            mesh->getVertexBufStride(),     // stride 
+            (void*)0                        // array buffer offset 
+        );
+    }
+    if (mesh->hasVertexColors()) {
+        glEnableVertexAttribArray(mProgram->getLocation("aColor"));
+    }
+    // TODO: check other attributes in mesh
+
+    // support only GL_UNSIGNED_INT right now
+    glDrawElements(GL_TRIANGLES,            // mode
+        mesh->mNumFaces * 3,                // indidces count
+        GL_UNSIGNED_INT,                    // type
+        mesh->getIndexBuf());
+
+    // restore
+    if (mesh->hasPositions())
+        glDisableVertexAttribArray(mProgram->getLocation("aPos"));
+
+    if (mesh->hasVertexColors()) {
+        glDisableVertexAttribArray(mProgram->getLocation("aColor"));
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 } // namespace dzy

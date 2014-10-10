@@ -165,16 +165,16 @@ shared_ptr<Mesh> AIAdapter::typeCast(aiMesh *mesh) {
             3, 3 * sizeof(float), me->mNumVertices,
             reinterpret_cast<unsigned char*>(mesh->mBitangents));
     }
-    // Attention: support triange faces only
     if (mesh->HasFaces()) {
         ALOGD("mNumFaces: %u", me->mNumFaces);
-        // TODO:  consider optimizing
-        for (int i=0; i< me->mNumFaces; i++) {
-            MeshData meshData;
-            meshData.set(MeshData::MESH_DATA_TYPE_INT,
-                1, 1 * sizeof(int), mesh->mFaces[i].mNumIndices,
-                reinterpret_cast<unsigned char*>(mesh->mFaces[i].mIndices));
-            me->mTriangleFaces.push_back(meshData);
+        me->mTriangleFaces.resize(me->mNumFaces);
+        // TODO: consider optimizing, avoid looping
+        for (int i=0; i<me->mNumFaces; i++) {
+            // Attention: support triange faces only
+            assert(mesh->mFaces[i].mIndices == 3);
+            // Attention: need continuous memory from assimp, keep an eye on this
+            memcpy(me->mTriangleFaces[i].mIndices,
+                mesh->mFaces[i].mIndices, 3 * sizeof(unsigned int));
         }
     }
 

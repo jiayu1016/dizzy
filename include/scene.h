@@ -81,6 +81,10 @@ class Material {
 };
 class Animation {
 };
+class TriangleFace {
+public:
+    unsigned int mIndices[3];
+};
 
 /*
  * Used to hold raw buffer data of Mesh
@@ -113,6 +117,9 @@ public:
         unsigned int stride, unsigned int numVertices,
         unsigned char *rawBuffer);
     inline unsigned int getBufSize() { return mBufSize; };
+    inline unsigned int getBufStride() { return mStride; };
+    inline unsigned int getNumComponents() { return mNumComponents; };
+
     void * getBuf();
 
 private:
@@ -124,7 +131,6 @@ private:
     std::shared_ptr<unsigned char>  mBuffer;
 };
 
-typedef std::vector<MeshData>       MeshDataContainer;
 class Mesh {
 public:
     enum {
@@ -148,30 +154,36 @@ public:
     bool            hasTextureCoords(unsigned int index) const;
     unsigned int    getNumUVChannels() const;
     unsigned int    getNumColorChannels() const;
+    unsigned int    getNumVertices() const;
+    unsigned int    getNumFaces() const;
+    unsigned int    getVertexNumComponent();
     unsigned int    getVertexBufSize();
+    unsigned int    getVertexBufStride();
     void *          getVertexBuf();
+    unsigned int    getIndexBufSize();
+    void *          getIndexBuf();
 
     friend class AIAdapter;
     friend class Render;
 private:
-    std::string             mName;
-    PrimitiveType           mPrimitiveType;
+    std::string                     mName;
+    PrimitiveType                   mPrimitiveType;
 
-    unsigned int            mNumVertices;
-    unsigned int            mNumFaces;
-    unsigned int            mNumUVComponents[MAX_TEXTURECOORDS];
+    unsigned int                    mNumVertices;
+    unsigned int                    mNumFaces;
+    unsigned int                    mNumUVComponents[MAX_TEXTURECOORDS];
 
-    MeshData                mVertices;
-    MeshData                mNormals;
-    MeshData                mTangents;
-    MeshData                mBitangents;
-    MeshDataContainer       mTriangleFaces;
+    MeshData                        mVertices;
+    MeshData                        mNormals;
+    MeshData                        mTangents;
+    MeshData                        mBitangents;
+    std::vector<TriangleFace>       mTriangleFaces;
 
-    MeshData                mColors         [MAX_COLOR_SETS];
-    MeshData                mTextureCoords  [MAX_TEXTURECOORDS];
+    MeshData                        mColors         [MAX_COLOR_SETS];
+    MeshData                        mTextureCoords  [MAX_TEXTURECOORDS];
 
     // A mesh use only ONE material, otherwise it is splitted to multiple meshes
-    unsigned int            mMaterialIndex;
+    unsigned int                    mMaterialIndex;
 };
 
 class NodeTree;
