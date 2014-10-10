@@ -171,7 +171,7 @@ shared_ptr<Mesh> AIAdapter::typeCast(aiMesh *mesh) {
         // TODO: consider optimizing, avoid looping
         for (int i=0; i<me->mNumFaces; i++) {
             // Attention: support triange faces only
-            assert(mesh->mFaces[i].mIndices == 3);
+            assert(mesh->mFaces[i].mNumIndices == 3);
             // Attention: need continuous memory from assimp, keep an eye on this
             memcpy(me->mTriangleFaces[i].mIndices,
                 mesh->mFaces[i].mIndices, 3 * sizeof(unsigned int));
