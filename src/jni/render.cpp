@@ -10,13 +10,13 @@ namespace dzy {
 
 static const char VERTEX_SHADER[] =
     "#version 300 es\n"
-    "in vec4 pos;\n"
-    "in vec4 color;\n"
+    "in vec4 aPos;\n"
+    "in vec4 aColor;\n"
     "uniform mat4 uMVP;\n"
     "out vec4 vColor;\n"
     "void main() {\n"
-    "    gl_Position = uMVP * pos;\n"
-    "    vColor = color;\n"
+    "    gl_Position = uMVP * aPos;\n"
+    "    vColor = aColor;\n"
     "}\n";
 
 static const char FRAGMENT_SHADER[] =
@@ -66,7 +66,7 @@ bool Shader::compileFromFile(const char *strFileName) {
 }
 
 Program::Program()
-    : mInitialized(false)
+    : mLinked(false)
     , mProgramId(0) {
     mProgramId = glCreateProgram();
     if (!mProgramId) {
@@ -84,8 +84,8 @@ void Program::use() {
 }
 
 bool Program::link(std::shared_ptr<Shader> vtxShader, std::shared_ptr<Shader> fragShader) {
-    if (mInitialized) {
-        ALOGW("Program already initialized");
+    if (isValid()) {
+        ALOGW("Program already linked");
         return false;
     }
 
@@ -95,8 +95,7 @@ bool Program::link(std::shared_ptr<Shader> vtxShader, std::shared_ptr<Shader> fr
 
     // in order to support other shaders in future
     for (auto iter = mShaders.begin(); iter != mShaders.end(); iter++) {
-        if (*iter)
-            glAttachShader(mProgramId, (*iter)->getShaderID());
+        if (*iter) glAttachShader(mProgramId, (*iter)->getShaderID());
     }
 
     if (!ndk_helper::shader::LinkProgram(mProgramId)) {
@@ -109,22 +108,61 @@ bool Program::link(std::shared_ptr<Shader> vtxShader, std::shared_ptr<Shader> fr
         return false;
     }
 
-    mInitialized = true;
+    mLinked = true;
 
     return true;
 }
 
 bool Program::load(std::shared_ptr<Scene> scene) {
+    if (scene->atLeastOneMeshHasVertexPosition()) {
+        GLint attribLoc = getAttrib("aPos");
+        if (attribLoc == -1) {
+            ALOGE("shader not compatible with scene: vertex position");
+            return false;
+        }
+        mLocations["aPos"] = attribLoc;
+    }
+    if (scene->atLeastOneMeshHasVertexColor()) {
+        GLint attribLoc = getAttrib("aColor");
+        if (attribLoc == -1) {
+            ALOGE("shader not compatible with scene: vertex color");
+            return false;
+        }
+        mLocations["aColor"] = attribLoc;
+    }
+
+    GLint uniformLoc = getUniform("uMVP");
+    if (uniformLoc == -1) {
+        ALOGE("shader not compatible with scene: mvp matrix");
+        return false;
+    }
+    mLocations["aColor"] = uniformLoc;
+
+    // TODO: check other attributes
+
+    size_t numMeshes = scene->getNumMeshes();
+    mVBOs.resize(numMeshes);
+    for(size_t i = 0; i < numMeshes; ++i) {
+        // Load vertex data into buffer object
+        shared_ptr<Mesh> mesh(scene->mMeshes[i]);
+        glGenBuffers(1, &mVBOs[i]);
+        glBindBuffer(GL_ARRAY_BUFFER, mVBOs[i]);
+        glBufferData(GL_ARRAY_BUFFER, mesh->getVertexBufSize(),
+            mesh->getVertexBuf(), GL_STATIC_DRAW);
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     return true;
 }
 
-GLuint Program::getAttrib(const char* name) const {
-    return 0;
+GLint Program::getAttrib(const char* name) const {
+    if (!isValid()) return -1;
+    return glGetAttribLocation(mProgramId, name);
 }
 
 GLint Program::getUniform(const char* name) const {
-    return 0;
+    if (!isValid()) return -1;
+    return glGetUniformLocation(mProgramId, name);
 }
 
 bool Render::init(shared_ptr<Scene> scene) {
@@ -165,12 +203,12 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
 }
 
 void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
-    ALOGD("Node %s has %d meshes", node->mName.c_str(), node->mMeshes.size());
+    //ALOGD("Node %s has %d meshes", node->mName.c_str(), node->mMeshes.size());
     for (size_t i=0; i<node->mMeshes.size(); i++) {
         int meshIdx = node->mMeshes[i];
-        ALOGD("meshIdx: %d", meshIdx);
+        //ALOGD("meshIdx: %d", meshIdx);
         shared_ptr<Mesh> mesh(scene->mMeshes[meshIdx]);
-        ALOGD("mesh name: %s", mesh->mName.c_str());
+        //ALOGD("mesh name: %s", mesh->mName.c_str());
         mesh->draw(*this);
     }
 }

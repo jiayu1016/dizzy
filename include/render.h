@@ -34,22 +34,25 @@ public:
     Program();
     ~Program();
 
-    bool isValid() const { return mInitialized; }
+    bool    isValid() const { return mLinked; }
     // bind program
-    void use();
-    bool link(std::shared_ptr<Shader> vtxShader, std::shared_ptr<Shader> fragShader);
-    bool load(std::shared_ptr<Scene> scene);
-    GLuint getAttrib(const char* name) const;
-    GLint getUniform(const char* name) const;
+    void    use();
+    bool    link(std::shared_ptr<Shader> vtxShader, std::shared_ptr<Shader> fragShader);
+    bool    load(std::shared_ptr<Scene> scene);
+    GLint   getAttrib(const char* name) const;
+    GLint   getUniform(const char* name) const;
 
     friend class Shader;
 private:
-    bool                                        mInitialized;
+    bool                                        mLinked;
     GLuint                                      mProgramId;
     std::vector<std::shared_ptr<Shader> >       mShaders;
+    std::map<std::string, GLint>                mLocations;
     GLint                                       mProjectionMatrixLoc;
     GLint                                       mColorMatrixLoc;
     GLint                                       mColorLoc;
+    // the order must be consistent with the mesh vector in scene
+    std::vector<GLuint>                         mVBOs;
 };
 
 class Scene;

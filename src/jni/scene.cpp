@@ -20,6 +20,7 @@ MeshData::MeshData()
     : mType(MESH_DATA_TYPE_FLOAT)
     , mNumComponents(0)
     , mStride(0)
+    , mBufSize(0)
     , mBuffer(NULL, std::default_delete<unsigned char[]>()) {
 }
 
@@ -27,19 +28,23 @@ void MeshData::reset() {
     mType = MESH_DATA_TYPE_FLOAT;
     mNumComponents = 0;
     mStride = 0;
+    mBufSize = 0;
     mBuffer.reset();
 }
 
 void MeshData::set(MeshDataType type, unsigned int numComponents,
     unsigned int stride, unsigned int numVertices,
     unsigned char *rawBuffer) {
-    unsigned int bufSize = numVertices * stride;
-    unsigned char *newBuf = new unsigned char[bufSize];
-    memcpy(newBuf, rawBuffer, bufSize);
+    mBufSize = numVertices * stride;
+    unsigned char *newBuf = new unsigned char[mBufSize];
+    memcpy(newBuf, rawBuffer, mBufSize);
     mType = type;
     mNumComponents = numComponents;
     mStride = stride;
     mBuffer.reset(newBuf, std::default_delete<unsigned char[]>());
+}
+void * MeshData::getBuf() {
+    return static_cast<void *>(mBuffer.get());
 }
 
 Camera::Camera()
@@ -129,6 +134,13 @@ bool Mesh::hasVertexColors(unsigned int index) const {
         return !mColors[index].empty() && mNumVertices > 0;
 }
 
+bool Mesh::hasVertexColors() const {
+    for (unsigned int i=0; i<MAX_COLOR_SETS; i++) {
+        if (hasVertexColors(i)) return true;
+    }
+    return false;
+}
+
 bool Mesh::hasTextureCoords(unsigned int index) const {
     if( index >= MAX_TEXTURECOORDS)
         return false;
@@ -146,6 +158,14 @@ unsigned int Mesh::getNumColorChannels() const {
     unsigned int n = 0;
     while (n < MAX_COLOR_SETS && !mColors[n].empty()) ++n;
     return n;
+}
+
+unsigned int Mesh::getVertexBufSize() {
+    return mVertices.getBufSize();
+}
+
+void * Mesh::getVertexBuf() {
+    return mVertices.getBuf();
 }
 
 void Mesh::draw(const Render &) {
@@ -352,6 +372,20 @@ bool Scene::listAssetFiles(shared_ptr<AppContext> appContext,
     AAssetDir_close(assetDir);
 
     return true;
+}
+
+bool Scene::atLeastOneMeshHasVertexPosition() {
+    for (size_t i=0; i<getNumMeshes(); i++) {
+        if (mMeshes[i]->hasPositions()) return true;
+    }
+    return false;
+}
+
+bool Scene::atLeastOneMeshHasVertexColor() {
+    for (size_t i=0; i<getNumMeshes(); i++) {
+        if (mMeshes[i]->hasVertexColors()) return true;
+    }
+    return false;
 }
 
 SceneManager::SceneManager() {

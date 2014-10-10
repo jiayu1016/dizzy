@@ -112,11 +112,14 @@ public:
     void set(MeshDataType type, unsigned int numComponents,
         unsigned int stride, unsigned int numVertices,
         unsigned char *rawBuffer);
+    inline unsigned int getBufSize() { return mBufSize; };
+    void * getBuf();
 
 private:
     MeshDataType                    mType;
     unsigned int                    mNumComponents;
     unsigned int                    mStride;
+    unsigned int                    mBufSize;
     // c++11 shared_ptr doesn't support array, must explicitly set deleter
     std::shared_ptr<unsigned char>  mBuffer;
 };
@@ -142,10 +145,12 @@ public:
     bool            hasNormals() const;
     bool            hasTangentsAndBitangents() const;
     bool            hasVertexColors(unsigned int index) const;
+    bool            hasVertexColors() const;
     bool            hasTextureCoords(unsigned int index) const;
     unsigned int    getNumUVChannels() const;
     unsigned int    getNumColorChannels() const;
-
+    unsigned int    getVertexBufSize();
+    void *          getVertexBuf();
     void            draw(const Render &);
 
     friend class AIAdapter;
@@ -212,7 +217,7 @@ private:
 
 class SceneManager;
 class AppContext;
-
+class Program;
 typedef std::vector<std::shared_ptr<Camera> >      CameraContainer;
 typedef std::vector<std::shared_ptr<Light> >       LightContainer;
 typedef std::vector<std::shared_ptr<Animation> >   AnimationContainer;
@@ -234,9 +239,14 @@ public:
     inline size_t getNumMeshes() { return mMeshes.size(); }
     //inline size_t getNumNodes() { return mNodeTree.getNumNodes(); }
 
+    bool atLeastOneMeshHasVertexPosition();
+    bool atLeastOneMeshHasVertexColor();
+
     inline NodeTree& getNodeTree() { return mNodeTree;}
+
     friend class SceneManager;
     friend class Render;
+    friend class Program;
 private:
     unsigned int        mFlags;
     CameraContainer     mCameras;
