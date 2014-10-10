@@ -168,9 +168,6 @@ void * Mesh::getVertexBuf() {
     return mVertices.getBuf();
 }
 
-void Mesh::draw(const Render &) {
-}
-
 void Node::addChild(shared_ptr<Node> node) {
     // no duplicate Node in children list
     bool exist = false;

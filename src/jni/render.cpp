@@ -209,8 +209,11 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
         //ALOGD("meshIdx: %d", meshIdx);
         shared_ptr<Mesh> mesh(scene->mMeshes[meshIdx]);
         //ALOGD("mesh name: %s", mesh->mName.c_str());
-        mesh->draw(*this);
+        drawMesh(mesh);
     }
+}
+
+void Render::drawMesh(shared_ptr<Mesh> mesh) {
 }
 
 } // namespace dzy

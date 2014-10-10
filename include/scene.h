@@ -124,7 +124,6 @@ private:
     std::shared_ptr<unsigned char>  mBuffer;
 };
 
-class Render;
 typedef std::vector<MeshData>       MeshDataContainer;
 class Mesh {
 public:
@@ -151,7 +150,6 @@ public:
     unsigned int    getNumColorChannels() const;
     unsigned int    getVertexBufSize();
     void *          getVertexBuf();
-    void            draw(const Render &);
 
     friend class AIAdapter;
     friend class Render;

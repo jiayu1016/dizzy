@@ -57,12 +57,15 @@ private:
 
 class Scene;
 class Node;
+class Mesh;
 class Render {
 public:
     bool init(std::shared_ptr<Scene> scene);
     bool release();
     bool drawScene(std::shared_ptr<Scene> scene);
-    void drawNode(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node);
+    void drawNode(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node);    
+    void drawMesh(std::shared_ptr<Mesh> mesh);
+
 private:
     std::shared_ptr<Program> mProgram;
 };
