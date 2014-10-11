@@ -10,6 +10,7 @@
 namespace dzy {
 
 extern const char* glStatusStr();
+class AppContext;
 
 class Shader {
 public:
@@ -69,26 +70,15 @@ public:
     bool drawScene(std::shared_ptr<Scene> scene);
     void drawNode(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node);    
     void drawMesh(std::shared_ptr<Mesh> mesh, int idxInMesh);
+    std::shared_ptr<AppContext> getAppContext();
 
+    friend class AppContext;
 private:
-    std::shared_ptr<Program> mProgram;
-};
+    void setAppContext(std::shared_ptr<AppContext> appContext);
 
-class RenderManager : public Singleton<RenderManager> {
-public:
-    std::shared_ptr<Render> createDefaultRender() {
-        std::shared_ptr<Render> r(new Render);
-        mCurrentRender = r;
-        return r;
-    }
+    std::shared_ptr<Program>    mProgram;
+    std::weak_ptr<AppContext>   mAppContext;
 
-    std::shared_ptr<Render> getCurrentRender() {
-        return mCurrentRender;
-    }
-
-private:
-    std::vector<std::shared_ptr<Render> >   mRenders;
-    std::shared_ptr<Render>                 mCurrentRender;
 };
 
 } // namespace dzy 

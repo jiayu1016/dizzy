@@ -33,7 +33,7 @@ public:
 
     std::shared_ptr<AppContext> getAppContext();
     std::shared_ptr<Scene>      getCurrentScene();
-    std::shared_ptr<Render>     getCurrentRender();
+    std::shared_ptr<Render>     getRender();
 
     friend class AppContext;
 private:

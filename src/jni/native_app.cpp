@@ -135,8 +135,8 @@ shared_ptr<Scene> NativeApp::getCurrentScene() {
     return SceneManager::get()->getCurrentScene();
 }
 
-shared_ptr<Render> NativeApp::getCurrentRender() {
-    return RenderManager::get()->getCurrentRender();
+shared_ptr<Render> NativeApp::getRender() {
+    return mAppContext->getRender();
 }
 
 void NativeApp::mainLoop() {

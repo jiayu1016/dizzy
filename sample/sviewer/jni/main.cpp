@@ -57,16 +57,16 @@ bool SViewApp::releaseApp() {
 
 bool SViewApp::initView(shared_ptr<Scene> scene) {
     ALOGD("SViewapp::initView()");
-    return getCurrentRender()->init(scene);
+    return getRender()->init(scene);
 }
 
 bool SViewApp::releaseView() {
     ALOGD("SViewapp::releaseView()");
-    return getCurrentRender()->release();
+    return getRender()->release();
 }
 
 bool SViewApp::drawScene(shared_ptr<Scene> scene) {
-    shared_ptr<Render> render(getCurrentRender());
+    shared_ptr<Render> render(getRender());
 
     return render->drawScene(scene);
 }

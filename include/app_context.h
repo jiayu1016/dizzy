@@ -15,7 +15,10 @@ namespace dzy {
 
 class NativeApp;
 class Scene;
-class AppContext : private noncopyable {
+class Render;
+class AppContext
+    : public std::enable_shared_from_this<AppContext>
+    , private noncopyable {
 public:
     explicit AppContext(NativeApp* nativeApp);
     ~AppContext();
@@ -28,22 +31,31 @@ public:
 
     NativeApp*                  getNativeApp();
     AAssetManager*              getAssetManager();
+    std::shared_ptr<Render>     getRender();
 
     // gfx system
-    bool initDisplay();
-    void releaseDisplay();
-    bool updateDisplay(std::shared_ptr<Scene> scene);
+    bool            initDisplay();
+    void            releaseDisplay();
+    bool            updateDisplay(std::shared_ptr<Scene> scene);
 
-    void requestQuit();
-    bool needQuit();
-    void setRenderState(bool rendering);
-    bool isRendering();
+    void            requestQuit();
+    bool            needQuit();
+    void            setRenderState(bool rendering);
+    bool            isRendering();
+
+    EGLDisplay      getEGLDisplay();
+    EGLContext      getEGLContext();
+    EGLSurface      getEGLSurface();
+    EGLint          getSurfaceWidth();
+    EGLint          getSurfaceHeight();
 
 private:
     const char* eglStatusStr() const;
 
     NativeApp*              mNativeApp;
     AAssetManager*          mAssetManager;
+    std::shared_ptr<Render> mRender;
+
     bool                    mRequestQuit;
     bool                    mRendering;
 

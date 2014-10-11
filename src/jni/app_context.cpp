@@ -21,11 +21,11 @@ AppContext::AppContext(NativeApp* nativeApp)
     , mRendering    (false)
     , mNativeApp    (nativeApp)
     , mAssetManager (nativeApp->mApp->activity->assetManager)
+    , mRender       (new Render)
     , mDisplay      (EGL_NO_DISPLAY)
     , mEglContext   (EGL_NO_CONTEXT)
     , mSurface      (EGL_NO_SURFACE) {
     ALOGD("AppContext::AppContext()");
-    RenderManager::get()->createDefaultRender();
 }
 
 AppContext::~AppContext() {
@@ -33,18 +33,12 @@ AppContext::~AppContext() {
 }
 
 bool AppContext::initDisplay() {
-    EGLint      w, h, format, numConfigs;
-    EGLConfig   config;
-    EGLSurface  surface;
-    EGLContext  context;
-    EGLint      majorVersion;
-    EGLint      minorVersion;
-
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     if (display == EGL_DEFAULT_DISPLAY) {
         ALOGE("Unable to connect window system: %s", eglStatusStr());
         return false;
     }
+    EGLint majorVersion, minorVersion;
     if (!eglInitialize(display, &majorVersion, &minorVersion)) {
         ALOGE("Unable to initialize egl: %s", eglStatusStr());
         return false;
@@ -63,16 +57,19 @@ bool AppContext::initDisplay() {
         EGL_NONE
     };
 
+    EGLConfig config;
+    EGLint numConfigs;
     if (!eglChooseConfig(display, configAttribs, &config, 1, &numConfigs)
         && numConfigs < 1){
         ALOGE("Unable to choose egl config: %s", eglStatusStr());
         return false;
     }
 
+    EGLint format;
     eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
     ANativeWindow_setBuffersGeometry(mNativeApp->mApp->window, 0, 0, format);
 
-    surface = eglCreateWindowSurface(display, config, mNativeApp->mApp->window, NULL);
+    EGLSurface surface = eglCreateWindowSurface(display, config, mNativeApp->mApp->window, NULL);
     if (surface == EGL_NO_SURFACE) {
         ALOGW("Unable to create surface: %s", eglStatusStr());
         return false;
@@ -81,7 +78,8 @@ bool AppContext::initDisplay() {
         EGL_CONTEXT_CLIENT_VERSION, 3,
         EGL_NONE
     };
-    context = eglCreateContext(display, config, NULL, contextAttrs);
+
+    EGLContext context = eglCreateContext(display, config, NULL, contextAttrs);
     if (context == EGL_NO_CONTEXT) {
         ALOGW("Unable to create context: %s", eglStatusStr());
         return false;
@@ -91,6 +89,7 @@ bool AppContext::initDisplay() {
         return false;
     }
 
+    EGLint w, h;
     eglQuerySurface(display, surface, EGL_WIDTH, &w);
     eglQuerySurface(display, surface, EGL_HEIGHT, &h);
 
@@ -99,6 +98,7 @@ bool AppContext::initDisplay() {
     mSurface    = surface;
     mWidth      = w;
     mHeight     = h;
+    mRender->setAppContext(shared_from_this());
 
     mNativeApp->initView(mNativeApp->getCurrentScene());
     mNativeApp->drawScene(mNativeApp->getCurrentScene());
@@ -156,6 +156,10 @@ AAssetManager* AppContext::getAssetManager() {
     return mAssetManager;
 }
 
+shared_ptr<Render> AppContext::getRender() {
+    return mRender;
+}
+
 const string AppContext::getAppName() {
     return getAppName(getpid());
 }
@@ -209,5 +213,26 @@ void AppContext::setRenderState(bool rendering) {
 bool AppContext::isRendering() {
     return mRendering;
 }
+
+EGLDisplay AppContext::getEGLDisplay() {
+    return mDisplay;
+}
+
+EGLContext AppContext::getEGLContext() {
+    return mEglContext;
+}
+
+EGLSurface AppContext::getEGLSurface() {
+    return mSurface;
+}
+
+EGLint AppContext::getSurfaceWidth() {
+    return mWidth;
+}
+
+EGLint AppContext::getSurfaceHeight() {
+    return mHeight;
+}
+
 
 } // namespace dzy

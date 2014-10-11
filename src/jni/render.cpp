@@ -1,6 +1,7 @@
 #include <memory>
 #include <functional>
 #include "log.h"
+#include "app_context.h"
 #include "scene.h"
 #include "render.h"
 
@@ -192,15 +193,11 @@ bool Program::load(std::shared_ptr<Scene> scene) {
         glGenBuffers(1, &mVertexBOs[i]);
         glGenBuffers(1, &mIndexBOs[i]);
         glBindBuffer(GL_ARRAY_BUFFER, mVertexBOs[i]);
-        ALOGD("glBindBuffer status: %s", glStatusStr());
         glBufferData(GL_ARRAY_BUFFER, mesh->getVertexBufSize(),
             mesh->getVertexBuf(), GL_STATIC_DRAW);
-        ALOGD("glBufferData status: %s", glStatusStr());
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBOs[i]);
-        ALOGD("glBindBuffer status: %s", glStatusStr());
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->getIndexBufSize(),
             mesh->getIndexBuf(), GL_STATIC_DRAW);
-        ALOGD("glBufferData status: %s", glStatusStr());
     }
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -245,8 +242,15 @@ bool Render::init(shared_ptr<Scene> scene) {
 
     glClearColor(0.6f, 0.7f, 1.0f, 1.0f);
 
-    // TODO: remove hard coded dimension
-    glViewport(0, 0, 720, 1080);
+    shared_ptr<AppContext> appContext(getAppContext());
+    if (appContext)
+        glViewport(0, 0,
+            appContext->getSurfaceWidth(),
+            appContext->getSurfaceHeight());
+    else {
+        ALOGE("AppContext released while render trying to init");
+        return false;
+    }
 
     return true;
 }
@@ -260,6 +264,13 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
     using namespace std::placeholders;
     mProgram->use();
     tree.dfsTraversal(scene, bind(&Render::drawNode, this, _1, _2));
+    shared_ptr<AppContext> appContext(getAppContext());
+    if (appContext)
+        eglSwapBuffers(appContext->getEGLDisplay(), appContext->getEGLSurface());
+    else {
+        ALOGE("AppContext released while render trying to draw scene");
+        return false;
+    }
     return true;
 }
 
@@ -277,12 +288,9 @@ void Render::drawMesh(shared_ptr<Mesh> mesh, int meshIdx) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     mProgram->bindBufferObjects(meshIdx);
-    ALOGD("glBindBuffer status: %s", glStatusStr());
     if (mesh->hasPositions()) {
         GLint posLoc = mProgram->getLocation("aPos");
-        ALOGD("aPos attrib loc: %d", posLoc);
         glEnableVertexAttribArray(posLoc);
-        ALOGD("glEnableVertexAttribArray posLoc status: %s", glStatusStr());
         ALOGD("num vertices: %d, num components: %d, stride: %d",
             mesh->getNumVertices(),
             mesh->getVertexNumComponent(),
@@ -296,7 +304,6 @@ void Render::drawMesh(shared_ptr<Mesh> mesh, int meshIdx) {
             0,                              // stride, 0 means tightly packed
             (void*)0                        // offset
         );
-        ALOGD("glVertexAttribPointer posLoc status: %s", glStatusStr());
     }
     if (mesh->hasVertexColors()) {
         glEnableVertexAttribArray(mProgram->getLocation("aColor"));
@@ -311,7 +318,6 @@ void Render::drawMesh(shared_ptr<Mesh> mesh, int meshIdx) {
         mesh->getNumIndices(),              // indices count
         GL_UNSIGNED_INT,                    // type
         (void *)0);                         // offset
-    ALOGD("glDrawElements status: %s", glStatusStr());
 
     // restore
     if (mesh->hasPositions())
@@ -324,5 +330,14 @@ void Render::drawMesh(shared_ptr<Mesh> mesh, int meshIdx) {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
+
+shared_ptr<AppContext> Render::getAppContext() {
+    return mAppContext.lock();
+}
+
+void Render::setAppContext(shared_ptr<AppContext> appContext) {
+    mAppContext = appContext;
+}
+
 
 } // namespace dzy
