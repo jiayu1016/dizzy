@@ -16,11 +16,9 @@ using namespace std;
 
 namespace dzy {
 
-AppContext::AppContext(NativeApp* nativeApp)
+AppContext::AppContext()
     : mRequestQuit  (false)
     , mRendering    (false)
-    , mNativeApp    (nativeApp)
-    , mAssetManager (nativeApp->mApp->activity->assetManager)
     , mRender       (new Render)
     , mDisplay      (EGL_NO_DISPLAY)
     , mEglContext   (EGL_NO_CONTEXT)
@@ -32,7 +30,18 @@ AppContext::~AppContext() {
     ALOGD("AppContext::~AppContext()");
 }
 
+void AppContext::init(shared_ptr<NativeApp> nativeApp) {
+    mAssetManager = nativeApp->mApp->activity->assetManager;
+    mInternalDataPath = nativeApp->mApp->activity->internalDataPath;
+    mNativeApp = nativeApp;
+}
+
 bool AppContext::initDisplay() {
+    shared_ptr<NativeApp> nativeApp(getNativeApp());
+    if (!nativeApp) {
+        ALOGE("NativeApp released before AppContext");
+        return false;
+    }
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     if (display == EGL_DEFAULT_DISPLAY) {
         ALOGE("Unable to connect window system: %s", eglStatusStr());
@@ -67,9 +76,9 @@ bool AppContext::initDisplay() {
 
     EGLint format;
     eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
-    ANativeWindow_setBuffersGeometry(mNativeApp->mApp->window, 0, 0, format);
+    ANativeWindow_setBuffersGeometry(nativeApp->mApp->window, 0, 0, format);
 
-    EGLSurface surface = eglCreateWindowSurface(display, config, mNativeApp->mApp->window, NULL);
+    EGLSurface surface = eglCreateWindowSurface(display, config, nativeApp->mApp->window, NULL);
     if (surface == EGL_NO_SURFACE) {
         ALOGW("Unable to create surface: %s", eglStatusStr());
         return false;
@@ -100,8 +109,8 @@ bool AppContext::initDisplay() {
     mHeight     = h;
     mRender->setAppContext(shared_from_this());
 
-    mNativeApp->initView(mNativeApp->getCurrentScene());
-    mNativeApp->drawScene(mNativeApp->getCurrentScene());
+    nativeApp->initView(nativeApp->getCurrentScene());
+    nativeApp->drawScene(nativeApp->getCurrentScene());
 }
 
 const char* AppContext::eglStatusStr() const {
@@ -127,7 +136,12 @@ const char* AppContext::eglStatusStr() const {
 }
 
 void AppContext::releaseDisplay() {
-    mNativeApp->releaseView();
+    shared_ptr<NativeApp> nativeApp(getNativeApp());
+    if (!nativeApp) {
+        ALOGE("NativeApp released before AppContext");
+        return;
+    }
+    nativeApp->releaseView();
     if (mDisplay != EGL_NO_DISPLAY) {
         eglMakeCurrent(mDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         if (mEglContext != EGL_NO_CONTEXT) {
@@ -144,16 +158,21 @@ void AppContext::releaseDisplay() {
 }
 
 bool AppContext::updateDisplay(shared_ptr<Scene> scene) {
-    mNativeApp->drawScene(scene);
+    shared_ptr<NativeApp> nativeApp(getNativeApp());
+    if (!nativeApp) {
+        ALOGE("NativeApp released before AppContext");
+        return false;
+    }
+    nativeApp->drawScene(scene);
     return true;
-}
-
-NativeApp* AppContext::getNativeApp() {
-    return mNativeApp;
 }
 
 AAssetManager* AppContext::getAssetManager() {
     return mAssetManager;
+}
+
+shared_ptr<NativeApp> AppContext::getNativeApp() {
+    return mNativeApp.lock();
 }
 
 shared_ptr<Render> AppContext::getRender() {
@@ -188,14 +207,13 @@ const string AppContext::getExternalDataDir() {
 }
 
 const string AppContext::getInternalDataDir() {
-    const char *idp = mNativeApp->mApp->activity->internalDataPath;
-    if (!idp) {
+    if (!mInternalDataPath.empty()) {
         string appName = getAppName();
         ALOGW("app's internal data path set to /data/data/%s",
             appName.c_str());
         return "/data/data/" + appName;
     }
-    return idp;
+    return mInternalDataPath;
 }
 
 void AppContext::requestQuit() {

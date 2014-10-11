@@ -22,8 +22,8 @@ bool NativeApp::init(struct android_app* app) {
     mApp->userData = this;
     mApp->onAppCmd = NativeApp::handleAppCmd;
     mApp->onInputEvent = NativeApp::handleInputEvent;
-    mAppContext.reset(new AppContext(this));
-
+    mAppContext.reset(new AppContext);
+    mAppContext->init(shared_from_this());
     bool ret = initApp();
     if (!ret) ALOGE("Init NativeApp class failed\n");
     return ret;

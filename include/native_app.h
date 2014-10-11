@@ -10,7 +10,9 @@ namespace dzy {
 class AppContext;
 class Scene;
 class Render;
-class NativeApp : private noncopyable {
+class NativeApp 
+    : public std::enable_shared_from_this<NativeApp>
+    , private noncopyable {
 public:
     explicit NativeApp();
     ~NativeApp();

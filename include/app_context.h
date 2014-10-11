@@ -20,8 +20,10 @@ class AppContext
     : public std::enable_shared_from_this<AppContext>
     , private noncopyable {
 public:
-    explicit AppContext(NativeApp* nativeApp);
+    explicit AppContext();
     ~AppContext();
+    // init non-trivial class members that cannot be put in ctor
+    void                        init(std::shared_ptr<NativeApp> nativeApp);
 
     // OS specific
     static const std::string    getAppName();
@@ -29,8 +31,8 @@ public:
     const std::string           getExternalDataDir();
     const std::string           getInternalDataDir();
 
-    NativeApp*                  getNativeApp();
     AAssetManager*              getAssetManager();
+    std::shared_ptr<NativeApp>  getNativeApp();
     std::shared_ptr<Render>     getRender();
 
     // gfx system
@@ -50,21 +52,24 @@ public:
     EGLint          getSurfaceHeight();
 
 private:
-    const char* eglStatusStr() const;
+    const char*     eglStatusStr() const;
 
-    NativeApp*              mNativeApp;
-    AAssetManager*          mAssetManager;
-    std::shared_ptr<Render> mRender;
+    AAssetManager*              mAssetManager;
+    std::weak_ptr<NativeApp>    mNativeApp;
+    std::shared_ptr<Render>     mRender;
 
-    bool                    mRequestQuit;
-    bool                    mRendering;
+    bool                        mRequestQuit;
+    bool                        mRendering;
 
     // egl
-    EGLDisplay              mDisplay;
-    EGLContext              mEglContext;
-    EGLSurface              mSurface;
-    EGLint                  mWidth;
-    EGLint                  mHeight;
+    EGLDisplay                  mDisplay;
+    EGLContext                  mEglContext;
+    EGLSurface                  mSurface;
+    EGLint                      mWidth;
+    EGLint                      mHeight;
+
+    // OS specific
+    std::string                 mInternalDataPath;
 };
 
 } // namespace dzy
