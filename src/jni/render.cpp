@@ -259,17 +259,19 @@ bool Render::release() {
 }
 
 bool Render::drawScene(shared_ptr<Scene> scene) {
-    NodeTree &tree = scene->getNodeTree();
-    using namespace std::placeholders;
-    mProgram->use();
-    tree.dfsTraversal(scene, bind(&Render::drawNode, this, _1, _2));
     shared_ptr<AppContext> appContext(getAppContext());
-    if (appContext)
-        eglSwapBuffers(appContext->getEGLDisplay(), appContext->getEGLSurface());
-    else {
-        ALOGE("AppContext released while render trying to draw scene");
+    if (!appContext){
+        ALOGE("AppContext released while rendering a scene");
         return false;
     }
+
+    mProgram->use();
+
+    NodeTree &tree = scene->getNodeTree();
+    using namespace std::placeholders;
+    tree.dfsTraversal(scene, bind(&Render::drawNode, this, _1, _2));
+    eglSwapBuffers(appContext->getEGLDisplay(), appContext->getEGLSurface());
+    
     return true;
 }
 
