@@ -48,8 +48,9 @@ static const char FRAGMENT_SHADER[] =
 static const char VERTEX_SHADER[] =
     "#version 300 es\n"
     "in vec3 aPos;\n"
+    "uniform mat4 uMVP;\n"
     "void main() {\n"
-    "    gl_Position = vec4(aPos, 1.0);\n"
+    "    gl_Position = uMVP * vec4(aPos, 1.0);\n"
     "}\n";
 
 static const char FRAGMENT_SHADER[] =
@@ -173,14 +174,12 @@ bool Program::load(std::shared_ptr<Scene> scene) {
         mLocations["aColor"] = attribLoc;
     }
 
-    /*
     GLint mvpLoc = glGetUniformLocation(mProgramId, "uMVP");
     if (mvpLoc == -1) {
         ALOGE("shader not compatible with scene: mvp matrix");
         return false;
     }
-    mLocations["aColor"] = mvpLoc;
-    */
+    mLocations["uMVP"] = mvpLoc;
 
     // TODO: check other attributes
 
@@ -275,7 +274,11 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
 }
 
 void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
-    //ALOGD("Node %s has %d meshes", node->mName.c_str(), node->mMeshes.size());
+    ALOGD("Node %s has %d meshes, depth: %d",
+        node->mName.c_str(), node->mMeshes.size(), scene->mNodeDepth);
+    ndk_helper::Mat4 matrix = scene->mMatrixStack.top();
+    matrix.Dump();
+    glUniformMatrix4fv(mProgram->getLocation("uMVP"), 1, GL_FALSE, matrix.Ptr());
     for (size_t i=0; i<node->mMeshes.size(); i++) {
         int meshIdx = node->mMeshes[i];
         shared_ptr<Mesh> mesh(scene->mMeshes[meshIdx]);
@@ -295,7 +298,7 @@ void Render::drawMesh(shared_ptr<Mesh> mesh, int meshIdx) {
             mesh->getNumVertices(),
             mesh->getVertexNumComponent(),
             mesh->getVertexBufStride());
-        mesh->dumpVertexBuf();
+        //mesh->dumpVertexBuf();
         glVertexAttribPointer(
             posLoc,
             mesh->getVertexNumComponent(),  // size
@@ -312,7 +315,7 @@ void Render::drawMesh(shared_ptr<Mesh> mesh, int meshIdx) {
 
     ALOGD("num indices: %d, indices buf size: %d",
         mesh->getNumIndices(), mesh->getIndexBufSize());
-    mesh->dumpIndexBuf();
+    //mesh->dumpIndexBuf();
     // support only GL_UNSIGNED_INT right now
     glDrawElements(GL_TRIANGLES,            // mode
         mesh->getNumIndices(),              // indices count

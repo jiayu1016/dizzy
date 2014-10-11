@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <stack>
 #include <functional>
 #include <algorithm>
 #include <vecmath.h>
@@ -230,6 +231,17 @@ private:
     std::shared_ptr<Node> mRoot;
 };
 
+class MatrixStack {
+public:
+    MatrixStack();
+    void push(ndk_helper::Mat4 &matrix);
+    void pop();
+    ndk_helper::Mat4 top();
+
+private:
+    std::stack<ndk_helper::Mat4> mProduct;
+};
+
 class SceneManager;
 class AppContext;
 class Program;
@@ -241,6 +253,7 @@ typedef std::vector<std::shared_ptr<Material> >    MaterialContainer;
 typedef std::vector<std::shared_ptr<Mesh> >        MeshContainer;
 class Scene {
 public:
+    Scene();
     virtual bool loadColladaAsset(std::shared_ptr<AppContext> appContext, const std::string &asset);
     virtual bool load(std::shared_ptr<AppContext> appContext, const std::string &file);
     virtual bool listAssetFiles(std::shared_ptr<AppContext> appContext,
@@ -262,6 +275,7 @@ public:
     friend class SceneManager;
     friend class Render;
     friend class Program;
+    friend class NodeTree;
 private:
     unsigned int        mFlags;
     CameraContainer     mCameras;
@@ -271,6 +285,10 @@ private:
     MaterialContainer   mMaterials;
     MeshContainer       mMeshes;
     NodeTree            mNodeTree;
+
+    // transient status for easy traversal
+    unsigned int        mNodeDepth;
+    MatrixStack         mMatrixStack;
 };
 
 class SceneManager : public Singleton<SceneManager> {

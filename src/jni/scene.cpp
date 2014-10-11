@@ -299,10 +299,36 @@ void NodeTree::dfsTraversal(shared_ptr<Scene> scene, VisitFunc visit) {
 }
 
 void NodeTree::dfsTraversal(shared_ptr<Scene> scene, shared_ptr<Node> node, VisitFunc visit) {
+    node->mTransformation.Dump();
+    scene->mNodeDepth++;
+    scene->mMatrixStack.push(node->mTransformation);
     visit(scene, node);
     std::for_each(node->mChildren.begin(), node->mChildren.end(), [&] (shared_ptr<Node> c) {
         dfsTraversal(scene, c, visit);
     });
+    scene->mMatrixStack.pop();
+    scene->mNodeDepth--;
+}
+
+MatrixStack::MatrixStack() {
+    //mProduct.push(ndk_helper::Mat4::Identity());
+}
+
+void MatrixStack::push(ndk_helper::Mat4 &current) {
+    ndk_helper::Mat4 product = top();
+    mProduct.push(current * product);
+}
+
+void MatrixStack::pop() {
+    mProduct.pop();
+}
+
+ndk_helper::Mat4 MatrixStack::top() {
+    return mProduct.top();
+}
+
+Scene::Scene()
+    : mNodeDepth(-1) {
 }
 
 bool Scene::loadColladaAsset(shared_ptr<AppContext> appContext,
