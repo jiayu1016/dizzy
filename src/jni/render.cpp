@@ -201,7 +201,7 @@ bool Render::init(shared_ptr<Scene> scene) {
     }
     mProgram = program;
 
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0.6f, 0.7f, 1.0f, 1.0f);
 
     return true;
 }
@@ -221,21 +221,27 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
     //ALOGD("Node %s has %d meshes", node->mName.c_str(), node->mMeshes.size());
     for (size_t i=0; i<node->mMeshes.size(); i++) {
         int meshIdx = node->mMeshes[i];
-        //ALOGD("meshIdx: %d", meshIdx);
         shared_ptr<Mesh> mesh(scene->mMeshes[meshIdx]);
-        //ALOGD("mesh name: %s", mesh->mName.c_str());
         drawMesh(mesh, i);
     }
 }
 
 void Render::drawMesh(shared_ptr<Mesh> mesh, int meshIdx) {
+    ALOGD("meshIdx: %d, mesh name: %s", meshIdx, mesh->mName.c_str());
     glClear(GL_COLOR_BUFFER_BIT);
     mProgram->use();
     mProgram->bindBufferObjects(meshIdx);
     if (mesh->hasPositions()) {
-        glEnableVertexAttribArray(mProgram->getLocation("aPos"));
+        GLint posLoc = mProgram->getLocation("aPos");
+        ALOGD("aPos attrib loc: %d", posLoc);
+        glEnableVertexAttribArray(posLoc);
+        ALOGD("num vertices: %d, num components: %d, stride: %d",
+            mesh->getNumVertices(),
+            mesh->getVertexNumComponent(),
+            mesh->getVertexBufStride());
+        mesh->dumpVertexBuf();
         glVertexAttribPointer(
-            mProgram->getLocation("aPos"),
+            posLoc,
             mesh->getVertexNumComponent(),  // size 
             GL_FLOAT,                       // type 
             GL_FALSE,                       // normalized? 
@@ -248,9 +254,11 @@ void Render::drawMesh(shared_ptr<Mesh> mesh, int meshIdx) {
     }
     // TODO: check other attributes in mesh
 
+    ALOGD("num indices: %d", mesh->getNumIndices());
+    mesh->dumpIndexBuf();
     // support only GL_UNSIGNED_INT right now
     glDrawElements(GL_TRIANGLES,            // mode
-        mesh->mNumFaces * 3,                // indidces count
+        mesh->getNumIndices(),              // indices count
         GL_UNSIGNED_INT,                    // type
         mesh->getIndexBuf());
 

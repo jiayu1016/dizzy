@@ -22,4 +22,6 @@ do {                                            \
 #define ALOGW(FMT, ...) DO_LOG(ANDROID_LOG_WARN,  FMT, ##__VA_ARGS__);
 #define ALOGE(FMT, ...) DO_LOG(ANDROID_LOG_ERROR, FMT, ##__VA_ARGS__);
 
+#define PRINT(...) ((void)__android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__));
+
 #endif

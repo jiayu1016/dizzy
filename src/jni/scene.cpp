@@ -182,14 +182,59 @@ void * Mesh::getVertexBuf() {
     return mVertices.getBuf();
 }
 
-unsigned int Mesh::getIndexBufSize() {
+unsigned int Mesh::getNumIndices() {
     return getNumFaces() * 3;
+}
+
+unsigned int Mesh::getIndexBufSize() {
+    return getNumIndices() * sizeof(float);
 }
 
 void * Mesh::getIndexBuf() {
     if (mTriangleFaces.empty()) return NULL;
     // Attention: 
     return &mTriangleFaces[0];
+}
+
+void Mesh::dumpVertexBuf(int groupSize) {
+    unsigned int bufSize = getVertexBufSize();
+    float *buf = (float *)getVertexBuf();
+    int num = bufSize/sizeof(float);
+    char format[1024];
+
+    if (num)
+        PRINT("************ start Mesh::dumpVertexBuf **********");
+    for (int i=0; i<num; i+=groupSize) {
+        int n = sprintf(format, "%8p:", buf + i);
+        int left = (i+groupSize <= num) ? groupSize : num - i;
+        for (int k=0; k<left; k++) {
+            n += sprintf(format + n, " %+08.6f", buf[i+k]);
+        }
+        PRINT("%s", format);
+    }
+    if (num)
+        PRINT("************ end Mesh::dumpVertexBuf ************");
+}
+
+void Mesh::dumpIndexBuf(int groupSize) {
+    unsigned int bufSize = getIndexBufSize();
+    int *buf = (int *)getIndexBuf();
+    // Attention: supports only integer type indices
+    int num = bufSize/sizeof(int);
+    char format[1024];
+
+    if (num)
+        PRINT("************ start Mesh::dumpIndexBuf **********");
+    for (int i=0; i<num; i+=groupSize) {
+        int n = sprintf(format, "%8p:", buf + i);
+        int left = (i+groupSize <= num) ? groupSize : num - i;
+        for (int k=0; k<left; k++) {
+            n += sprintf(format + n, " %8u", buf[i+k]);
+        }
+        PRINT("%s", format);
+    }
+    if (num)
+        PRINT("************ end Mesh::dumpIndexBuf ************");
 }
 
 void Node::addChild(shared_ptr<Node> node) {

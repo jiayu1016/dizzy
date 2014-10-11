@@ -156,12 +156,17 @@ public:
     unsigned int    getNumColorChannels() const;
     unsigned int    getNumVertices() const;
     unsigned int    getNumFaces() const;
+    unsigned int    getNumIndices();
     unsigned int    getVertexNumComponent();
     unsigned int    getVertexBufSize();
     unsigned int    getVertexBufStride();
     void *          getVertexBuf();
     unsigned int    getIndexBufSize();
     void *          getIndexBuf();
+
+    // default 3 float a float veretex
+    void            dumpVertexBuf(int groupSize = 3);
+    void            dumpIndexBuf(int groupSize = 3);
 
     friend class AIAdapter;
     friend class Render;

@@ -100,6 +100,11 @@
 			<type>2</type>
 			<locationURI>ROOT_DIR/src/jni</locationURI>
 		</link>
+		<link>
+			<name>include</name>
+			<type>2</type>
+			<locationURI>ROOT_DIR/include</locationURI>
+		</link>
 	</linkedResources>
 	<variableList>
 		<variable>
