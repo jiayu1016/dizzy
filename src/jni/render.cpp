@@ -8,6 +8,21 @@ using namespace std;
 
 namespace dzy {
 
+const char* glStatusStr() {
+    GLenum error = glGetError();
+
+    switch (error) {
+        case GL_NO_ERROR: return "GL_NO_ERROR";
+        case GL_INVALID_ENUM: return "GL_INVALID_ENUM";
+        case GL_INVALID_VALUE: return "GL_INVALID_VALUE";
+        case GL_INVALID_OPERATION: return "GL_INVALID_OPERATION";
+        case GL_INVALID_FRAMEBUFFER_OPERATION: return "GL_INVALID_FRAMEBUFFER_OPERATION";
+        case GL_OUT_OF_MEMORY: return "GL_OUT_OF_MEMORY";
+        default: return "UNKNOWN_GL_ERROR";
+    }
+}
+
+/*
 static const char VERTEX_SHADER[] =
     "#version 300 es\n"
     "in vec4 aPos;\n"
@@ -15,7 +30,7 @@ static const char VERTEX_SHADER[] =
     "uniform mat4 uMVP;\n"
     "out vec4 vColor;\n"
     "void main() {\n"
-    "    gl_Position = uMVP * aPos;\n"
+    "    gl_Position = uMVP * aPos\n"
     "    vColor = aColor;\n"
     "}\n";
 
@@ -26,6 +41,22 @@ static const char FRAGMENT_SHADER[] =
     "out vec4 outColor;\n"
     "void main() {\n"
     "    outColor = vColor;\n"
+    "}\n";
+*/
+
+static const char VERTEX_SHADER[] =
+    "#version 300 es\n"
+    "in vec3 aPos;\n"
+    "void main() {\n"
+    "    gl_Position = vec4(aPos, 1.0);\n"
+    "}\n";
+
+static const char FRAGMENT_SHADER[] =
+    "#version 300 es\n"
+    "precision mediump float;\n"
+    "out vec4 outColor;\n"
+    "void main() {\n"
+    "    outColor = vec4(1.0, 0.0, 0.0, 1.0);\n"
     "}\n";
 
 Shader::Shader(GLenum type)
@@ -77,6 +108,10 @@ Program::Program()
 
 Program::~Program() {
     if (mProgramId) glDeleteProgram(mProgramId);
+    if (!mVertexBOs.empty())
+        glDeleteBuffers(mVertexBOs.size(), &mVertexBOs[0]);
+    if (!mIndexBOs.empty())
+        glDeleteBuffers(mIndexBOs.size(), &mIndexBOs[0]);
 }
 
 void Program::use() {
@@ -128,6 +163,7 @@ bool Program::load(std::shared_ptr<Scene> scene) {
         mLocations["aPos"] = attribLoc;
     }
     if (scene->atLeastOneMeshHasVertexColor()) {
+        ALOGD("at lease one mesh has vertex color");
         GLint attribLoc = glGetAttribLocation(mProgramId, "aColor");
         if (attribLoc == -1) {
             ALOGE("shader not compatible with scene: vertex color");
@@ -136,12 +172,14 @@ bool Program::load(std::shared_ptr<Scene> scene) {
         mLocations["aColor"] = attribLoc;
     }
 
+    /*
     GLint mvpLoc = glGetUniformLocation(mProgramId, "uMVP");
     if (mvpLoc == -1) {
         ALOGE("shader not compatible with scene: mvp matrix");
         return false;
     }
     mLocations["aColor"] = mvpLoc;
+    */
 
     // TODO: check other attributes
 
@@ -154,11 +192,15 @@ bool Program::load(std::shared_ptr<Scene> scene) {
         glGenBuffers(1, &mVertexBOs[i]);
         glGenBuffers(1, &mIndexBOs[i]);
         glBindBuffer(GL_ARRAY_BUFFER, mVertexBOs[i]);
+        ALOGD("glBindBuffer status: %s", glStatusStr());
         glBufferData(GL_ARRAY_BUFFER, mesh->getVertexBufSize(),
             mesh->getVertexBuf(), GL_STATIC_DRAW);
+        ALOGD("glBufferData status: %s", glStatusStr());
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBOs[i]);
+        ALOGD("glBindBuffer status: %s", glStatusStr());
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->getIndexBufSize(),
             mesh->getIndexBuf(), GL_STATIC_DRAW);
+        ALOGD("glBufferData status: %s", glStatusStr());
     }
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -203,6 +245,9 @@ bool Render::init(shared_ptr<Scene> scene) {
 
     glClearColor(0.6f, 0.7f, 1.0f, 1.0f);
 
+    // TODO: remove hard coded dimension
+    glViewport(0, 0, 720, 1080);
+
     return true;
 }
 
@@ -213,6 +258,7 @@ bool Render::release() {
 bool Render::drawScene(shared_ptr<Scene> scene) {
     NodeTree &tree = scene->getNodeTree();
     using namespace std::placeholders;
+    mProgram->use();
     tree.dfsTraversal(scene, bind(&Render::drawNode, this, _1, _2));
     return true;
 }
@@ -229,12 +275,14 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
 void Render::drawMesh(shared_ptr<Mesh> mesh, int meshIdx) {
     ALOGD("meshIdx: %d, mesh name: %s", meshIdx, mesh->mName.c_str());
     glClear(GL_COLOR_BUFFER_BIT);
-    mProgram->use();
+
     mProgram->bindBufferObjects(meshIdx);
+    ALOGD("glBindBuffer status: %s", glStatusStr());
     if (mesh->hasPositions()) {
         GLint posLoc = mProgram->getLocation("aPos");
         ALOGD("aPos attrib loc: %d", posLoc);
         glEnableVertexAttribArray(posLoc);
+        ALOGD("glEnableVertexAttribArray posLoc status: %s", glStatusStr());
         ALOGD("num vertices: %d, num components: %d, stride: %d",
             mesh->getNumVertices(),
             mesh->getVertexNumComponent(),
@@ -242,25 +290,28 @@ void Render::drawMesh(shared_ptr<Mesh> mesh, int meshIdx) {
         mesh->dumpVertexBuf();
         glVertexAttribPointer(
             posLoc,
-            mesh->getVertexNumComponent(),  // size 
-            GL_FLOAT,                       // type 
-            GL_FALSE,                       // normalized? 
-            mesh->getVertexBufStride(),     // stride 
-            (void*)0                        // array buffer offset 
+            mesh->getVertexNumComponent(),  // size
+            GL_FLOAT,                       // type
+            GL_FALSE,                       // normalized
+            0,                              // stride, 0 means tightly packed
+            (void*)0                        // offset
         );
+        ALOGD("glVertexAttribPointer posLoc status: %s", glStatusStr());
     }
     if (mesh->hasVertexColors()) {
         glEnableVertexAttribArray(mProgram->getLocation("aColor"));
     }
     // TODO: check other attributes in mesh
 
-    ALOGD("num indices: %d", mesh->getNumIndices());
+    ALOGD("num indices: %d, indices buf size: %d",
+        mesh->getNumIndices(), mesh->getIndexBufSize());
     mesh->dumpIndexBuf();
     // support only GL_UNSIGNED_INT right now
     glDrawElements(GL_TRIANGLES,            // mode
         mesh->getNumIndices(),              // indices count
         GL_UNSIGNED_INT,                    // type
-        mesh->getIndexBuf());
+        (void *)0);                         // offset
+    ALOGD("glDrawElements status: %s", glStatusStr());
 
     // restore
     if (mesh->hasPositions())

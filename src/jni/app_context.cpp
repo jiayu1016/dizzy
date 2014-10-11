@@ -104,8 +104,7 @@ bool AppContext::initDisplay() {
     mNativeApp->drawScene(mNativeApp->getCurrentScene());
 }
 
-const char* AppContext::eglStatusStr() const
-{
+const char* AppContext::eglStatusStr() const {
     EGLint error = eglGetError();
 
     switch (error) {

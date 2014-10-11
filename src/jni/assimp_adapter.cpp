@@ -149,6 +149,12 @@ shared_ptr<Mesh> AIAdapter::typeCast(aiMesh *mesh) {
 
     // Attention: rely on continuous memory layout of vertices in assimp
     if (mesh->HasPositions()) {
+        // hack for showing first scene before mvp ready
+        for (int i=0; i<me->mNumVertices; i++) {
+            mesh->mVertices[i].x /= 100;
+            mesh->mVertices[i].y /= 100;
+            mesh->mVertices[i].z /= 100;
+        }
         me->mVertices.set(MeshData::MESH_DATA_TYPE_FLOAT, 3, 3 * sizeof(float),
             me->mNumVertices, reinterpret_cast<unsigned char*>(mesh->mVertices));
     }

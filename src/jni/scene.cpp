@@ -43,6 +43,7 @@ void MeshData::set(MeshDataType type, unsigned int numComponents,
     mStride = stride;
     mBuffer.reset(newBuf, std::default_delete<unsigned char[]>());
 }
+
 void * MeshData::getBuf() {
     return static_cast<void *>(mBuffer.get());
 }

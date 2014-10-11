@@ -9,6 +9,8 @@
 
 namespace dzy {
 
+extern const char* glStatusStr();
+
 class Shader {
 public:
     Shader(GLenum type);
