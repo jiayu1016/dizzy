@@ -311,7 +311,7 @@ void NodeTree::dfsTraversal(shared_ptr<Scene> scene, shared_ptr<Node> node, Visi
 }
 
 MatrixStack::MatrixStack() {
-    //mProduct.push(ndk_helper::Mat4::Identity());
+    mProduct.push(ndk_helper::Mat4::Identity());
 }
 
 void MatrixStack::push(ndk_helper::Mat4 &current) {
