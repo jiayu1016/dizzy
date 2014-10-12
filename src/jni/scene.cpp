@@ -59,9 +59,9 @@ Camera::Camera()
 }
 
 Camera::Camera(
-    ndk_helper::Vec3    position,
-    ndk_helper::Vec3    up,
-    ndk_helper::Vec3    lookAt,
+    glm::vec3           position,
+    glm::vec3           up,
+    glm::vec3           lookAt,
     float               horizontalFOV,
     float               clipPlaneNear,
     float               clipPlaneFar,
@@ -74,6 +74,31 @@ Camera::Camera(
     , mClipPlaneFar     (clipPlaneFar)
     , mAspect           (aspect) {
 
+}
+
+glm::mat4 Camera::getViewMatrix() {
+    //TODO: check parameters
+    dumpParameter();
+    //return glm::lookAt(mPosition, mLookAt, mUp);
+    return glm::lookAt(
+        glm::vec3(4.f, 3.f, 3.f),
+        mLookAt, mUp);
+}
+
+glm::mat4 Camera::getProjMatrix() {
+    //return glm::perspective(mHorizontalFOV, mAspect, mClipPlaneNear, mClipPlaneFar);
+    return glm::perspective(mHorizontalFOV, mAspect, mClipPlaneNear, mClipPlaneFar);
+}
+
+void Camera::dumpParameter() {
+    PRINT("position: (%+08.6f, %+08.6f, %+08.6f)",
+        mPosition.x, mPosition.y, mPosition.z);
+    PRINT("up: (%+08.6f, %+08.6f, %+08.6f)",
+        mUp.x, mUp.y, mUp.z);
+    PRINT("at: (%+08.6f, %+08.6f, %+08.6f)",
+        mLookAt.x, mLookAt.y, mLookAt.z);
+    PRINT("(fov, aspect, near, far): (%+08.6f, %+08.6f, %+08.6f, %+08.6f)",
+        mHorizontalFOV, mAspect, mClipPlaneNear, mClipPlaneFar);
 }
 
 Light::Light()
@@ -100,10 +125,6 @@ Light::Light(
     , mAngleOuterCone       (angleOuterCone) {
 } 
 
-ndk_helper::Mat4 getMatrix() {
-    return ndk_helper::Mat4();
-};
-
 Mesh::Mesh()
     : mPrimitiveType    (PRIMITIVE_TYPE_TRIANGLES)
     , mNumVertices      (0)
@@ -129,6 +150,8 @@ bool Mesh::hasTangentsAndBitangents() const {
 }
 
 bool Mesh::hasVertexColors(unsigned int index) const {
+    // FIXME: debug purpose
+    return true;
     if( index >= MAX_COLOR_SETS)
         return false;
     else
@@ -188,7 +211,7 @@ unsigned int Mesh::getNumIndices() {
 }
 
 unsigned int Mesh::getIndexBufSize() {
-    return getNumIndices() * sizeof(float);
+    return getNumIndices() * sizeof(unsigned int);
 }
 
 void * Mesh::getIndexBuf() {
@@ -219,9 +242,9 @@ void Mesh::dumpVertexBuf(int groupSize) {
 
 void Mesh::dumpIndexBuf(int groupSize) {
     unsigned int bufSize = getIndexBufSize();
-    int *buf = (int *)getIndexBuf();
+    unsigned short *buf = (unsigned short *)getIndexBuf();
     // Attention: supports only integer type indices
-    int num = bufSize/sizeof(int);
+    int num = bufSize/sizeof(unsigned short);
     char format[1024];
 
     if (num)
@@ -299,7 +322,6 @@ void NodeTree::dfsTraversal(shared_ptr<Scene> scene, VisitFunc visit) {
 }
 
 void NodeTree::dfsTraversal(shared_ptr<Scene> scene, shared_ptr<Node> node, VisitFunc visit) {
-    node->mTransformation.Dump();
     scene->mNodeDepth++;
     scene->mMatrixStack.push(node->mTransformation);
     visit(scene, node);
@@ -311,11 +333,11 @@ void NodeTree::dfsTraversal(shared_ptr<Scene> scene, shared_ptr<Node> node, Visi
 }
 
 MatrixStack::MatrixStack() {
-    mProduct.push(ndk_helper::Mat4::Identity());
+    mProduct.push(glm::mat4(1.0));
 }
 
-void MatrixStack::push(ndk_helper::Mat4 &current) {
-    ndk_helper::Mat4 product = top();
+void MatrixStack::push(glm::mat4 &current) {
+    glm::mat4 product = top();
     mProduct.push(current * product);
 }
 
@@ -323,7 +345,7 @@ void MatrixStack::pop() {
     mProduct.pop();
 }
 
-ndk_helper::Mat4 MatrixStack::top() {
+glm::mat4 MatrixStack::top() {
     return mProduct.top();
 }
 
@@ -465,6 +487,13 @@ bool Scene::listAssetFiles(shared_ptr<AppContext> appContext,
     AAssetDir_close(assetDir);
 
     return true;
+}
+
+shared_ptr<Camera> Scene::getActiveCamera() {
+    // TODO: support muliple cameras in a scene
+    if (hasCameras())
+        return mCameras[1];
+    return NULL;
 }
 
 bool Scene::atLeastOneMeshHasVertexPosition() {

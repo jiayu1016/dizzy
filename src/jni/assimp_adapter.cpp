@@ -172,9 +172,9 @@ shared_ptr<Mesh> AIAdapter::typeCast(aiMesh *mesh) {
         for (int i=0; i<me->mNumFaces; i++) {
             // Attention: support triange faces only
             assert(mesh->mFaces[i].mNumIndices == 3);
-            // Attention: need continuous memory from assimp, keep an eye on this
-            memcpy(me->mTriangleFaces[i].mIndices,
-                mesh->mFaces[i].mIndices, 3 * sizeof(unsigned int));
+            me->mTriangleFaces[i].mIndices[0] = mesh->mFaces[i].mIndices[0];
+            me->mTriangleFaces[i].mIndices[1] = mesh->mFaces[i].mIndices[1];
+            me->mTriangleFaces[i].mIndices[2] = mesh->mFaces[i].mIndices[2];
         }
     }
 
@@ -196,20 +196,20 @@ shared_ptr<Node> AIAdapter::typeCast(aiNode *node) {
     return n;
 }
 
-ndk_helper::Vec3 AIAdapter::typeCast(const aiVector3D &vec3d) {
-    return ndk_helper::Vec3(vec3d.x, vec3d.y, vec3d.z);
+glm::vec3 AIAdapter::typeCast(const aiVector3D &vec3d) {
+    return glm::vec3(vec3d.x, vec3d.y, vec3d.z);
 }
 
-ndk_helper::Vec3 AIAdapter::typeCast(const aiColor3D &color3d) {
-    return ndk_helper::Vec3(color3d.r, color3d.g, color3d.b);
+glm::vec3 AIAdapter::typeCast(const aiColor3D &color3d) {
+    return glm::vec3(color3d.r, color3d.g, color3d.b);
 }
 
-ndk_helper::Vec4 AIAdapter::typeCast(const aiColor4D &color4d) {
-    return ndk_helper::Vec4(color4d.r, color4d.g, color4d.b, color4d.a);
+glm::vec4 AIAdapter::typeCast(const aiColor4D &color4d) {
+    return glm::vec4(color4d.r, color4d.g, color4d.b, color4d.a);
 }
 
-ndk_helper::Mat4 AIAdapter::typeCast(const aiMatrix4x4 &mat4) {
-    ndk_helper::Mat4 m;
+glm::mat4 AIAdapter::typeCast(const aiMatrix4x4 &mat4) {
+    glm::mat4 m;
     memcpy(&m, &mat4, sizeof(aiMatrix4x4));
     return m;
 }

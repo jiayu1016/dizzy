@@ -9,29 +9,14 @@ using namespace std;
 
 namespace dzy {
 
-const char* glStatusStr() {
-    GLenum error = glGetError();
-
-    switch (error) {
-        case GL_NO_ERROR: return "GL_NO_ERROR";
-        case GL_INVALID_ENUM: return "GL_INVALID_ENUM";
-        case GL_INVALID_VALUE: return "GL_INVALID_VALUE";
-        case GL_INVALID_OPERATION: return "GL_INVALID_OPERATION";
-        case GL_INVALID_FRAMEBUFFER_OPERATION: return "GL_INVALID_FRAMEBUFFER_OPERATION";
-        case GL_OUT_OF_MEMORY: return "GL_OUT_OF_MEMORY";
-        default: return "UNKNOWN_GL_ERROR";
-    }
-}
-
-/*
 static const char VERTEX_SHADER[] =
     "#version 300 es\n"
-    "in vec4 aPos;\n"
+    "in vec3 aPos;\n"
     "in vec4 aColor;\n"
     "uniform mat4 uMVP;\n"
     "out vec4 vColor;\n"
     "void main() {\n"
-    "    gl_Position = uMVP * aPos\n"
+    "    gl_Position = uMVP * vec4(aPos, 1.0);\n"
     "    vColor = aColor;\n"
     "}\n";
 
@@ -42,23 +27,6 @@ static const char FRAGMENT_SHADER[] =
     "out vec4 outColor;\n"
     "void main() {\n"
     "    outColor = vColor;\n"
-    "}\n";
-*/
-
-static const char VERTEX_SHADER[] =
-    "#version 300 es\n"
-    "in vec3 aPos;\n"
-    "uniform mat4 uMVP;\n"
-    "void main() {\n"
-    "    gl_Position = uMVP * vec4(aPos, 1.0);\n"
-    "}\n";
-
-static const char FRAGMENT_SHADER[] =
-    "#version 300 es\n"
-    "precision mediump float;\n"
-    "out vec4 outColor;\n"
-    "void main() {\n"
-    "    outColor = vec4(1.0, 0.0, 0.0, 1.0);\n"
     "}\n";
 
 Shader::Shader(GLenum type)
@@ -239,6 +207,9 @@ bool Render::init(shared_ptr<Scene> scene) {
     }
     mProgram = program;
 
+    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
     glClearColor(0.6f, 0.7f, 1.0f, 1.0f);
 
     shared_ptr<AppContext> appContext(getAppContext());
@@ -266,6 +237,7 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
     }
 
     mProgram->use();
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
     NodeTree &tree = scene->getNodeTree();
     using namespace std::placeholders;
@@ -276,11 +248,16 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
 }
 
 void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
-    ALOGD("Node %s has %d meshes, depth: %d",
-        node->mName.c_str(), node->mMeshes.size(), scene->mNodeDepth);
-    ndk_helper::Mat4 matrix = scene->mMatrixStack.top();
-    matrix.Dump();
-    glUniformMatrix4fv(mProgram->getLocation("uMVP"), 1, GL_FALSE, matrix.Ptr());
+    glm::mat4 world = scene->mMatrixStack.top();
+    glm::mat4 mvp = world;
+
+    if (scene->hasCameras()) {
+        glm::mat4 view = scene->getActiveCamera()->getViewMatrix();
+        glm::mat4 proj = scene->getActiveCamera()->getProjMatrix();
+        mvp = proj * view * world;
+    }
+
+    glUniformMatrix4fv(mProgram->getLocation("uMVP"), 1, GL_FALSE, glm::value_ptr(mvp));
     for (size_t i=0; i<node->mMeshes.size(); i++) {
         int meshIdx = node->mMeshes[i];
         shared_ptr<Mesh> mesh(scene->mMeshes[meshIdx]);
@@ -290,7 +267,6 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
 
 void Render::drawMesh(shared_ptr<Mesh> mesh, int meshIdx) {
     ALOGD("meshIdx: %d, mesh name: %s", meshIdx, mesh->mName.c_str());
-    glClear(GL_COLOR_BUFFER_BIT);
 
     mProgram->bindBufferObjects(meshIdx);
     if (mesh->hasPositions()) {
@@ -306,17 +282,54 @@ void Render::drawMesh(shared_ptr<Mesh> mesh, int meshIdx) {
             mesh->getVertexNumComponent(),  // size
             GL_FLOAT,                       // type
             GL_FALSE,                       // normalized
-            0,                              // stride, 0 means tightly packed
+            mesh->getVertexBufStride(),     // stride, 0 means tightly packed
             (void*)0                        // offset
         );
     }
     if (mesh->hasVertexColors()) {
-        glEnableVertexAttribArray(mProgram->getLocation("aColor"));
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        GLint colorLoc = mProgram->getLocation("aColor");
+        glEnableVertexAttribArray(colorLoc);
+        float fakeColor[24 * 4] = {
+            1.0, 0.0, 0.0, 1.0,
+            0.0, 1.0, 0.0, 1.0,
+            0.0, 0.0, 1.0, 1.0,
+            1.0, 1.0, 0.0, 1.0,
+            0.0, 1.0, 1.0, 1.0,
+            1.0, 0.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            0.5, 0.0, 0.0, 1.0,
+            0.0, 0.5, 0.0, 1.0,
+            0.0, 0.0, 0.5, 1.0,
+            0.5, 0.5, 0.0, 1.0,
+            0.0, 0.5, 0.5, 1.0,
+            0.5, 0.0, 0.5, 1.0,
+            0.5, 0.5, 0.5, 1.0,
+            1.0, 0.0, 0.0, 1.0,
+            0.0, 1.0, 0.0, 1.0,
+            0.0, 0.0, 1.0, 1.0,
+            1.0, 1.0, 0.0, 1.0,
+            0.0, 1.0, 1.0, 1.0,
+            1.0, 0.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            0.5, 0.0, 0.0, 1.0,
+            0.0, 0.5, 0.0, 1.0,
+            0.0, 0.0, 0.5, 1.0,
+        };
+        glVertexAttribPointer(
+            colorLoc,
+            4,                              // size
+            GL_FLOAT,                       // type
+            GL_FALSE,                       // normalized
+            0,                              // stride, 0 means tightly packed
+            fakeColor                       // buffer pointer
+        );
+
     }
     // TODO: check other attributes in mesh
 
-    ALOGD("num indices: %d, indices buf size: %d",
-        mesh->getNumIndices(), mesh->getIndexBufSize());
+    //ALOGD("num indices: %d, indices buf size: %d",
+    //    mesh->getNumIndices(), mesh->getIndexBufSize());
     //mesh->dumpIndexBuf();
     // support only GL_UNSIGNED_INT right now
     glDrawElements(GL_TRIANGLES,            // mode
@@ -340,9 +353,29 @@ shared_ptr<AppContext> Render::getAppContext() {
     return mAppContext.lock();
 }
 
+void Render::dumpMat4(const glm::mat4& mat4) {
+    float const * buf = glm::value_ptr(mat4);
+    for (int i=0; i<16; i+=4)
+        PRINT(" %+08.6f %+08.6f %+08.6f %+08.6f",
+            buf[i], buf[i+1], buf[i+2], buf[i+3]);
+}
+
+const char* Render::glStatusStr() {
+    GLenum error = glGetError();
+
+    switch (error) {
+        case GL_NO_ERROR: return "GL_NO_ERROR";
+        case GL_INVALID_ENUM: return "GL_INVALID_ENUM";
+        case GL_INVALID_VALUE: return "GL_INVALID_VALUE";
+        case GL_INVALID_OPERATION: return "GL_INVALID_OPERATION";
+        case GL_INVALID_FRAMEBUFFER_OPERATION: return "GL_INVALID_FRAMEBUFFER_OPERATION";
+        case GL_OUT_OF_MEMORY: return "GL_OUT_OF_MEMORY";
+        default: return "UNKNOWN_GL_ERROR";
+    }
+}
+
 void Render::setAppContext(shared_ptr<AppContext> appContext) {
     mAppContext = appContext;
 }
-
 
 } // namespace dzy

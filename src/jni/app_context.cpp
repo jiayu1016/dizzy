@@ -98,6 +98,11 @@ bool AppContext::initDisplay() {
         return false;
     }
 
+    ALOGD("%s", glGetString(GL_VENDOR));
+    ALOGD("%s", glGetString(GL_RENDERER));
+    ALOGD("%s", glGetString(GL_VERSION));
+    ALOGD("%s", glGetString(GL_EXTENSIONS));
+
     EGLint w, h;
     eglQuerySurface(display, surface, EGL_WIDTH, &w);
     eglQuerySurface(display, surface, EGL_HEIGHT, &h);

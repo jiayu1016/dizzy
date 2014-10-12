@@ -10,32 +10,39 @@
 #include <stack>
 #include <functional>
 #include <algorithm>
-#include <vecmath.h>
 #include "utils.h"
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
 
 namespace dzy {
 
 class AIAdapter;
+class Scene;
+class Render;
 
 class Camera {
 public:
     Camera();
     Camera(
-        ndk_helper::Vec3    position,
-        ndk_helper::Vec3    up,
-        ndk_helper::Vec3    lookAt,
+        glm::vec3           position,
+        glm::vec3           up,
+        glm::vec3           lookAt,
         float               horizontalFOV,
         float               clipPlaneNear,
         float               clipPlaneFar,
         float               aspect);
-    ndk_helper::Mat4 getMatrix();
 
+    glm::mat4   getViewMatrix();
+    glm::mat4   getProjMatrix();
+    void        dumpParameter();
+
+    friend class Render;
     friend class AIAdapter;
 private:
     std::string         mName;
-    ndk_helper::Vec3    mPosition;
-    ndk_helper::Vec3    mUp;
-    ndk_helper::Vec3    mLookAt;
+    glm::vec3           mPosition;
+    glm::vec3           mUp;
+    glm::vec3           mLookAt;
     float               mHorizontalFOV;
     float               mClipPlaneNear;
     float               mClipPlaneFar;
@@ -64,14 +71,14 @@ public:
 private:
     std::string         mName;
     LightSourceType     mType;
-    ndk_helper::Vec3    mPosition;
-    ndk_helper::Vec3    mDirection;
+    glm::vec3           mPosition;
+    glm::vec3           mDirection;
     float               mAttenuationConstant;
     float               mAttenuationLinear;
     float               mAttenuationQuadratic;
-    ndk_helper::Vec3    mColorDiffuse;
-    ndk_helper::Vec3    mColorSpecular;
-    ndk_helper::Vec3    mColorAmbient;
+    glm::vec3           mColorDiffuse;
+    glm::vec3           mColorSpecular;
+    glm::vec3           mColorAmbient;
     float               mAngleInnerCone;
     float               mAngleOuterCone;
 
@@ -208,14 +215,13 @@ public:
 private:
 
     std::string                             mName;
-    ndk_helper::Mat4                        mTransformation;
+    glm::mat4                               mTransformation;
     std::weak_ptr<Node>                     mParent;
     std::vector<std::shared_ptr<Node> >     mChildren;
     std::vector<int>                        mMeshes;
 
 };
 
-class Scene;
 class NodeTree {
 public:
     typedef std::function<void(std::shared_ptr<Scene>, std::shared_ptr<Node>)> VisitFunc;
@@ -234,12 +240,12 @@ private:
 class MatrixStack {
 public:
     MatrixStack();
-    void push(ndk_helper::Mat4 &matrix);
+    void push(glm::mat4 &matrix);
     void pop();
-    ndk_helper::Mat4 top();
+    glm::mat4 top();
 
 private:
-    std::stack<ndk_helper::Mat4> mProduct;
+    std::stack<glm::mat4> mProduct;
 };
 
 class SceneManager;
@@ -259,13 +265,15 @@ public:
     virtual bool listAssetFiles(std::shared_ptr<AppContext> appContext,
         const std::string &dir);
 
-    inline size_t getNumCameras() { return mCameras.size(); }
-    inline size_t getNumLights() { return mLights.size(); }
-    inline size_t getNumTextures() { return mTextures.size(); }
-    inline size_t getNumAnimations() { return mAnimations.size(); }
-    inline size_t getNumMaterials() { return mMaterials.size(); }
-    inline size_t getNumMeshes() { return mMeshes.size(); }
+    inline unsigned int getNumCameras() { return mCameras.size(); }
+    inline unsigned int getNumLights() { return mLights.size(); }
+    inline unsigned int getNumTextures() { return mTextures.size(); }
+    inline unsigned int getNumAnimations() { return mAnimations.size(); }
+    inline unsigned int getNumMaterials() { return mMaterials.size(); }
+    inline unsigned int getNumMeshes() { return mMeshes.size(); }
     //inline size_t getNumNodes() { return mNodeTree.getNumNodes(); }
+    inline bool         hasCameras() { return getNumCameras() > 0; };
+    std::shared_ptr<Camera> getActiveCamera();
 
     bool atLeastOneMeshHasVertexPosition();
     bool atLeastOneMeshHasVertexColor();
