@@ -32,6 +32,7 @@ public:
         float               clipPlaneFar,
         float               aspect);
 
+    void        setAspect(float aspect);
     glm::mat4   getViewMatrix();
     glm::mat4   getProjMatrix();
     void        dumpParameter();

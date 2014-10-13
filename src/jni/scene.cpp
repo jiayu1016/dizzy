@@ -76,6 +76,10 @@ Camera::Camera(
 
 }
 
+void Camera::setAspect(float aspect) {
+    mAspect = aspect;
+}
+
 glm::mat4 Camera::getViewMatrix() {
     //dumpParameter();
     return glm::lookAt(mPosition, mLookAt, mUp);

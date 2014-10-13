@@ -251,14 +251,20 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
     glm::mat4 world = scene->mMatrixStack.top();
     glm::mat4 mvp = world;
 
-    if (scene->hasCameras()) {
+    shared_ptr<Camera> activeCamera(scene->getActiveCamera());
+    if (activeCamera) {
+        //override the aspect read from model
+        float surfaceWidth = getAppContext()->getSurfaceWidth();
+        float surfaceHeight = getAppContext()->getSurfaceHeight();
+        activeCamera->setAspect(surfaceWidth/surfaceHeight);
+
         // TODO: find a way to determine camera position, lookat & up vector
-        //glm::mat4 view = scene->getActiveCamera()->getViewMatrix();
+        //glm::mat4 view = activeCamera->getViewMatrix();
         glm::mat4 view = glm::lookAt(
             glm::vec3(4.f, 3.f, 3.f),
             glm::vec3(0.0f, 0.0f, 0.0f),
             glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::mat4 proj = scene->getActiveCamera()->getProjMatrix();
+        glm::mat4 proj = activeCamera->getProjMatrix();
         mvp = proj * view * world;
     }
 
