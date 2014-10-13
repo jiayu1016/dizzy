@@ -77,16 +77,11 @@ Camera::Camera(
 }
 
 glm::mat4 Camera::getViewMatrix() {
-    //TODO: check parameters
-    dumpParameter();
-    //return glm::lookAt(mPosition, mLookAt, mUp);
-    return glm::lookAt(
-        glm::vec3(4.f, 3.f, 3.f),
-        mLookAt, mUp);
+    //dumpParameter();
+    return glm::lookAt(mPosition, mLookAt, mUp);
 }
 
 glm::mat4 Camera::getProjMatrix() {
-    //return glm::perspective(mHorizontalFOV, mAspect, mClipPlaneNear, mClipPlaneFar);
     return glm::perspective(mHorizontalFOV, mAspect, mClipPlaneNear, mClipPlaneFar);
 }
 
@@ -492,7 +487,7 @@ bool Scene::listAssetFiles(shared_ptr<AppContext> appContext,
 shared_ptr<Camera> Scene::getActiveCamera() {
     // TODO: support muliple cameras in a scene
     if (hasCameras())
-        return mCameras[1];
+        return mCameras[0];
     return NULL;
 }
 

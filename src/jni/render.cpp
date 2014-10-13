@@ -252,7 +252,12 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
     glm::mat4 mvp = world;
 
     if (scene->hasCameras()) {
-        glm::mat4 view = scene->getActiveCamera()->getViewMatrix();
+        // TODO: find a way to determine camera position, lookat & up vector
+        //glm::mat4 view = scene->getActiveCamera()->getViewMatrix();
+        glm::mat4 view = glm::lookAt(
+            glm::vec3(4.f, 3.f, 3.f),
+            glm::vec3(0.0f, 0.0f, 0.0f),
+            glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 proj = scene->getActiveCamera()->getProjMatrix();
         mvp = proj * view * world;
     }
