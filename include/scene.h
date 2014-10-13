@@ -84,10 +84,26 @@ private:
     float               mAngleOuterCone;
 
 };
+
 class Texture {
 };
+
 class Material {
+public:
+    enum MaterialType {
+        COLOR_DIFFUSE,
+        COLOR_SPECULAR,
+        COLOR_AMBIENT,
+    };
+    bool get(MaterialType type, glm::vec3& color);
+
+    friend class AIAdapter;
+private:
+    glm::vec3   mDiffuse;
+    glm::vec3   mSpecular;
+    glm::vec3   mAmbient;
 };
+
 class Animation {
 };
 class TriangleFace {
@@ -273,7 +289,6 @@ public:
     inline unsigned int getNumMaterials() { return mMaterials.size(); }
     inline unsigned int getNumMeshes() { return mMeshes.size(); }
     //inline size_t getNumNodes() { return mNodeTree.getNumNodes(); }
-    inline bool         hasCameras() { return getNumCameras() > 0; };
     std::shared_ptr<Camera> getActiveCamera();
 
     bool atLeastOneMeshHasVertexPosition();

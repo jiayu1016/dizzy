@@ -99,6 +99,13 @@ shared_ptr<Animation> AIAdapter::typeCast(aiAnimation *animation) {
 
 shared_ptr<Material> AIAdapter::typeCast(aiMaterial *material) {
     shared_ptr<Material> ma(new Material);
+    aiColor3D diffuse, specular, ambient;
+    material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
+    material->Get(AI_MATKEY_COLOR_SPECULAR, specular);
+    material->Get(AI_MATKEY_COLOR_AMBIENT, ambient);
+    ma->mDiffuse = typeCast(diffuse);
+    ma->mSpecular = typeCast(specular);
+    ma->mAmbient = typeCast(ambient);
     return ma;
 }
 
@@ -178,7 +185,6 @@ shared_ptr<Mesh> AIAdapter::typeCast(aiMesh *mesh) {
         }
     }
 
-    // TODO: rethink the material index
     me->mMaterialIndex = mesh->mMaterialIndex;
 
     return me;

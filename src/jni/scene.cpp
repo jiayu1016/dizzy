@@ -124,6 +124,21 @@ Light::Light(
     , mAngleOuterCone       (angleOuterCone) {
 } 
 
+bool Material::get(MaterialType type, glm::vec3& color) {
+    switch(type) {
+    case COLOR_DIFFUSE:
+        color = mDiffuse;
+        break;
+    case COLOR_SPECULAR:
+        color = mSpecular;
+        break;
+    case COLOR_AMBIENT:
+        color = mAmbient;
+        break;
+    }
+    return true;
+}
+
 Mesh::Mesh()
     : mPrimitiveType    (PRIMITIVE_TYPE_TRIANGLES)
     , mNumVertices      (0)
@@ -149,8 +164,6 @@ bool Mesh::hasTangentsAndBitangents() const {
 }
 
 bool Mesh::hasVertexColors(unsigned int index) const {
-    // FIXME: debug purpose
-    return true;
     if( index >= MAX_COLOR_SETS)
         return false;
     else
@@ -490,7 +503,7 @@ bool Scene::listAssetFiles(shared_ptr<AppContext> appContext,
 
 shared_ptr<Camera> Scene::getActiveCamera() {
     // TODO: support muliple cameras in a scene
-    if (hasCameras())
+    if (getNumCameras() > 0)
         return mCameras[0];
     return NULL;
 }

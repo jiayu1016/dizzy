@@ -73,9 +73,11 @@ public:
     bool release();
     bool drawScene(std::shared_ptr<Scene> scene);
     void drawNode(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node);    
-    void drawMesh(std::shared_ptr<Mesh> mesh, int idxInMesh);
+    void drawMesh(std::shared_ptr<Scene> scene, int meshIdx);
     std::shared_ptr<AppContext> getAppContext();
-    static void dumpMat4(const glm::mat4& mat4);
+    static void dump(const char *msg, const glm::mat4& mat4);
+    static void dump(const char *msg, const glm::vec3& vec3);
+    static void dump(const char *msg, const glm::vec4& vec4);
     static const char* glStatusStr();
 
     friend class AppContext;

@@ -12,21 +12,23 @@ namespace dzy {
 static const char VERTEX_SHADER[] =
     "#version 300 es\n"
     "in vec3 aPos;\n"
-    "in vec4 aColor;\n"
     "uniform mat4 uMVP;\n"
-    "out vec4 vColor;\n"
     "void main() {\n"
     "    gl_Position = uMVP * vec4(aPos, 1.0);\n"
-    "    vColor = aColor;\n"
     "}\n";
 
 static const char FRAGMENT_SHADER[] =
     "#version 300 es\n"
     "precision mediump float;\n"
-    "in vec4 vColor;\n"
     "out vec4 outColor;\n"
+    "struct Material {\n"
+    "    vec3 diffuse;\n"
+    "    vec3 specular;\n"
+    "    vec3 ambient;\n"
+    "};\n"
+    "uniform Material uMaterial;\n"
     "void main() {\n"
-    "    outColor = vColor;\n"
+    "    outColor = vec4(uMaterial.diffuse + uMaterial.specular + uMaterial.ambient, 1.0);\n"
     "}\n";
 
 Shader::Shader(GLenum type)
@@ -148,6 +150,19 @@ bool Program::load(std::shared_ptr<Scene> scene) {
         return false;
     }
     mLocations["uMVP"] = mvpLoc;
+
+    if (scene->getNumMaterials() > 0) {
+        GLint diffuseLoc = glGetUniformLocation(mProgramId, "uMaterial.diffuse");
+        GLint specularLoc = glGetUniformLocation(mProgramId, "uMaterial.specular");
+        GLint ambientLoc = glGetUniformLocation(mProgramId, "uMaterial.ambient");
+        if (diffuseLoc == -1 || specularLoc == -1 || ambientLoc == -1) {
+            ALOGE("shader not compatible with scene: uMaterial");
+            return false;
+        }
+        mLocations["uMaterial.diffuse"] = diffuseLoc;
+        mLocations["uMaterial.specular"] = specularLoc;
+        mLocations["uMaterial.ambient"] = ambientLoc;
+    }
 
     // TODO: check other attributes
 
@@ -271,22 +286,39 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
     glUniformMatrix4fv(mProgram->getLocation("uMVP"), 1, GL_FALSE, glm::value_ptr(mvp));
     for (size_t i=0; i<node->mMeshes.size(); i++) {
         int meshIdx = node->mMeshes[i];
-        shared_ptr<Mesh> mesh(scene->mMeshes[meshIdx]);
-        drawMesh(mesh, i);
+        drawMesh(scene, i);
     }
 }
 
-void Render::drawMesh(shared_ptr<Mesh> mesh, int meshIdx) {
-    ALOGD("meshIdx: %d, mesh name: %s", meshIdx, mesh->mName.c_str());
-
+void Render::drawMesh(shared_ptr<Scene> scene, int meshIdx) {
+    shared_ptr<Mesh> mesh(scene->mMeshes[meshIdx]);
     mProgram->bindBufferObjects(meshIdx);
+    //ALOGD("meshIdx: %d, mesh name: %s, material idx: %d",
+    //    meshIdx, mesh->mName.c_str(), mesh->mMaterialIndex);
+    if (scene->getNumMaterials() > 0) {
+        shared_ptr<Material> material(scene->mMaterials[mesh->mMaterialIndex]);
+        glm::vec3 diffuse, specular, ambient;
+        material->get(Material::COLOR_DIFFUSE, diffuse);
+        material->get(Material::COLOR_SPECULAR, specular);
+        material->get(Material::COLOR_AMBIENT, ambient);
+        //dump("diffuse", diffuse);
+        //dump("specular", specular);
+        //dump("ambient", ambient);
+
+        glUniform3fv(mProgram->getLocation("uMaterial.diffuse"),
+            1, glm::value_ptr(diffuse));
+        glUniform3fv(mProgram->getLocation("uMaterial.specular"),
+            1, glm::value_ptr(specular));
+        glUniform3fv(mProgram->getLocation("uMaterial.ambient"),
+            1, glm::value_ptr(ambient));
+    }
     if (mesh->hasPositions()) {
         GLint posLoc = mProgram->getLocation("aPos");
         glEnableVertexAttribArray(posLoc);
-        ALOGD("num vertices: %d, num components: %d, stride: %d",
-            mesh->getNumVertices(),
-            mesh->getVertexNumComponent(),
-            mesh->getVertexBufStride());
+        //ALOGD("num vertices: %d, num components: %d, stride: %d",
+        //    mesh->getNumVertices(),
+        //    mesh->getVertexNumComponent(),
+        //    mesh->getVertexBufStride());
         //mesh->dumpVertexBuf();
         glVertexAttribPointer(
             posLoc,
@@ -301,42 +333,8 @@ void Render::drawMesh(shared_ptr<Mesh> mesh, int meshIdx) {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         GLint colorLoc = mProgram->getLocation("aColor");
         glEnableVertexAttribArray(colorLoc);
-        float fakeColor[24 * 4] = {
-            1.0, 0.0, 0.0, 1.0,
-            0.0, 1.0, 0.0, 1.0,
-            0.0, 0.0, 1.0, 1.0,
-            1.0, 1.0, 0.0, 1.0,
-            0.0, 1.0, 1.0, 1.0,
-            1.0, 0.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            0.5, 0.0, 0.0, 1.0,
-            0.0, 0.5, 0.0, 1.0,
-            0.0, 0.0, 0.5, 1.0,
-            0.5, 0.5, 0.0, 1.0,
-            0.0, 0.5, 0.5, 1.0,
-            0.5, 0.0, 0.5, 1.0,
-            0.5, 0.5, 0.5, 1.0,
-            1.0, 0.0, 0.0, 1.0,
-            0.0, 1.0, 0.0, 1.0,
-            0.0, 0.0, 1.0, 1.0,
-            1.0, 1.0, 0.0, 1.0,
-            0.0, 1.0, 1.0, 1.0,
-            1.0, 0.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            0.5, 0.0, 0.0, 1.0,
-            0.0, 0.5, 0.0, 1.0,
-            0.0, 0.0, 0.5, 1.0,
-        };
-        glVertexAttribPointer(
-            colorLoc,
-            4,                              // size
-            GL_FLOAT,                       // type
-            GL_FALSE,                       // normalized
-            0,                              // stride, 0 means tightly packed
-            fakeColor                       // buffer pointer
-        );
-
     }
+
     // TODO: check other attributes in mesh
 
     //ALOGD("num indices: %d, indices buf size: %d",
@@ -364,11 +362,21 @@ shared_ptr<AppContext> Render::getAppContext() {
     return mAppContext.lock();
 }
 
-void Render::dumpMat4(const glm::mat4& mat4) {
+void Render::dump(const char *msg, const glm::mat4& mat4) {
     float const * buf = glm::value_ptr(mat4);
     for (int i=0; i<16; i+=4)
-        PRINT(" %+08.6f %+08.6f %+08.6f %+08.6f",
-            buf[i], buf[i+1], buf[i+2], buf[i+3]);
+        PRINT("%s: %+08.6f %+08.6f %+08.6f %+08.6f",
+            msg, buf[i], buf[i+1], buf[i+2], buf[i+3]);
+}
+
+void Render::dump(const char *msg, const glm::vec3& vec3) {
+    PRINT("%s: %+08.6f %+08.6f %+08.6f",
+        msg, vec3.x, vec3.y, vec3.z);
+}
+
+void Render::dump(const char *msg, const glm::vec4& vec4) {
+    PRINT("%s: %+08.6f %+08.6f %+08.6f %+08.6f",
+        msg, vec4.x, vec4.y, vec4.z, vec4.w);
 }
 
 const char* Render::glStatusStr() {
