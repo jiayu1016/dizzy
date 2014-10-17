@@ -49,13 +49,13 @@ void * MeshData::getBuf() {
 }
 
 Camera::Camera()
-    : mUp               (0.f,1.f,0.f)
-    , mLookAt           (0.f,0.f,1.f)
+    : mPosition         (0.f, 0.f, 0.f)
+    , mUp               (0.f, 1.f, 0.f)
+    , mLookAt           (0.f, 0.f, -1.f)
     , mHorizontalFOV    (0.25f * (float)M_PI)
     , mClipPlaneNear    (0.1f)
     , mClipPlaneFar     (1000.f)
     , mAspect           (0.f) {
-
 }
 
 Camera::Camera(
@@ -73,7 +73,6 @@ Camera::Camera(
     , mClipPlaneNear    (clipPlaneNear)
     , mClipPlaneFar     (clipPlaneFar)
     , mAspect           (aspect) {
-
 }
 
 void Camera::setAspect(float aspect) {
@@ -81,21 +80,42 @@ void Camera::setAspect(float aspect) {
 }
 
 glm::mat4 Camera::getViewMatrix() {
-    //dumpParameter();
     return glm::lookAt(mPosition, mLookAt, mUp);
+}
+
+glm::mat4 Camera::getViewMatrix(glm::mat4 transform) {
+    glm::vec4 newPos = transform * glm::vec4(mPosition, 1.0f);
+    glm::vec4 newLook = transform * glm::vec4(mLookAt, 1.0f);
+    glm::vec4 newUp = transform * glm::vec4(mUp, 1.0f);
+
+    glm::vec3 pos = glm::vec3(newPos.x, newPos.y, newPos.z);
+    glm::vec3 look = glm::vec3(newLook.x, newLook.y, newLook.z);
+    glm::vec3 up = glm::vec3(newUp.x, newUp.y, newUp.z);
+    // FIXME:  blender 2.7 exported camera node matrix is wrong ?
+    // need to add an offset in order to show the scene.
+    pos.x += 4.f;
+    pos.y += 3.f;
+    pos.z += 3.f;
+
+    return glm::lookAt(pos, look, up);
 }
 
 glm::mat4 Camera::getProjMatrix() {
     return glm::perspective(mHorizontalFOV, mAspect, mClipPlaneNear, mClipPlaneFar);
 }
 
-void Camera::dumpParameter() {
+void Camera::dump(glm::vec3 pos, glm::vec3 at, glm::vec3 up) {
     PRINT("position: (%+08.6f, %+08.6f, %+08.6f)",
-        mPosition.x, mPosition.y, mPosition.z);
-    PRINT("up: (%+08.6f, %+08.6f, %+08.6f)",
-        mUp.x, mUp.y, mUp.z);
+        pos.x, pos.y, pos.z);
     PRINT("at: (%+08.6f, %+08.6f, %+08.6f)",
-        mLookAt.x, mLookAt.y, mLookAt.z);
+        at.x, at.y, at.z);
+    PRINT("up: (%+08.6f, %+08.6f, %+08.6f)",
+        up.x, up.y, up.z);
+}
+
+void Camera::dumpParameter() {
+    PRINT("*********** Camera Parameters ***********");
+    dump(mPosition, mLookAt, mUp);
     PRINT("(fov, aspect, near, far): (%+08.6f, %+08.6f, %+08.6f, %+08.6f)",
         mHorizontalFOV, mAspect, mClipPlaneNear, mClipPlaneFar);
 }
@@ -295,6 +315,10 @@ void Node::addChild(shared_ptr<Node> node) {
     }
 }
 
+shared_ptr<Node> Node::getParent() {
+    return mParent.lock();
+}
+
 /*
 void Node::setParent(shared_ptr<Node> parent) {
     shared_ptr<Node> oldParent(mParent.lock());
@@ -331,6 +355,10 @@ shared_ptr<Node> Node::findNode(const string &name) {
 
 void NodeTree::dfsTraversal(shared_ptr<Scene> scene, VisitFunc visit) {
     dfsTraversal(scene, mRoot, visit);
+}
+
+shared_ptr<Node> NodeTree::findNode(const string &name) {
+    return mRoot->findNode(name);
 }
 
 void NodeTree::dfsTraversal(shared_ptr<Scene> scene, shared_ptr<Node> node, VisitFunc visit) {

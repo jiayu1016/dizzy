@@ -246,19 +246,35 @@ bool Render::release() {
 
 bool Render::drawScene(shared_ptr<Scene> scene) {
     shared_ptr<AppContext> appContext(getAppContext());
-    if (!appContext){
+    if (!appContext) {
         ALOGE("AppContext released while rendering a scene");
         return false;
     }
 
     mProgram->use();
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    scene->mCameraTransform = glm::mat4(1.0f);
 
     NodeTree &tree = scene->getNodeTree();
+    shared_ptr<Camera> activeCamera(scene->getActiveCamera());
+    if (activeCamera) {
+        string name = activeCamera->mName;
+        shared_ptr<Node> node(tree.findNode(name));
+        if (node) {
+            glm::mat4 transform = glm::mat4(1.0f);
+            while(node != tree.mRoot) {
+                transform = transform * node->mTransformation;
+                node = node->getParent();
+            };
+            transform = transform * node->mTransformation;
+            scene->mCameraTransform = transform;
+        }
+    }
+
     using namespace std::placeholders;
     tree.dfsTraversal(scene, bind(&Render::drawNode, this, _1, _2));
     eglSwapBuffers(appContext->getEGLDisplay(), appContext->getEGLSurface());
-    
+
     return true;
 }
 
@@ -266,19 +282,14 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
     glm::mat4 world = scene->mMatrixStack.top();
     glm::mat4 mvp = world;
 
+    //dump(node->mName.c_str(), node->mTransformation);
     shared_ptr<Camera> activeCamera(scene->getActiveCamera());
     if (activeCamera) {
         //override the aspect read from model
         float surfaceWidth = getAppContext()->getSurfaceWidth();
         float surfaceHeight = getAppContext()->getSurfaceHeight();
         activeCamera->setAspect(surfaceWidth/surfaceHeight);
-
-        // TODO: find a way to determine camera position, lookat & up vector
-        //glm::mat4 view = activeCamera->getViewMatrix();
-        glm::mat4 view = glm::lookAt(
-            glm::vec3(4.f, 3.f, 3.f),
-            glm::vec3(0.0f, 0.0f, 0.0f),
-            glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 view = activeCamera->getViewMatrix(scene->mCameraTransform);
         glm::mat4 proj = activeCamera->getProjMatrix();
         mvp = proj * view * world;
     }
@@ -362,11 +373,20 @@ shared_ptr<AppContext> Render::getAppContext() {
     return mAppContext.lock();
 }
 
+/*
+ * format aligned to column major matrix
+ */
 void Render::dump(const char *msg, const glm::mat4& mat4) {
     float const * buf = glm::value_ptr(mat4);
-    for (int i=0; i<16; i+=4)
-        PRINT("%s: %+08.6f %+08.6f %+08.6f %+08.6f",
-            msg, buf[i], buf[i+1], buf[i+2], buf[i+3]);
+    PRINT("********** %s ************", msg);
+    PRINT("%+08.6f %+08.6f %+08.6f %+08.6f",
+            buf[0], buf[4], buf[8], buf[12]);
+    PRINT("%+08.6f %+08.6f %+08.6f %+08.6f",
+            buf[1], buf[5], buf[9], buf[13]);
+    PRINT("%+08.6f %+08.6f %+08.6f %+08.6f",
+            buf[2], buf[6], buf[10], buf[14]);
+    PRINT("%+08.6f %+08.6f %+08.6f %+08.6f",
+            buf[3], buf[7], buf[11], buf[15]);
 }
 
 void Render::dump(const char *msg, const glm::vec3& vec3) {

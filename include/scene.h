@@ -34,7 +34,9 @@ public:
 
     void        setAspect(float aspect);
     glm::mat4   getViewMatrix();
+    glm::mat4   getViewMatrix(glm::mat4 transform);
     glm::mat4   getProjMatrix();
+    void        dump(glm::vec3 pos, glm::vec3 at, glm::vec3 up);
     void        dumpParameter();
 
     friend class Render;
@@ -48,7 +50,6 @@ private:
     float               mClipPlaneNear;
     float               mClipPlaneFar;
     float               mAspect;
-
 };
 
 class Light {
@@ -223,6 +224,7 @@ public:
     Node(const std::string& name) : mName(name) { }
 
     void addChild(std::shared_ptr<Node> node);
+    std::shared_ptr<Node> getParent();
     //void setParent(std::shared_ptr<Node> parent);
     std::shared_ptr<Node> findNode(const std::string &name);
 
@@ -246,8 +248,10 @@ public:
         mRoot = root;
     }
     void dfsTraversal(std::shared_ptr<Scene> scene, VisitFunc visit);
+    std::shared_ptr<Node> findNode(const std::string &name);
 
     friend class AIAdapter;
+    friend class Render;
 private:
     void dfsTraversal(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node, VisitFunc visit);
 
@@ -313,6 +317,7 @@ private:
     // transient status for easy traversal
     unsigned int        mNodeDepth;
     MatrixStack         mMatrixStack;
+    glm::mat4           mCameraTransform;
 };
 
 class SceneManager : public Singleton<SceneManager> {
