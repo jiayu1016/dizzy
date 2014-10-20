@@ -144,6 +144,22 @@ Light::Light(
     , mAngleOuterCone       (angleOuterCone) {
 } 
 
+void Light::dumpParameter() {
+    ALOGD("light: %s\n"
+        "position: (%f, %f, %f), direction: (%f, %f, %f)\n"
+        "diffuse: (%f, %f, %f), specular: (%f, %f, %f), ambient: (%f, %f, %f)\n"
+        "mAngleInnerCone: %f , mAngleOuterCone: %f\n"
+        "mAttenuationConstant: %f, mAttenuationLinear: %f, mAttenuationQuadratic: %f",
+        mName.c_str(),
+        mPosition.x, mPosition.y, mPosition.z,
+        mDirection.x, mDirection.y, mDirection.z,
+        mColorDiffuse.x, mColorDiffuse.y, mColorDiffuse.z,
+        mColorSpecular.x, mColorSpecular.y, mColorSpecular.z,
+        mColorAmbient.x, mColorAmbient.y, mColorAmbient.z,
+        mAngleInnerCone, mAngleOuterCone,
+        mAttenuationConstant, mAttenuationLinear, mAttenuationQuadratic);
+}
+
 bool Material::get(MaterialType type, glm::vec3& color) {
     switch(type) {
     case COLOR_DIFFUSE:

@@ -69,6 +69,8 @@ public:
         float           angleInnerCone,
         float           angleOuterCone);
 
+    void dumpParameter();
+
     friend class AIAdapter;
 private:
     std::string         mName;
