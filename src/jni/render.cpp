@@ -373,32 +373,6 @@ shared_ptr<AppContext> Render::getAppContext() {
     return mAppContext.lock();
 }
 
-/*
- * format aligned to column major matrix
- */
-void Render::dump(const char *msg, const glm::mat4& mat4) {
-    float const * buf = glm::value_ptr(mat4);
-    PRINT("********** %s ************", msg);
-    PRINT("%+08.6f %+08.6f %+08.6f %+08.6f",
-            buf[0], buf[4], buf[8], buf[12]);
-    PRINT("%+08.6f %+08.6f %+08.6f %+08.6f",
-            buf[1], buf[5], buf[9], buf[13]);
-    PRINT("%+08.6f %+08.6f %+08.6f %+08.6f",
-            buf[2], buf[6], buf[10], buf[14]);
-    PRINT("%+08.6f %+08.6f %+08.6f %+08.6f",
-            buf[3], buf[7], buf[11], buf[15]);
-}
-
-void Render::dump(const char *msg, const glm::vec3& vec3) {
-    PRINT("%s: %+08.6f %+08.6f %+08.6f",
-        msg, vec3.x, vec3.y, vec3.z);
-}
-
-void Render::dump(const char *msg, const glm::vec4& vec4) {
-    PRINT("%s: %+08.6f %+08.6f %+08.6f %+08.6f",
-        msg, vec4.x, vec4.y, vec4.z, vec4.w);
-}
-
 const char* Render::glStatusStr() {
     GLenum error = glGetError();
 

@@ -1,7 +1,11 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include "log.h"
 #include <chrono>
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace dzy {
 
@@ -54,6 +58,29 @@ public:
 
 private:
     Clock::time_point mStart;
+};
+
+class Utils {
+public:
+    static void dump(const char *msg, const glm::mat4& mat4) {
+        float const * buf = glm::value_ptr(mat4);
+        PRINT("********** %s ************", msg);
+        for (int i=0; i<16; i+=4) {
+            PRINT("%+08.6f %+08.6f %+08.6f %+08.6f",
+                buf[i], buf[i+1], buf[i+2], buf[i+3]);
+        }
+    }
+
+    static void dump(const char *msg, const glm::vec3& vec3) {
+        PRINT("%s: %+08.6f %+08.6f %+08.6f",
+            msg, vec3.x, vec3.y, vec3.z);
+    }
+
+    static void dump(const char *msg, const glm::vec4& vec4) {
+        PRINT("%s: %+08.6f %+08.6f %+08.6f %+08.6f",
+            msg, vec4.x, vec4.y, vec4.z, vec4.w);
+    }
+
 };
 
 }
