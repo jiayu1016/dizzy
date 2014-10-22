@@ -263,10 +263,10 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
         if (node) {
             glm::mat4 transform = glm::mat4(1.0f);
             while(node != tree.mRoot) {
-                transform = transform * node->mTransformation;
+                transform = node->mTransformation * transform;
                 node = node->getParent();
             };
-            transform = transform * node->mTransformation;
+            transform = node->mTransformation * transform;
             scene->mCameraTransform = transform;
         }
     }
@@ -282,7 +282,7 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
     glm::mat4 world = scene->mMatrixStack.top();
     glm::mat4 mvp = world;
 
-    //dump(node->mName.c_str(), node->mTransformation);
+    //Utils::dump(node->mName.c_str(), node->mTransformation);
     shared_ptr<Camera> activeCamera(scene->getActiveCamera());
     if (activeCamera) {
         //override the aspect read from model

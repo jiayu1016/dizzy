@@ -214,10 +214,14 @@ glm::vec4 AIAdapter::typeCast(const aiColor4D &color4d) {
     return glm::vec4(color4d.r, color4d.g, color4d.b, color4d.a);
 }
 
+// assimp matrix has different memory layout with glm matrix
 glm::mat4 AIAdapter::typeCast(const aiMatrix4x4 &mat4) {
-    glm::mat4 m;
-    memcpy(&m, &mat4, sizeof(aiMatrix4x4));
-    return m;
+    glm::mat4 to;
+    to[0][0] = mat4.a1; to[1][0] = mat4.a2; to[2][0] = mat4.a3; to[3][0] = mat4.a4;
+    to[0][1] = mat4.b1; to[1][1] = mat4.b2; to[2][1] = mat4.b3; to[3][1] = mat4.b4;
+    to[0][2] = mat4.c1; to[1][2] = mat4.c2; to[2][2] = mat4.c3; to[3][2] = mat4.c4;
+    to[0][3] = mat4.d1; to[1][3] = mat4.d2; to[2][3] = mat4.d3; to[3][3] = mat4.d4;
+    return to;
 }
 
 string AIAdapter::typeCast(const aiString &str) {

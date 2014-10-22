@@ -79,22 +79,34 @@ void Camera::setAspect(float aspect) {
     mAspect = aspect;
 }
 
+#if 0
+glm::mat4 Camera::getCameraMatrix() {
+    glm::vec3 zaxis = mLookAt;
+    zaxis = glm::normalize(zaxis);
+    glm::vec3 yaxis = mUp;
+    yaxis = glm::normalize(yaxis);
+    glm::vec3 xaxis = glm::cross(yaxis, zaxis);
+
+    return glm::lookAt(...);
+}
+#endif
+
 glm::mat4 Camera::getViewMatrix() {
     return glm::lookAt(mPosition, mLookAt, mUp);
 }
 
-glm::mat4 Camera::getViewMatrix(glm::mat4 transform) {
-    //FIXME: why ?
-    transform = glm::transpose(transform);
-    glm::vec4 newPos = transform * glm::vec4(mPosition, 1.0f);
-    glm::vec4 newLook = transform * glm::vec4(mLookAt, 1.0f);
-    glm::vec4 newUp = transform * glm::vec4(mUp, 1.0f);
+glm::mat4 Camera::getViewMatrix(glm::mat4 modelTransfrom) {
+    //Utils::dump("camera model transform", modelTransfrom);
+    glm::vec4 newPos = modelTransfrom * glm::vec4(mPosition, 1.0f);
+    glm::vec4 newLook = modelTransfrom * glm::vec4(mLookAt, 1.0f);
+    //glm::vec4 newUp = modelTransfrom * glm::vec4(mUp, 1.0f);
 
     glm::vec3 pos = glm::vec3(newPos.x, newPos.y, newPos.z);
     glm::vec3 look = glm::vec3(newLook.x, newLook.y, newLook.z);
-    glm::vec3 up = glm::vec3(newUp.x, newUp.y, newUp.z);
+    //glm::vec3 up = glm::vec3(newUp.x, newUp.y, newUp.z);
 
-    return glm::lookAt(pos, look, up);
+    // up vector doesn't change
+    return glm::lookAt(pos, look, mUp);
 }
 
 glm::mat4 Camera::getProjMatrix() {
@@ -391,7 +403,7 @@ MatrixStack::MatrixStack() {
 
 void MatrixStack::push(glm::mat4 &current) {
     glm::mat4 product = top();
-    mProduct.push(current * product);
+    mProduct.push(product * current);
 }
 
 void MatrixStack::pop() {
