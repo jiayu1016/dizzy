@@ -28,7 +28,7 @@ bool SViewApp::initApp() {
     shared_ptr<Scene> currentScene(SceneManager::get()->getCurrentScene());
     currentScene->listAssetFiles(appContext, "");
 
-    ret = currentScene->loadColladaAsset(appContext, "cube.dae");
+    ret = currentScene->loadColladaAsset(appContext, "4meshes.dae");
     if (!ret) return ret;
 
     return ret;

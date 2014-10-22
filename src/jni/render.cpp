@@ -297,7 +297,7 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
     glUniformMatrix4fv(mProgram->getLocation("uMVP"), 1, GL_FALSE, glm::value_ptr(mvp));
     for (size_t i=0; i<node->mMeshes.size(); i++) {
         int meshIdx = node->mMeshes[i];
-        drawMesh(scene, i);
+        drawMesh(scene, meshIdx);
     }
 }
 
