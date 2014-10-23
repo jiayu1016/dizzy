@@ -1,7 +1,5 @@
 package com.wayne.dizzy.sample.sviewer;
 
-import com.wayne.dizzy.sample.sviewer.R;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -13,6 +11,7 @@ public class MainActivity extends Activity {
         // don't need these if we use gnustl_static
         System.loadLibrary("gnustl_shared");
         System.loadLibrary("assimp");
+        System.loadLibrary("dzy");
         // libsviewer.so will be load by framework, load it here for consistency
         System.loadLibrary("sviewer");
     }
