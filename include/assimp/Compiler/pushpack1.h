@@ -28,6 +28,8 @@
 #elif defined( __GNUC__ )
 #	if defined(__clang__)
 #		define PACK_STRUCT	__attribute__((__packed__))
+#	elif defined(ANDROID)
+#		define PACK_STRUCT __attribute__((__packed__))
 #	else
 #		define PACK_STRUCT	__attribute__((gcc_struct, __packed__))
 #	endif
