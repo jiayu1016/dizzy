@@ -99,13 +99,18 @@ shared_ptr<Animation> AIAdapter::typeCast(aiAnimation *animation) {
 
 shared_ptr<Material> AIAdapter::typeCast(aiMaterial *material) {
     shared_ptr<Material> ma(new Material);
-    aiColor3D diffuse, specular, ambient;
+    aiColor3D diffuse, specular, ambient, emission;
+    float shininess;
     material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
     material->Get(AI_MATKEY_COLOR_SPECULAR, specular);
     material->Get(AI_MATKEY_COLOR_AMBIENT, ambient);
+    material->Get(AI_MATKEY_COLOR_EMISSIVE, emission);
+    material->Get(AI_MATKEY_SHININESS, shininess);
     ma->mDiffuse = typeCast(diffuse);
     ma->mSpecular = typeCast(specular);
     ma->mAmbient = typeCast(ambient);
+    ma->mEmission = typeCast(emission);
+    ma->mShininess = shininess;
     return ma;
 }
 

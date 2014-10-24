@@ -71,6 +71,7 @@ public:
 
     void dumpParameter();
 
+    friend class Render;
     friend class AIAdapter;
 private:
     std::string         mName;
@@ -97,14 +98,19 @@ public:
         COLOR_DIFFUSE,
         COLOR_SPECULAR,
         COLOR_AMBIENT,
+        COLOR_EMISSION,
+        SHININESS,
     };
     bool get(MaterialType type, glm::vec3& color);
+    bool get(MaterialType type, float& value);
 
     friend class AIAdapter;
 private:
     glm::vec3   mDiffuse;
     glm::vec3   mSpecular;
     glm::vec3   mAmbient;
+    glm::vec3   mEmission;
+    float       mShininess;
 };
 
 class Animation {
@@ -191,6 +197,9 @@ public:
     void *          getVertexBuf();
     unsigned int    getIndexBufSize();
     void *          getIndexBuf();
+    unsigned int    getNormalBufStride();
+    unsigned int    getNormalNumComponent();
+    void *          getNormalBuf();
 
     // default 3 float a float veretex
     void            dumpVertexBuf(int groupSize = 3);
@@ -299,6 +308,7 @@ public:
 
     bool atLeastOneMeshHasVertexPosition();
     bool atLeastOneMeshHasVertexColor();
+    bool atLeastOneMeshHasNormal();
 
     inline NodeTree& getNodeTree() { return mNodeTree;}
 
@@ -319,7 +329,7 @@ private:
     // transient status for easy traversal
     unsigned int        mNodeDepth;
     MatrixStack         mMatrixStack;
-    glm::mat4           mCameraTransform;
+    glm::mat4           mCameraModelTransform;
 };
 
 class SceneManager : public Singleton<SceneManager> {

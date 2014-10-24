@@ -9,28 +9,6 @@ using namespace std;
 
 namespace dzy {
 
-static const char VERTEX_SHADER[] =
-    "#version 300 es\n"
-    "in vec3 aPos;\n"
-    "uniform mat4 uMVP;\n"
-    "void main() {\n"
-    "    gl_Position = uMVP * vec4(aPos, 1.0);\n"
-    "}\n";
-
-static const char FRAGMENT_SHADER[] =
-    "#version 300 es\n"
-    "precision mediump float;\n"
-    "out vec4 outColor;\n"
-    "struct Material {\n"
-    "    vec3 diffuse;\n"
-    "    vec3 specular;\n"
-    "    vec3 ambient;\n"
-    "};\n"
-    "uniform Material uMaterial;\n"
-    "void main() {\n"
-    "    outColor = vec4(uMaterial.diffuse + uMaterial.specular + uMaterial.ambient, 1.0);\n"
-    "}\n";
-
 Shader::Shader(GLenum type)
     : mShaderType(type)
     , mShaderId(0)
@@ -66,6 +44,30 @@ bool Shader::compileFromFile(const char *strFileName) {
     bool success = ndk_helper::shader::CompileShader(&mShaderId, mShaderType, strFileName);
     if (success) mInitialized = true;
     return success;
+}
+
+bool Shader::compileFromAsset(
+    AAssetManager *assetManager, const string &assetFile) {
+    assert(assetManager != NULL);
+
+    AAsset* asset = AAssetManager_open(assetManager,
+        assetFile.c_str(), AASSET_MODE_BUFFER);
+
+    if (!asset) {
+        ALOGE("Failed to open asset: %s", assetFile.c_str());
+        return false;
+    }
+
+    off_t length = AAsset_getLength(asset);
+    unique_ptr<char[]> buffer(new char[length]);
+    size_t sz = AAsset_read(asset, buffer.get(), length);
+    AAsset_close(asset);
+    if (sz != length) {
+        ALOGE("Partial read %d bytes", sz);
+        return false;
+    }
+
+    return compileFromMemory(buffer.get(), sz);
 }
 
 Program::Program()
@@ -127,44 +129,76 @@ bool Program::link(std::shared_ptr<Shader> vtxShader, std::shared_ptr<Shader> fr
 
 bool Program::load(std::shared_ptr<Scene> scene) {
     if (scene->atLeastOneMeshHasVertexPosition()) {
-        GLint attribLoc = glGetAttribLocation(mProgramId, "aPos");
+        GLint attribLoc = glGetAttribLocation(mProgramId, "dzyVertexPosition");
         if (attribLoc == -1) {
             ALOGE("shader not compatible with scene: vertex position");
             return false;
         }
-        mLocations["aPos"] = attribLoc;
+        mLocations["dzyVertexPosition"] = attribLoc;
     }
     if (scene->atLeastOneMeshHasVertexColor()) {
-        ALOGD("at lease one mesh has vertex color");
-        GLint attribLoc = glGetAttribLocation(mProgramId, "aColor");
+        GLint attribLoc = glGetAttribLocation(mProgramId, "dzyVertexColor");
         if (attribLoc == -1) {
             ALOGE("shader not compatible with scene: vertex color");
             return false;
         }
-        mLocations["aColor"] = attribLoc;
+        mLocations["dzyVertexColor"] = attribLoc;
+    }
+    if (scene->atLeastOneMeshHasNormal()) {
+        GLint attribLoc = glGetAttribLocation(mProgramId, "dzyVertexNormal");
+        if (attribLoc == -1) {
+            ALOGE("shader not compatible with scene: vertex normal");
+            return false;
+        }
+        mLocations["dzyVertexNormal"] = attribLoc;
     }
 
-    GLint mvpLoc = glGetUniformLocation(mProgramId, "uMVP");
+    GLint mvpLoc = glGetUniformLocation(mProgramId, "dzyMVPMatrix");
     if (mvpLoc == -1) {
         ALOGE("shader not compatible with scene: mvp matrix");
         return false;
     }
-    mLocations["uMVP"] = mvpLoc;
+    mLocations["dzyMVPMatrix"] = mvpLoc;
+
+    GLint mvLoc = glGetUniformLocation(mProgramId, "dzyMVMatrix");
+    if (mvLoc != -1)
+        mLocations["dzyMVMatrix"] = mvLoc;
+
+    GLint normalMatrixLoc = glGetUniformLocation(mProgramId, "dzyNormalMatrix");
+    if (normalMatrixLoc != -1)
+        mLocations["dzyNormalMatrix"] = normalMatrixLoc;
 
     if (scene->getNumMaterials() > 0) {
-        GLint diffuseLoc = glGetUniformLocation(mProgramId, "uMaterial.diffuse");
-        GLint specularLoc = glGetUniformLocation(mProgramId, "uMaterial.specular");
-        GLint ambientLoc = glGetUniformLocation(mProgramId, "uMaterial.ambient");
-        if (diffuseLoc == -1 || specularLoc == -1 || ambientLoc == -1) {
-            ALOGE("shader not compatible with scene: uMaterial");
-            return false;
-        }
-        mLocations["uMaterial.diffuse"] = diffuseLoc;
-        mLocations["uMaterial.specular"] = specularLoc;
-        mLocations["uMaterial.ambient"] = ambientLoc;
+        GLint loc = -1;
+        loc = glGetUniformLocation(mProgramId, "dzyMaterial.diffuse");
+        if (loc != -1) mLocations["dzyMaterial.diffuse"] = loc;
+        loc = glGetUniformLocation(mProgramId, "dzyMaterial.specular");
+        if (loc != -1) mLocations["dzyMaterial.specular"] = loc;
+        loc = glGetUniformLocation(mProgramId, "dzyMaterial.ambient");
+        if (loc != -1) mLocations["dzyMaterial.ambient"] = loc;
+        loc = glGetUniformLocation(mProgramId, "dzyMaterial.emission");
+        if (loc != -1) mLocations["dzyMaterial.emission"] = loc;
+        loc = glGetUniformLocation(mProgramId, "dzyMaterial.shininess");
+        if (loc != -1) mLocations["dzyMaterial.shininess"] = loc;
     }
 
-    // TODO: check other attributes
+    if (scene->getNumLights() > 0) {
+        GLint loc = -1;
+        loc = glGetUniformLocation(mProgramId, "dzyLight.color");
+        if (loc != -1) mLocations["dzyLight.color"] = loc;
+        loc = glGetUniformLocation(mProgramId, "dzyLight.ambient");
+        if (loc != -1) mLocations["dzyLight.ambient"] = loc;
+        loc = glGetUniformLocation(mProgramId, "dzyLight.position");
+        if (loc != -1) mLocations["dzyLight.position"] = loc;
+        loc = glGetUniformLocation(mProgramId, "dzyLight.attenuationConstant");
+        if (loc != -1) mLocations["dzyLight.attenuationConstant"] = loc;
+        loc = glGetUniformLocation(mProgramId, "dzyLight.attenuationLinear");
+        if (loc != -1) mLocations["dzyLight.attenuationLinear"] = loc;
+        loc = glGetUniformLocation(mProgramId, "dzyLight.attenuationQuadratic");
+        if (loc != -1) mLocations["dzyLight.attenuationQuadratic"] = loc;
+        loc = glGetUniformLocation(mProgramId, "dzyLight.strength");
+        if (loc != -1) mLocations["dzyLight.strength"] = loc;
+    }
 
     size_t numMeshes = scene->getNumMeshes();
     mVertexBOs.resize(numMeshes);
@@ -199,15 +233,19 @@ GLint Program::getLocation(const char* name) {
 }
 
 bool Render::init(shared_ptr<Scene> scene) {
+    shared_ptr<AppContext> appContext(getAppContext());
+    if (!appContext) {
+        ALOGE("AppContext released while init Render");
+        return false;
+    }
+
     shared_ptr<Shader> vtxShader(new Shader(GL_VERTEX_SHADER));
-    if (!vtxShader->compileFromMemory(VERTEX_SHADER,
-            sizeof(VERTEX_SHADER))) {
+    if (!vtxShader->compileFromAsset(appContext->getAssetManager(), "vertex.shader")) {
         ALOGE("error compile vertex shader");
         return false;
     }
     shared_ptr<Shader> fragShader(new Shader(GL_FRAGMENT_SHADER));
-    if (!fragShader->compileFromMemory(FRAGMENT_SHADER,
-        sizeof(FRAGMENT_SHADER))) {
+    if (!fragShader->compileFromAsset(appContext->getAssetManager(), "fragment.shader")) {
         ALOGE("error compile fragment shader");
         return false;
     }
@@ -227,15 +265,9 @@ bool Render::init(shared_ptr<Scene> scene) {
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.6f, 0.7f, 1.0f, 1.0f);
 
-    shared_ptr<AppContext> appContext(getAppContext());
-    if (appContext)
-        glViewport(0, 0,
-            appContext->getSurfaceWidth(),
-            appContext->getSurfaceHeight());
-    else {
-        ALOGE("AppContext released while render trying to init");
-        return false;
-    }
+    glViewport(0, 0,
+        appContext->getSurfaceWidth(),
+        appContext->getSurfaceHeight());
 
     return true;
 }
@@ -253,13 +285,12 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
 
     mProgram->use();
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-    scene->mCameraTransform = glm::mat4(1.0f);
+    scene->mCameraModelTransform = glm::mat4(1.0f);
 
     NodeTree &tree = scene->getNodeTree();
     shared_ptr<Camera> activeCamera(scene->getActiveCamera());
     if (activeCamera) {
-        string name = activeCamera->mName;
-        shared_ptr<Node> node(tree.findNode(name));
+        shared_ptr<Node> node(tree.findNode(activeCamera->mName));
         if (node) {
             glm::mat4 transform = glm::mat4(1.0f);
             while(node != tree.mRoot) {
@@ -267,7 +298,41 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
                 node = node->getParent();
             };
             transform = node->mTransformation * transform;
-            scene->mCameraTransform = transform;
+            scene->mCameraModelTransform = transform;
+        }
+
+        // Support lighing only when we have a camera
+        // Use only one light right now
+        if (scene->getNumLights() > 0) {
+            shared_ptr<Light> light(scene->mLights[0]);
+            if (light) {
+                shared_ptr<Node> node(tree.findNode(light->mName));
+                if (node) {
+                    glm::mat4 trans = glm::mat4(1.0f);
+                    while(node != tree.mRoot) {
+                        trans = node->mTransformation * trans;
+                        node = node->getParent();
+                    };
+                    trans = node->mTransformation * trans;
+
+                    glUniform3fv(mProgram->getLocation("dzyLight.color"),
+                        1, glm::value_ptr(light->mColorDiffuse));
+                    glUniform3fv(mProgram->getLocation("dzyLight.ambient"),
+                        1, glm::value_ptr(light->mColorAmbient));
+                    glm::mat4 view = activeCamera->getViewMatrix(scene->mCameraModelTransform);
+                    glm::vec3 lightPosEyeSpace = glm::vec3(view * trans * glm::vec4(light->mPosition, 1.0f));
+                    glUniform3fv(mProgram->getLocation("dzyLight.position"),
+                        1, glm::value_ptr(lightPosEyeSpace));
+                    glUniform1f(mProgram->getLocation("dzyLight.attenuationConstant"),
+                        light->mAttenuationConstant);
+                    glUniform1f(mProgram->getLocation("dzyLight.attenuationLinear"),
+                        light->mAttenuationLinear);
+                    glUniform1f(mProgram->getLocation("dzyLight.attenuationQuadratic"),
+                        light->mAttenuationQuadratic);
+                    glUniform1f(mProgram->getLocation("dzyLight.strength"), 1.0f);
+
+                }
+            }
         }
     }
 
@@ -289,12 +354,23 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
         float surfaceWidth = getAppContext()->getSurfaceWidth();
         float surfaceHeight = getAppContext()->getSurfaceHeight();
         activeCamera->setAspect(surfaceWidth/surfaceHeight);
-        glm::mat4 view = activeCamera->getViewMatrix(scene->mCameraTransform);
+        glm::mat4 view = activeCamera->getViewMatrix(scene->mCameraModelTransform);
         glm::mat4 proj = activeCamera->getProjMatrix();
-        mvp = proj * view * world;
+        glm::mat4 mv = view * world;
+        mvp = proj * mv;
+
+        GLint mvLoc = mProgram->getLocation("dzyMVMatrix");
+        if (mvLoc != -1) {
+            glUniformMatrix4fv(mvLoc, 1, GL_FALSE, glm::value_ptr(mv));
+        }
+        GLint normalMatrixLoc = mProgram->getLocation("dzyNormalMatrix");
+        if (normalMatrixLoc != -1) {
+            glm::mat3 mvInvTransMatrix = glm::mat3(glm::transpose(glm::inverse(mv)));
+            glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(mvInvTransMatrix));
+        }
     }
 
-    glUniformMatrix4fv(mProgram->getLocation("uMVP"), 1, GL_FALSE, glm::value_ptr(mvp));
+    glUniformMatrix4fv(mProgram->getLocation("dzyMVPMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
     for (size_t i=0; i<node->mMeshes.size(); i++) {
         int meshIdx = node->mMeshes[i];
         drawMesh(scene, meshIdx);
@@ -308,23 +384,27 @@ void Render::drawMesh(shared_ptr<Scene> scene, int meshIdx) {
     //    meshIdx, mesh->mName.c_str(), mesh->mMaterialIndex);
     if (scene->getNumMaterials() > 0) {
         shared_ptr<Material> material(scene->mMaterials[mesh->mMaterialIndex]);
-        glm::vec3 diffuse, specular, ambient;
+        glm::vec3 diffuse, specular, ambient, emission;
+        float shininess;
         material->get(Material::COLOR_DIFFUSE, diffuse);
         material->get(Material::COLOR_SPECULAR, specular);
         material->get(Material::COLOR_AMBIENT, ambient);
-        //dump("diffuse", diffuse);
-        //dump("specular", specular);
-        //dump("ambient", ambient);
+        material->get(Material::COLOR_EMISSION, emission);
+        material->get(Material::SHININESS, shininess);
 
-        glUniform3fv(mProgram->getLocation("uMaterial.diffuse"),
+        glUniform3fv(mProgram->getLocation("dzyMaterial.diffuse"),
             1, glm::value_ptr(diffuse));
-        glUniform3fv(mProgram->getLocation("uMaterial.specular"),
+        glUniform3fv(mProgram->getLocation("dzyMaterial.specular"),
             1, glm::value_ptr(specular));
-        glUniform3fv(mProgram->getLocation("uMaterial.ambient"),
+        glUniform3fv(mProgram->getLocation("dzyMaterial.ambient"),
             1, glm::value_ptr(ambient));
+        glUniform3fv(mProgram->getLocation("dzyMaterial.emission"),
+            1, glm::value_ptr(emission));
+        glUniform1f(mProgram->getLocation("dzyMaterial.shininess"), shininess);
+
     }
     if (mesh->hasPositions()) {
-        GLint posLoc = mProgram->getLocation("aPos");
+        GLint posLoc = mProgram->getLocation("dzyVertexPosition");
         glEnableVertexAttribArray(posLoc);
         //ALOGD("num vertices: %d, num components: %d, stride: %d",
         //    mesh->getNumVertices(),
@@ -342,11 +422,22 @@ void Render::drawMesh(shared_ptr<Scene> scene, int meshIdx) {
     }
     if (mesh->hasVertexColors()) {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
-        GLint colorLoc = mProgram->getLocation("aColor");
+        GLint colorLoc = mProgram->getLocation("dzyVertexColor");
         glEnableVertexAttribArray(colorLoc);
     }
-
-    // TODO: check other attributes in mesh
+    if (mesh->hasNormals()) {
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        GLint normalLoc = mProgram->getLocation("dzyVertexNormal");
+        glEnableVertexAttribArray(normalLoc);
+        glVertexAttribPointer(
+            normalLoc,
+            mesh->getNormalNumComponent(),  // size
+            GL_FLOAT,                       // type
+            GL_FALSE,                       // normalized
+            mesh->getNormalBufStride(),     // stride, 0 means tightly packed
+            mesh->getNormalBuf()            // actual data
+        );
+    }
 
     //ALOGD("num indices: %d, indices buf size: %d",
     //    mesh->getNumIndices(), mesh->getIndexBufSize());
@@ -359,10 +450,13 @@ void Render::drawMesh(shared_ptr<Scene> scene, int meshIdx) {
 
     // restore
     if (mesh->hasPositions())
-        glDisableVertexAttribArray(mProgram->getLocation("aPos"));
+        glDisableVertexAttribArray(mProgram->getLocation("dzyVertexPosition"));
 
     if (mesh->hasVertexColors()) {
-        glDisableVertexAttribArray(mProgram->getLocation("aColor"));
+        glDisableVertexAttribArray(mProgram->getLocation("dzyVertexColor"));
+    }
+    if (mesh->hasNormals()) {
+        glDisableVertexAttribArray(mProgram->getLocation("dzyVertexNormal"));
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);

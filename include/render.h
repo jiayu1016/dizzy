@@ -26,6 +26,7 @@ public:
     bool compileFromMemory(std::vector<uint8_t>& data);
     bool compileFromMemory(const GLchar *source, const int32_t size);
     bool compileFromFile(const char *strFileName);
+    bool compileFromAsset(AAssetManager *assetManager, const std::string &assetFile); 
 
 private:
     bool        mInitialized;

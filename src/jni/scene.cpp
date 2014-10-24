@@ -180,6 +180,22 @@ bool Material::get(MaterialType type, glm::vec3& color) {
     case COLOR_AMBIENT:
         color = mAmbient;
         break;
+    case COLOR_EMISSION:
+        color = mEmission;
+        break;
+    default:
+        return false;
+    }
+    return true;
+}
+
+bool Material::get(MaterialType type, float& value) {
+    switch(type) {
+    case SHININESS:
+        value = mShininess;
+        break;
+    default:
+        return false;
     }
     return true;
 }
@@ -275,6 +291,18 @@ void * Mesh::getIndexBuf() {
     if (mTriangleFaces.empty()) return NULL;
     // Attention: 
     return &mTriangleFaces[0];
+}
+
+unsigned int Mesh::getNormalBufStride() {
+    mNormals.getBufStride();
+}
+
+unsigned int Mesh::getNormalNumComponent() {
+    return mNormals.getNumComponents();
+}
+
+void * Mesh::getNormalBuf() {
+    return mNormals.getBuf();
 }
 
 void Mesh::dumpVertexBuf(int groupSize) {
@@ -575,6 +603,12 @@ bool Scene::atLeastOneMeshHasVertexColor() {
     return false;
 }
 
+bool Scene::atLeastOneMeshHasNormal() {
+    for (size_t i=0; i<getNumMeshes(); i++) {
+        if (mMeshes[i]->hasNormals()) return true;
+    }
+    return false;
+}
 SceneManager::SceneManager() {
 }
 
