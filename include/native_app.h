@@ -29,13 +29,11 @@ public:
     // main interface for derived class
     virtual bool initApp() = 0;
     virtual bool releaseApp() = 0;
-    virtual bool initView(std::shared_ptr<Scene> scene) = 0;
+    virtual bool initView() = 0;
     virtual bool releaseView() = 0;
-    virtual bool drawScene(std::shared_ptr<Scene> scene) = 0;
+    virtual bool drawScene() = 0;
 
     std::shared_ptr<AppContext> getAppContext();
-    std::shared_ptr<Scene>      getCurrentScene();
-    std::shared_ptr<Render>     getRender();
 
     friend class AppContext;
 private:

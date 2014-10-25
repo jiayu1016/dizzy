@@ -30,15 +30,16 @@ public:
     static const std::string    getAppName(pid_t pid);
     const std::string           getExternalDataDir();
     const std::string           getInternalDataDir();
+    bool                        listAssetFiles(const std::string &dir);
 
     AAssetManager*              getAssetManager();
     std::shared_ptr<NativeApp>  getNativeApp();
-    std::shared_ptr<Render>     getRender();
+    std::shared_ptr<Render>     getDefaultRender();
 
     // gfx system
     bool            initDisplay();
     void            releaseDisplay();
-    bool            updateDisplay(std::shared_ptr<Scene> scene);
+    bool            updateDisplay();
 
     void            requestQuit();
     bool            needQuit();

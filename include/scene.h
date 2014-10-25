@@ -292,10 +292,6 @@ typedef std::vector<std::shared_ptr<Mesh> >        MeshContainer;
 class Scene {
 public:
     Scene();
-    virtual bool loadColladaAsset(std::shared_ptr<AppContext> appContext, const std::string &asset);
-    virtual bool load(std::shared_ptr<AppContext> appContext, const std::string &file);
-    virtual bool listAssetFiles(std::shared_ptr<AppContext> appContext,
-        const std::string &dir);
 
     inline unsigned int getNumCameras() { return mCameras.size(); }
     inline unsigned int getNumLights() { return mLights.size(); }
@@ -334,13 +330,15 @@ private:
 
 class SceneManager : public Singleton<SceneManager> {
 public:
-    enum SceneType {
-        SCENE_TYPE_FLAT,
-    };
-    ~SceneManager();
-    std::shared_ptr<Scene> createScene(SceneType);
     void addScene(std::shared_ptr<Scene> scene);
     std::shared_ptr<Scene> getCurrentScene();
+    void setCurrentScene(std::shared_ptr<Scene> scene);
+    static std::shared_ptr<Scene> loadFile(
+        std::shared_ptr<AppContext> appContext,
+        const std::string &file);
+    static std::shared_ptr<Scene> loadColladaAsset(
+        std::shared_ptr<AppContext> appContext,
+        const std::string &asset);
 
     friend class Singleton<SceneManager>;
 private:    

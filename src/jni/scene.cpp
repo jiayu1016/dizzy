@@ -446,142 +446,6 @@ Scene::Scene()
     : mNodeDepth(-1) {
 }
 
-bool Scene::loadColladaAsset(shared_ptr<AppContext> appContext,
-    const string &assetFile) {    
-    AAssetManager *assetManager = appContext->getAssetManager();
-    assert(assetManager != NULL);
-
-    AAsset* asset = AAssetManager_open(assetManager,
-        assetFile.c_str(), AASSET_MODE_BUFFER);
-
-    if (!asset) {
-        ALOGE("Failed to open asset: %s", assetFile.c_str());
-        return false;
-    }
-
-    off_t length = AAsset_getLength(asset);
-    unique_ptr<char[]> buffer(new char[length]);
-    size_t sz = AAsset_read(asset, buffer.get(), length);
-    AAsset_close(asset);
-    if (sz != length) {
-        ALOGE("Partial read %d bytes", sz);
-        return false;
-    }
-
-    MeasureDuration importDuration;
-    Assimp::Importer importer;
-    const aiScene *scene(importer.ReadFileFromMemory(
-        buffer.get(), length,
-        aiProcess_Triangulate |
-        aiProcess_JoinIdenticalVertices |
-        aiProcess_SortByPType));
-    if (!scene) {
-        ALOGE("assimp failed to load %s: %s", assetFile.c_str(),
-            importer.GetErrorString());
-        return false;
-    }
-
-    // parse aiScene to FlatScene
-    if (scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE) {
-        ALOGE("%s: incomplete scene data loaded", assetFile.c_str());
-        return false;
-    }
-    if (scene->mRootNode == NULL) {
-        ALOGE("%s: root node null", assetFile.c_str());
-        return false;
-    }
-    long long importTime = importDuration.getMilliSeconds();
-
-    ALOGD("%s: %u meshes found",     assetFile.c_str(), scene->mNumMeshes);
-    ALOGD("%s: %u materials found",  assetFile.c_str(), scene->mNumMaterials);
-    ALOGD("%s: %u animations found", assetFile.c_str(), scene->mNumAnimations);
-    ALOGD("%s: %u textures found",   assetFile.c_str(), scene->mNumTextures);
-    ALOGD("%s: %u lights found",     assetFile.c_str(), scene->mNumLights);
-    ALOGD("%s: %u cameras found",    assetFile.c_str(), scene->mNumCameras);
-
-    MeasureDuration cvtDuration;
-    for (int i=0; i<scene->mNumCameras; i++) {
-        shared_ptr<Camera> camera(AIAdapter::typeCast(scene->mCameras[i]));
-        mCameras.push_back(camera);
-    }
-    for (int i=0; i<scene->mNumLights; i++) {
-        shared_ptr<Light> light(AIAdapter::typeCast(scene->mLights[i]));
-        mLights.push_back(light);
-    }
-    for (int i=0; i<scene->mNumTextures; i++) {
-        shared_ptr<Texture> texture(AIAdapter::typeCast(scene->mTextures[i]));
-        mTextures.push_back(texture);
-    }
-    for (int i=0; i<scene->mNumAnimations; i++) {
-        shared_ptr<Animation> animation(AIAdapter::typeCast(scene->mAnimations[i]));
-        mAnimations.push_back(animation);
-    }
-    for (int i=0; i<scene->mNumMaterials; i++) {
-        shared_ptr<Material> material(AIAdapter::typeCast(scene->mMaterials[i]));
-        mMaterials.push_back(material);
-    }
-    for (int i=0; i<scene->mNumMeshes; i++) {
-        shared_ptr<Mesh> mesh(AIAdapter::typeCast(scene->mMeshes[i]));
-        mMeshes.push_back(mesh);
-    }
-
-    AIAdapter::buildNodeTree(scene->mRootNode, mNodeTree);
-
-    long long cvtTime = cvtDuration.getMicroSeconds();
-
-    ALOGD("assimp load: %lld ms, conversion: %lld us", importTime, cvtTime);
-
-    return true;
-}
-
-bool Scene::load(shared_ptr<AppContext> appContext,
-    const string &file) {
-    ifstream ifs(file.c_str(), ifstream::binary);
-    if (!ifs) {
-        ALOGE("ifstream ctor failed for %s", file.c_str());
-        return false;
-    }
-
-    ifs.seekg(0, ifs.end);
-    int length = ifs.tellg();
-    ifs.seekg(0, ifs.beg);
-
-    unique_ptr<char[]> buffer(new char[length]);
-    ifs.read(buffer.get(), length);
-    ifs.close();
-    if (!ifs) {
-        ALOGE("Partial read %d bytes", ifs.gcount());
-        return false;
-    }
-
-    // process the buffer
-    buffer.get()[length - 1] = 0;
-    ALOGD("%s: %s", file.c_str(), buffer.get());
-
-    return true;
-}
-
-bool Scene::listAssetFiles(shared_ptr<AppContext> appContext,
-    const string &dir) {
-    AAssetManager *assetManager = appContext->getAssetManager();
-    assert(assetManager != NULL);
-
-    AAssetDir* assetDir = AAssetManager_openDir(assetManager, dir.c_str());
-    if (!assetDir) {
-        ALOGE("Failed to open asset root dir");
-        return false;
-    }
-
-    const char * assetFile = NULL;
-    while (assetFile = AAssetDir_getNextFileName(assetDir)) {
-        ALOGD("%s", assetFile);
-    }
-
-    AAssetDir_close(assetDir);
-
-    return true;
-}
-
 shared_ptr<Camera> Scene::getActiveCamera() {
     // TODO: support muliple cameras in a scene
     if (getNumCameras() > 0)
@@ -609,20 +473,8 @@ bool Scene::atLeastOneMeshHasNormal() {
     }
     return false;
 }
+
 SceneManager::SceneManager() {
-}
-
-SceneManager::~SceneManager() {
-}
-
-shared_ptr<Scene> SceneManager::createScene(SceneType sceneType) {
-    (void)sceneType;
-    shared_ptr<Scene> scene(new Scene);
-    if (scene) {
-        SceneManager::get()->addScene(scene);
-        mCurrentScene = scene;
-    }
-    return scene;
 }
 
 void SceneManager::addScene(shared_ptr<Scene> scene) {
@@ -633,5 +485,134 @@ shared_ptr<Scene> SceneManager::getCurrentScene() {
     return mCurrentScene;
 }
 
+void SceneManager::setCurrentScene(shared_ptr<Scene> scene) {
+    auto it = find(mScenes.begin(), mScenes.end(), scene);
+    if (it != mScenes.end())
+        mCurrentScene = *it;
+    else {
+        mScenes.push_back(scene);
+        mCurrentScene = scene;
+    }
+}
+
+shared_ptr<Scene> SceneManager::loadFile(shared_ptr<AppContext> appContext,
+    const string &file) {
+    ifstream ifs(file.c_str(), ifstream::binary);
+    if (!ifs) {
+        ALOGE("ifstream ctor failed for %s", file.c_str());
+        return nullptr;
+    }
+
+    ifs.seekg(0, ifs.end);
+    int length = ifs.tellg();
+    ifs.seekg(0, ifs.beg);
+
+    unique_ptr<char[]> buffer(new char[length]);
+    ifs.read(buffer.get(), length);
+    ifs.close();
+    if (!ifs) {
+        ALOGE("Partial read %d bytes", ifs.gcount());
+        return nullptr;
+    }
+
+    // process the buffer
+    buffer.get()[length - 1] = 0;
+    ALOGD("%s: %s", file.c_str(), buffer.get());
+
+    shared_ptr<Scene> s(new Scene);
+
+    // TODO:
+
+    return s;
+}
+
+shared_ptr<Scene> SceneManager::loadColladaAsset(shared_ptr<AppContext> appContext,
+    const string &assetFile) {    
+    AAssetManager *assetManager = appContext->getAssetManager();
+    assert(assetManager != NULL);
+
+    AAsset* asset = AAssetManager_open(assetManager,
+        assetFile.c_str(), AASSET_MODE_BUFFER);
+
+    if (!asset) {
+        ALOGE("Failed to open asset: %s", assetFile.c_str());
+        return nullptr;
+    }
+
+    off_t length = AAsset_getLength(asset);
+    unique_ptr<char[]> buffer(new char[length]);
+    size_t sz = AAsset_read(asset, buffer.get(), length);
+    AAsset_close(asset);
+    if (sz != length) {
+        ALOGE("Partial read %d bytes", sz);
+        return nullptr;
+    }
+
+    MeasureDuration importDuration;
+    Assimp::Importer importer;
+    const aiScene *scene(importer.ReadFileFromMemory(
+        buffer.get(), length,
+        aiProcess_Triangulate |
+        aiProcess_JoinIdenticalVertices |
+        aiProcess_SortByPType));
+    if (!scene) {
+        ALOGE("assimp failed to load %s: %s", assetFile.c_str(),
+            importer.GetErrorString());
+        return nullptr;
+    }
+
+    if (scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE) {
+        ALOGE("%s: incomplete scene data loaded", assetFile.c_str());
+        return nullptr;
+    }
+    if (scene->mRootNode == NULL) {
+        ALOGE("%s: root node null", assetFile.c_str());
+        return nullptr;
+    }
+
+    shared_ptr<Scene> s(new Scene);
+    long long importTime = importDuration.getMilliSeconds();
+
+    ALOGD("%s: %u meshes found",     assetFile.c_str(), scene->mNumMeshes);
+    ALOGD("%s: %u materials found",  assetFile.c_str(), scene->mNumMaterials);
+    ALOGD("%s: %u animations found", assetFile.c_str(), scene->mNumAnimations);
+    ALOGD("%s: %u textures found",   assetFile.c_str(), scene->mNumTextures);
+    ALOGD("%s: %u lights found",     assetFile.c_str(), scene->mNumLights);
+    ALOGD("%s: %u cameras found",    assetFile.c_str(), scene->mNumCameras);
+
+    MeasureDuration cvtDuration;
+    for (int i=0; i<scene->mNumCameras; i++) {
+        shared_ptr<Camera> camera(AIAdapter::typeCast(scene->mCameras[i]));
+        s->mCameras.push_back(camera);
+    }
+    for (int i=0; i<scene->mNumLights; i++) {
+        shared_ptr<Light> light(AIAdapter::typeCast(scene->mLights[i]));
+        s->mLights.push_back(light);
+    }
+    for (int i=0; i<scene->mNumTextures; i++) {
+        shared_ptr<Texture> texture(AIAdapter::typeCast(scene->mTextures[i]));
+        s->mTextures.push_back(texture);
+    }
+    for (int i=0; i<scene->mNumAnimations; i++) {
+        shared_ptr<Animation> animation(AIAdapter::typeCast(scene->mAnimations[i]));
+        s->mAnimations.push_back(animation);
+    }
+    for (int i=0; i<scene->mNumMaterials; i++) {
+        shared_ptr<Material> material(AIAdapter::typeCast(scene->mMaterials[i]));
+        s->mMaterials.push_back(material);
+    }
+    for (int i=0; i<scene->mNumMeshes; i++) {
+        shared_ptr<Mesh> mesh(AIAdapter::typeCast(scene->mMeshes[i]));
+        s->mMeshes.push_back(mesh);
+    }
+
+    AIAdapter::buildNodeTree(scene->mRootNode, s->mNodeTree);
+
+    long long cvtTime = cvtDuration.getMicroSeconds();
+
+    ALOGD("assimp load: %lld ms, conversion: %lld us", importTime, cvtTime);
+
+    return s;
+}
 
 } // namespace dzy

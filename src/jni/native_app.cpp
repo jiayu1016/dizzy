@@ -130,14 +130,6 @@ shared_ptr<AppContext> NativeApp::getAppContext() {
     return mAppContext;
 }
 
-shared_ptr<Scene> NativeApp::getCurrentScene() {
-    return SceneManager::get()->getCurrentScene();
-}
-
-shared_ptr<Render> NativeApp::getRender() {
-    return mAppContext->getRender();
-}
-
 void NativeApp::mainLoop() {
     int ident;
     int events;
@@ -168,7 +160,7 @@ void NativeApp::mainLoop() {
         if (appContext->isRendering() && !appContext->needQuit()) {
             // Drawing is throttled to the screen update rate, so there
             // is no need to do timing here.
-            getAppContext()->updateDisplay(getCurrentScene());
+            getAppContext()->updateDisplay();
         }
     }
 
@@ -176,3 +168,12 @@ void NativeApp::mainLoop() {
 
 } // namespace
 
+extern dzy::NativeApp * dzyCreateNativeActivity();
+
+void android_main(struct android_app* app) {
+    shared_ptr<dzy::NativeApp> nativeApp(dzyCreateNativeActivity());
+    if (!nativeApp->init(app))
+        return;
+    nativeApp->mainLoop();
+    nativeApp->fini();
+}

@@ -114,7 +114,7 @@ bool AppContext::initDisplay() {
     mHeight     = h;
     mRender->setAppContext(shared_from_this());
 
-    nativeApp->initView(nativeApp->getCurrentScene());
+    nativeApp->initView();
 }
 
 const char* AppContext::eglStatusStr() const {
@@ -161,13 +161,13 @@ void AppContext::releaseDisplay() {
     mSurface    = EGL_NO_SURFACE;
 }
 
-bool AppContext::updateDisplay(shared_ptr<Scene> scene) {
+bool AppContext::updateDisplay() {
     shared_ptr<NativeApp> nativeApp(getNativeApp());
     if (!nativeApp) {
         ALOGE("NativeApp released before AppContext");
         return false;
     }
-    nativeApp->drawScene(scene);
+    nativeApp->drawScene();
     return true;
 }
 
@@ -179,7 +179,7 @@ shared_ptr<NativeApp> AppContext::getNativeApp() {
     return mNativeApp.lock();
 }
 
-shared_ptr<Render> AppContext::getRender() {
+shared_ptr<Render> AppContext::getDefaultRender() {
     return mRender;
 }
 
@@ -218,6 +218,25 @@ const string AppContext::getInternalDataDir() {
         return "/data/data/" + appName;
     }
     return mInternalDataPath;
+}
+
+bool AppContext::listAssetFiles(const string &dir) {
+    assert(mAssetManager != NULL);
+
+    AAssetDir* assetDir = AAssetManager_openDir(mAssetManager, dir.c_str());
+    if (!assetDir) {
+        ALOGE("Failed to open asset root dir");
+        return false;
+    }
+
+    const char * assetFile = NULL;
+    while (assetFile = AAssetDir_getNextFileName(assetDir)) {
+        ALOGD("%s", assetFile);
+    }
+
+    AAssetDir_close(assetDir);
+
+    return true;
 }
 
 void AppContext::requestQuit() {
