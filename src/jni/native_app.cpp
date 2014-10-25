@@ -79,13 +79,11 @@ void NativeApp::appCmd(int32_t cmd) {
         case APP_CMD_RESUME:
             break;
         case APP_CMD_GAINED_FOCUS:
-            getAppContext()->setRenderState(true);
             break;
 
         case APP_CMD_PAUSE:
             break;
         case APP_CMD_LOST_FOCUS:
-            getAppContext()->setRenderState(false);
             break;
         case APP_CMD_SAVE_STATE:
             break;
@@ -94,9 +92,10 @@ void NativeApp::appCmd(int32_t cmd) {
 
         case APP_CMD_INIT_WINDOW:
             getAppContext()->initDisplay();
-            getAppContext()->updateDisplay(getCurrentScene());
+            getAppContext()->setRenderState(true);
             break;
         case APP_CMD_TERM_WINDOW:
+            getAppContext()->setRenderState(false);
             getAppContext()->releaseDisplay();
             break;
 

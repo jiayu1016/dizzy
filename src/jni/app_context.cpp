@@ -115,7 +115,6 @@ bool AppContext::initDisplay() {
     mRender->setAppContext(shared_from_this());
 
     nativeApp->initView(nativeApp->getCurrentScene());
-    nativeApp->drawScene(nativeApp->getCurrentScene());
 }
 
 const char* AppContext::eglStatusStr() const {

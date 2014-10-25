@@ -73,6 +73,7 @@ bool Shader::compileFromAsset(
 Program::Program()
     : mLinked(false)
     , mProgramId(0) {
+    ALOGD("Program::Program()");
     mProgramId = glCreateProgram();
     if (!mProgramId) {
         ALOGE("glCreateProgram error");
@@ -81,6 +82,7 @@ Program::Program()
 }
 
 Program::~Program() {
+    ALOGD("Program::~Program()");
     if (mProgramId) glDeleteProgram(mProgramId);
     if (!mVertexBOs.empty())
         glDeleteBuffers(mVertexBOs.size(), &mVertexBOs[0]);
@@ -232,6 +234,14 @@ GLint Program::getLocation(const char* name) {
     return mLocations[name];
 }
 
+Render::Render() {
+    ALOGD("Render::Render()");
+}
+
+Render::~Render() {
+    ALOGD("Render::~Render()");
+}
+
 bool Render::init(shared_ptr<Scene> scene) {
     shared_ptr<AppContext> appContext(getAppContext());
     if (!appContext) {
@@ -249,7 +259,7 @@ bool Render::init(shared_ptr<Scene> scene) {
         ALOGE("error compile fragment shader");
         return false;
     }
-    shared_ptr<Program> program(new Program());
+    shared_ptr<Program> program(new Program);
     if (!program->link(vtxShader, fragShader)) {
         ALOGE("error link program");
         return false;
@@ -258,6 +268,10 @@ bool Render::init(shared_ptr<Scene> scene) {
         ALOGE("error load data");
         return false;
     }
+
+    // if this routine called twice on the same Render object,
+    // the original Program object will be deleted after this assignment,
+    // draw routine will get mismatched program object.
     mProgram = program;
 
     glCullFace(GL_BACK);
@@ -273,6 +287,7 @@ bool Render::init(shared_ptr<Scene> scene) {
 }
 
 bool Render::release() {
+    if (mProgram) mProgram.reset();
     return true;
 }
 

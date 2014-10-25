@@ -70,6 +70,8 @@ class Node;
 class Mesh;
 class Render {
 public:
+    Render();
+    ~Render();
     bool init(std::shared_ptr<Scene> scene);
     bool release();
     bool drawScene(std::shared_ptr<Scene> scene);
@@ -84,7 +86,6 @@ private:
 
     std::shared_ptr<Program>    mProgram;
     std::weak_ptr<AppContext>   mAppContext;
-
 };
 
 } // namespace dzy 
