@@ -211,8 +211,8 @@ bool Program::load(std::shared_ptr<Scene> scene) {
         glGenBuffers(1, &mVertexBOs[i]);
         glGenBuffers(1, &mIndexBOs[i]);
         glBindBuffer(GL_ARRAY_BUFFER, mVertexBOs[i]);
-        glBufferData(GL_ARRAY_BUFFER, mesh->getVertexBufSize(),
-            mesh->getVertexBuf(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, mesh->getPositionBufSize(),
+            mesh->getPositionBuf(), GL_STATIC_DRAW);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBOs[i]);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->getIndexBufSize(),
             mesh->getIndexBuf(), GL_STATIC_DRAW);
@@ -418,20 +418,20 @@ void Render::drawMesh(shared_ptr<Scene> scene, int meshIdx) {
         glUniform1f(mProgram->getLocation("dzyMaterial.shininess"), shininess);
 
     }
-    if (mesh->hasPositions()) {
+    if (mesh->hasVertexPositions()) {
         GLint posLoc = mProgram->getLocation("dzyVertexPosition");
         glEnableVertexAttribArray(posLoc);
         //ALOGD("num vertices: %d, num components: %d, stride: %d",
         //    mesh->getNumVertices(),
-        //    mesh->getVertexNumComponent(),
-        //    mesh->getVertexBufStride());
+        //    mesh->getPositionNumComponent(),
+        //    mesh->getPositionBufStride());
         //mesh->dumpVertexBuf();
         glVertexAttribPointer(
             posLoc,
-            mesh->getVertexNumComponent(),  // size
+            mesh->getPositionNumComponent(),// size
             GL_FLOAT,                       // type
             GL_FALSE,                       // normalized
-            mesh->getVertexBufStride(),     // stride, 0 means tightly packed
+            mesh->getPositionBufStride(),   // stride, 0 means tightly packed
             (void*)0                        // offset
         );
     }
@@ -440,7 +440,7 @@ void Render::drawMesh(shared_ptr<Scene> scene, int meshIdx) {
         GLint colorLoc = mProgram->getLocation("dzyVertexColor");
         glEnableVertexAttribArray(colorLoc);
     }
-    if (mesh->hasNormals()) {
+    if (mesh->hasVertexNormals()) {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         GLint normalLoc = mProgram->getLocation("dzyVertexNormal");
         glEnableVertexAttribArray(normalLoc);
@@ -464,13 +464,13 @@ void Render::drawMesh(shared_ptr<Scene> scene, int meshIdx) {
         (void *)0);                         // offset
 
     // restore
-    if (mesh->hasPositions())
+    if (mesh->hasVertexPositions())
         glDisableVertexAttribArray(mProgram->getLocation("dzyVertexPosition"));
 
     if (mesh->hasVertexColors()) {
         glDisableVertexAttribArray(mProgram->getLocation("dzyVertexColor"));
     }
-    if (mesh->hasNormals()) {
+    if (mesh->hasVertexNormals()) {
         glDisableVertexAttribArray(mProgram->getLocation("dzyVertexNormal"));
     }
 

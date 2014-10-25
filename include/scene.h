@@ -125,44 +125,15 @@ public:
  */
 class MeshData {
 public:
-    enum MeshDataType {
-        MESH_DATA_TYPE_NONE,
-        MESH_DATA_TYPE_FLOAT,
-        MESH_DATA_TYPE_INT,
-        MESH_DATA_TYPE_UNSIGNED_SHORT,
-        MESH_DATA_TYPE_FIXED16_16,
-        MESH_DATA_TYPE_UNSIGNED_BYTE,
-        MESH_DATA_TYPE_SHORT,
-        MESH_DATA_TYPE_SHORT_NORM,
-        MESH_DATA_TYPE_BYTE,
-        MESH_DATA_TYPE_BYTE_NORM,
-        MESH_DATA_TYPE_UNSIGNED_BYTE_NORM,
-        MESH_DATA_TYPE_UNSIGNED_SHORT_NORM,
-        MESH_DATA_TYPE_UNSIGNED_INT,
-        MESH_DATA_TYPE_RGBA,
-        MESH_DATA_TYPE_ARGB,
-        MESH_DATA_TYPE_ABGR,
-    };
+    void reserve(int size) { mBuffer.reserve(size); };
+    unsigned int append(int size, unsigned char *buf);
+    inline bool empty() const { return mBuffer.empty(); }
+    inline unsigned int getBufSize() { return mBuffer.size(); };
 
-    MeshData();
-    inline bool empty() const { return mBuffer.get() == NULL; }
-    void reset();
-    void set(MeshDataType type, unsigned int numComponents,
-        unsigned int stride, unsigned int numVertices,
-        unsigned char *rawBuffer);
-    inline unsigned int getBufSize() { return mBufSize; };
-    inline unsigned int getBufStride() { return mStride; };
-    inline unsigned int getNumComponents() { return mNumComponents; };
-
-    void * getBuf();
+    void * getBuf(int offset = 0);
 
 private:
-    MeshDataType                    mType;
-    unsigned int                    mNumComponents;
-    unsigned int                    mStride;
-    unsigned int                    mBufSize;
-    // c++11 shared_ptr doesn't support array, must explicitly set deleter
-    std::shared_ptr<unsigned char>  mBuffer;
+    std::vector<unsigned char>      mBuffer;
 };
 
 class Mesh {
@@ -179,31 +150,52 @@ public:
 
     Mesh();
 
-    bool            hasPositions() const;
-    bool            hasFaces() const;
-    bool            hasNormals() const;
-    bool            hasTangentsAndBitangents() const;
-    bool            hasVertexColors(unsigned int index) const;
+    bool            hasVertexPositions() const { return mHasPos; };
+    bool            hasVertexColors(unsigned int channel) const;
     bool            hasVertexColors() const;
-    bool            hasTextureCoords(unsigned int index) const;
-    unsigned int    getNumUVChannels() const;
-    unsigned int    getNumColorChannels() const;
-    unsigned int    getNumVertices() const;
-    unsigned int    getNumFaces() const;
-    unsigned int    getNumIndices();
-    unsigned int    getVertexNumComponent();
-    unsigned int    getVertexBufSize();
-    unsigned int    getVertexBufStride();
-    void *          getVertexBuf();
-    unsigned int    getIndexBufSize();
+    bool            hasTextureCoords(unsigned int channel) const;
+    bool            hasVertexNormals() const { return mHasNormal; };
+    bool            hasVertexTangentsAndBitangents() const { return mHasTangent && mHasBitangent; };
+    bool            hasFaces() const { return !mTriangleFaces.empty() && mNumFaces > 0; };
+
+    unsigned int    getNumVertices() const { return mNumVertices; };
+    unsigned int    getNumTextureCoordChannels() const { return mNumTextureCoordChannels; };
+    unsigned int    getNumColorChannels() const { return mNumColorChannels; };
+    unsigned int    getNumFaces() const { return mNumFaces; };
+    unsigned int    getNumIndices() const { return mNumFaces * 3; };
+
+    unsigned int    getPositionNumComponent() const { return mPosNumComponents; };
+    unsigned int    getPositionBufStride() const { return mPosNumComponents * mPosBytesComponent; };
+    unsigned int    getPositionBufSize() const { return getPositionBufStride() * mNumVertices; };
+    void *          getPositionBuf();
+
+    unsigned int    getIndexBufSize() { return getNumIndices() * sizeof(unsigned int); };
     void *          getIndexBuf();
-    unsigned int    getNormalBufStride();
-    unsigned int    getNormalNumComponent();
+
+    unsigned int    getNormalNumComponent() const { return mNormalNumComponents; };
+    unsigned int    getNormalBufStride() const { return mNormalNumComponents * mNormalBytesComponent; };
     void *          getNormalBuf();
+
+    void appendVertexPositions(unsigned char *buf, unsigned int numVertices,
+        unsigned int numComponents, unsigned int bytesEachComponent);
+    void appendVertexColors(unsigned char *buf, unsigned int numVertices,
+        unsigned int numComponents, unsigned int bytesEachComponent,
+        unsigned int channel);
+    void appendVertexTextureCoords(unsigned char *buf, unsigned int numVertices,
+        unsigned int numComponents, unsigned int bytesEachComponent,
+        unsigned int channel);
+    void appendVertexNormals(unsigned char *buf, unsigned int numVertices,
+        unsigned int numComponents, unsigned int bytesEachComponent);
+    void appendVertexTangents(unsigned char *buf, unsigned int numVertices,
+        unsigned int numComponents, unsigned int bytesEachComponent);
+    void appendVertexBitangents(unsigned char *buf, unsigned int numVertices,
+        unsigned int numComponents, unsigned int bytesEachComponent);
+
+    void reserveDataStorage(int size);
 
     // default 3 float a float veretex
     void            dumpVertexBuf(int groupSize = 3);
-    void            dumpIndexBuf(int groupSize = 3);
+    void            dumpIndexBuf (int groupSize = 3);
 
     friend class AIAdapter;
     friend class Render;
@@ -213,16 +205,39 @@ private:
 
     unsigned int                    mNumVertices;
     unsigned int                    mNumFaces;
-    unsigned int                    mNumUVComponents[MAX_TEXTURECOORDS];
-
-    MeshData                        mVertices;
-    MeshData                        mNormals;
-    MeshData                        mTangents;
-    MeshData                        mBitangents;
     std::vector<TriangleFace>       mTriangleFaces;
 
-    MeshData                        mColors         [MAX_COLOR_SETS];
-    MeshData                        mTextureCoords  [MAX_TEXTURECOORDS];
+    MeshData                        mMeshData;
+
+    unsigned int                    mPosOffset;
+    unsigned int                    mPosNumComponents;
+    unsigned int                    mPosBytesComponent;
+    bool                            mHasPos;
+
+    unsigned int                    mColorOffset[MAX_COLOR_SETS];
+    unsigned int                    mColorNumComponents[MAX_COLOR_SETS];
+    unsigned int                    mColorBytesComponent[MAX_COLOR_SETS];
+    unsigned int                    mNumColorChannels;
+
+    unsigned int                    mTextureCoordOffset[MAX_TEXTURECOORDS];
+    unsigned int                    mTextureCoordNumComponents[MAX_TEXTURECOORDS];
+    unsigned int                    mTextureCoordBytesComponent[MAX_TEXTURECOORDS];
+    unsigned int                    mNumTextureCoordChannels;
+
+    unsigned int                    mNormalOffset;
+    unsigned int                    mNormalNumComponents;
+    unsigned int                    mNormalBytesComponent;
+    bool                            mHasNormal;
+
+    unsigned int                    mTangentOffset;
+    unsigned int                    mTangentNumComponents;
+    unsigned int                    mTangentBytesComponent;
+    bool                            mHasTangent;
+
+    unsigned int                    mBitangentOffset;
+    unsigned int                    mBitangentNumComponents;
+    unsigned int                    mBitangentBytesComponent;
+    bool                            mHasBitangent;
 
     // A mesh use only ONE material, otherwise it is splitted to multiple meshes
     unsigned int                    mMaterialIndex;

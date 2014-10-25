@@ -146,36 +146,44 @@ shared_ptr<Mesh> AIAdapter::typeCast(aiMesh *mesh) {
     me->mNumVertices = mesh->mNumVertices;
     me->mNumFaces = mesh->mNumFaces;
 
-    for (int i=0; i< mesh->GetNumUVChannels(); i++) {
-        me->mNumUVComponents[i] = mesh->mNumUVComponents[i];
-        me->mTextureCoords[i].set(MeshData::MESH_DATA_TYPE_FLOAT,
-            3, 3 * sizeof(float), me->mNumVertices,
-            reinterpret_cast<unsigned char*>(mesh->mTextureCoords[i]));
-    }
+    int estimatedSize = 0;
+    if (mesh->HasPositions())
+        estimatedSize += me->mNumVertices * 3 *sizeof(float);
+    estimatedSize += me->mNumVertices * mesh->GetNumColorChannels() * 4 * sizeof(float);
+    estimatedSize += me->mNumVertices * mesh->GetNumUVChannels() * 3 * sizeof(float);
+    if (mesh->HasNormals())
+        estimatedSize += me->mNumVertices * 3 *sizeof(float);
+    if (mesh->HasTangentsAndBitangents())
+        estimatedSize += me->mNumVertices * 3 *sizeof(float) * 2;
 
-    for (int i=0; i< mesh->GetNumColorChannels(); i++) {
-        me->mColors[i].set(MeshData::MESH_DATA_TYPE_FLOAT,
-            4, 4 * sizeof(float), me->mNumVertices,
-            reinterpret_cast<unsigned char*>(mesh->mColors[i]));
-    }
+    me->reserveDataStorage(estimatedSize);
 
     // Attention: rely on continuous memory layout of vertices in assimp
     if (mesh->HasPositions()) {
-        me->mVertices.set(MeshData::MESH_DATA_TYPE_FLOAT, 3, 3 * sizeof(float),
-            me->mNumVertices, reinterpret_cast<unsigned char*>(mesh->mVertices));
+        me->appendVertexPositions(reinterpret_cast<unsigned char*>(mesh->mVertices),
+            me->mNumVertices, 3, sizeof(float));
     }
+
+    for (int i=0; i< mesh->GetNumColorChannels(); i++) {
+        me->appendVertexColors(reinterpret_cast<unsigned char*>(mesh->mColors[i]),
+            me->mNumVertices, 4, sizeof(float), i);
+    }
+
+    for (int i=0; i< mesh->GetNumUVChannels(); i++) {
+        me->appendVertexTextureCoords(reinterpret_cast<unsigned char*>(mesh->mTextureCoords[i]),
+            me->mNumVertices, mesh->mNumUVComponents[i], sizeof(float), i);
+    }
+
     if (mesh->HasNormals()) {
-        me->mNormals.set(MeshData::MESH_DATA_TYPE_FLOAT,
-            3, 3 * sizeof(float), me->mNumVertices,
-            reinterpret_cast<unsigned char*>(mesh->mNormals));
+        me->appendVertexNormals(reinterpret_cast<unsigned char*>(mesh->mNormals),
+            me->mNumVertices, 3, sizeof(float));
     }
+
     if (mesh->HasTangentsAndBitangents()) {
-        me->mTangents.set(MeshData::MESH_DATA_TYPE_FLOAT,
-            3, 3 * sizeof(float), me->mNumVertices,
-            reinterpret_cast<unsigned char*>(mesh->mTangents));
-        me->mBitangents.set(MeshData::MESH_DATA_TYPE_FLOAT,
-            3, 3 * sizeof(float), me->mNumVertices,
-            reinterpret_cast<unsigned char*>(mesh->mBitangents));
+        me->appendVertexTangents(reinterpret_cast<unsigned char*>(mesh->mTangents),
+            me->mNumVertices, 3, sizeof(float));
+        me->appendVertexBitangents(reinterpret_cast<unsigned char*>(mesh->mBitangents),
+            me->mNumVertices, 3, sizeof(float));
     }
     if (mesh->HasFaces()) {
         ALOGD("mNumFaces: %u", me->mNumFaces);
