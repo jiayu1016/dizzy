@@ -1,49 +1,49 @@
 #include <memory>
 #include "log.h"
-#include "app_context.h"
+#include "engine_context.h"
 #include "scene.h"
 #include "render.h"
-#include "native_app.h"
+#include "native_core.h"
 
 using namespace std;
 
 namespace dzy {
 
-NativeApp::NativeApp() {
-    ALOGD("NativeApp::NativeApp()");
+NativeCore::NativeCore() {
+    ALOGD("NativeCore::NativeCore()");
 }
 
-NativeApp::~NativeApp() {
-    ALOGD("NativeApp::~NativeApp()");
+NativeCore::~NativeCore() {
+    ALOGD("NativeCore::~NativeCore()");
 }
 
-bool NativeApp::init(struct android_app* app) {
+bool NativeCore::init(struct android_app* app) {
     mApp = app;
     mApp->userData = this;
-    mApp->onAppCmd = NativeApp::handleAppCmd;
-    mApp->onInputEvent = NativeApp::handleInputEvent;
-    mAppContext.reset(new AppContext);
-    mAppContext->init(shared_from_this());
-    bool ret = initApp();
-    if (!ret) ALOGE("Init NativeApp class failed\n");
+    mApp->onAppCmd = NativeCore::handleAppCmd;
+    mApp->onInputEvent = NativeCore::handleInputEvent;
+    mEngineContext.reset(new EngineContext);
+    mEngineContext->init(shared_from_this());
+    bool ret = initActivity();
+    if (!ret) ALOGE("Init NativeCore class failed\n");
     return ret;
 }
 
-void NativeApp::fini() {
-    releaseApp();
+void NativeCore::fini() {
+    releaseActivity();
 }
 
-int32_t NativeApp::handleInputEvent(struct android_app* app, AInputEvent* event) {
-    NativeApp *nativeApp = (NativeApp *)(app->userData);
-    return nativeApp->inputEvent(event);
+int32_t NativeCore::handleInputEvent(struct android_app* app, AInputEvent* event) {
+    NativeCore *nativeCore = (NativeCore *)(app->userData);
+    return nativeCore->inputEvent(event);
 }
 
-void NativeApp::handleAppCmd(struct android_app* app, int32_t cmd) {
-    NativeApp *nativeApp = (NativeApp *)(app->userData);
-    nativeApp->appCmd(cmd);
+void NativeCore::handleAppCmd(struct android_app* app, int32_t cmd) {
+    NativeCore *nativeCore = (NativeCore *)(app->userData);
+    nativeCore->appCmd(cmd);
 }
 
-int32_t NativeApp::inputMotionEvent(int action) {
+int32_t NativeCore::inputMotionEvent(int action) {
     int32_t ret = 1;
     switch(action) {
         case AMOTION_EVENT_ACTION_DOWN:
@@ -56,7 +56,7 @@ int32_t NativeApp::inputMotionEvent(int action) {
     return ret;
 }
 
-int32_t NativeApp::inputEvent(AInputEvent* event) {
+int32_t NativeCore::inputEvent(AInputEvent* event) {
     int32_t ret = 0;
     switch(AInputEvent_getType(event)) {
         case AINPUT_EVENT_TYPE_KEY:
@@ -72,7 +72,7 @@ int32_t NativeApp::inputEvent(AInputEvent* event) {
     return ret;
 }
 
-void NativeApp::appCmd(int32_t cmd) {
+void NativeCore::appCmd(int32_t cmd) {
     switch (cmd) {
         case APP_CMD_START:
             break;
@@ -91,12 +91,12 @@ void NativeApp::appCmd(int32_t cmd) {
             break;
 
         case APP_CMD_INIT_WINDOW:
-            getAppContext()->initDisplay();
-            getAppContext()->setRenderState(true);
+            getEngineContext()->initDisplay();
+            getEngineContext()->setRenderState(true);
             break;
         case APP_CMD_TERM_WINDOW:
-            getAppContext()->setRenderState(false);
-            getAppContext()->releaseDisplay();
+            getEngineContext()->setRenderState(false);
+            getEngineContext()->releaseDisplay();
             break;
 
         case APP_CMD_WINDOW_RESIZED:
@@ -110,13 +110,13 @@ void NativeApp::appCmd(int32_t cmd) {
     }
 }
 
-int32_t NativeApp::inputKeyEvent(int action, int code) {
+int32_t NativeCore::inputKeyEvent(int action, int code) {
     int32_t ret = 0;
     if (action == AKEY_EVENT_ACTION_DOWN) {
         switch(code) {
             case AKEYCODE_BACK:
                 ALOGD("AKEYCODE_BACK");
-                getAppContext()->requestQuit();
+                getEngineContext()->requestQuit();
                 break;
             default:
                 ALOGD("Not supported key code: %d", code);
@@ -126,15 +126,15 @@ int32_t NativeApp::inputKeyEvent(int action, int code) {
     return ret;
 }
 
-shared_ptr<AppContext> NativeApp::getAppContext() {
-    return mAppContext;
+shared_ptr<EngineContext> NativeCore::getEngineContext() {
+    return mEngineContext;
 }
 
-void NativeApp::mainLoop() {
+void NativeCore::mainLoop() {
     int ident;
     int events;
     struct android_poll_source* source;
-    shared_ptr<AppContext> appContext(getAppContext());
+    shared_ptr<EngineContext> engineContext(getEngineContext());
     app_dummy();
 
     while (true) {
@@ -142,7 +142,7 @@ void NativeApp::mainLoop() {
         // otherwise,  loop until all events are read, then continue
         // to draw the next frame of animation.
         while ((ident = ALooper_pollAll(
-                    appContext->isRendering() ? 0 : -1,
+                    engineContext->isRendering() ? 0 : -1,
                     NULL, &events, (void**)&source)) >= 0) {
             if (ident == LOOPER_ID_MAIN || ident == LOOPER_ID_INPUT) {
                 if (source != NULL) {
@@ -157,10 +157,10 @@ void NativeApp::mainLoop() {
         }
 
         // check needQuit() to give an early chance to stop drawing.
-        if (appContext->isRendering() && !appContext->needQuit()) {
+        if (engineContext->isRendering() && !engineContext->needQuit()) {
             // Drawing is throttled to the screen update rate, so there
             // is no need to do timing here.
-            getAppContext()->updateDisplay();
+            getEngineContext()->updateDisplay();
         }
     }
 
@@ -168,12 +168,12 @@ void NativeApp::mainLoop() {
 
 } // namespace
 
-extern dzy::NativeApp * dzyCreateNativeActivity();
+extern dzy::NativeCore * dzyCreateNativeActivity();
 
 void android_main(struct android_app* app) {
-    shared_ptr<dzy::NativeApp> nativeApp(dzyCreateNativeActivity());
-    if (!nativeApp->init(app))
+    shared_ptr<dzy::NativeCore> nativeCore(dzyCreateNativeActivity());
+    if (!nativeCore->init(app))
         return;
-    nativeApp->mainLoop();
-    nativeApp->fini();
+    nativeCore->mainLoop();
+    nativeCore->fini();
 }

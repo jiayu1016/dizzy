@@ -14,7 +14,7 @@
 namespace dzy {
 
 extern const char* glStatusStr();
-class AppContext;
+class EngineContext;
 
 class Shader {
 public:
@@ -77,15 +77,15 @@ public:
     bool drawScene(std::shared_ptr<Scene> scene);
     void drawNode(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node);    
     void drawMesh(std::shared_ptr<Scene> scene, int meshIdx);
-    std::shared_ptr<AppContext> getAppContext();
+    std::shared_ptr<EngineContext> getEngineContext();
     static const char* glStatusStr();
 
-    friend class AppContext;
+    friend class EngineContext;
 private:
-    void setAppContext(std::shared_ptr<AppContext> appContext);
+    void setEngineContext(std::shared_ptr<EngineContext> engineContext);
 
     std::shared_ptr<Program>    mProgram;
-    std::weak_ptr<AppContext>   mAppContext;
+    std::weak_ptr<EngineContext>   mEngineContext;
 };
 
 } // namespace dzy 

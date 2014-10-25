@@ -1,18 +1,18 @@
 #include <memory>
 #include <string>
 #include "log.h"
-#include "native_app.h"
-#include "app_context.h"
+#include "native_core.h"
+#include "engine_context.h"
 #include "render.h"
 #include "scene.h"
 
 using namespace dzy;
 using namespace std;
 
-class SViewApp : public NativeApp {
+class SViewer : public NativeCore {
 public:
-    virtual bool initApp();
-    virtual bool releaseApp();
+    virtual bool initActivity();
+    virtual bool releaseActivity();
     virtual bool initView();
     virtual bool releaseView();
     virtual bool drawScene();
@@ -21,15 +21,15 @@ private:
     shared_ptr<Render>  mRender;
 };
 
-bool SViewApp::initApp() {
+bool SViewer::initActivity() {
     bool ret = false;
 
-    shared_ptr<AppContext> appContext(getAppContext());
-    if (!appContext) return false;
+    shared_ptr<EngineContext> engineContext(getEngineContext());
+    if (!engineContext) return false;
 
-    appContext->listAssetFiles("");
+    engineContext->listAssetFiles("");
 
-    shared_ptr<Scene> scene(SceneManager::loadColladaAsset(appContext, "4meshes.dae"));
+    shared_ptr<Scene> scene(SceneManager::loadColladaAsset(engineContext, "4meshes.dae"));
     if (!scene) return false;
 
     SceneManager::get()->addScene(scene);
@@ -38,15 +38,15 @@ bool SViewApp::initApp() {
     return true;
 }
 
-bool SViewApp::releaseApp() {
+bool SViewer::releaseActivity() {
     return true;
 }
 
-bool SViewApp::initView() {
-    shared_ptr<AppContext> appContext(getAppContext());
-    if (!appContext) return false;
+bool SViewer::initView() {
+    shared_ptr<EngineContext> engineContext(getEngineContext());
+    if (!engineContext) return false;
 
-    mRender = appContext->getDefaultRender();
+    mRender = engineContext->getDefaultRender();
     if (!mRender) return false;
 
     shared_ptr<Scene> scene(SceneManager::get()->getCurrentScene());
@@ -55,17 +55,17 @@ bool SViewApp::initView() {
     return mRender->init(scene);
 }
 
-bool SViewApp::releaseView() {
+bool SViewer::releaseView() {
     return mRender->release();
 }
 
-bool SViewApp::drawScene() {
+bool SViewer::drawScene() {
     shared_ptr<Scene> scene(SceneManager::get()->getCurrentScene());
     if (!scene) return false;
 
     return mRender->drawScene(scene);
 }
 
-NativeApp * dzyCreateNativeActivity() {
-    return new SViewApp;
+NativeCore * dzyCreateNativeActivity() {
+    return new SViewer;
 }

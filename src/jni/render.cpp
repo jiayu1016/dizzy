@@ -1,7 +1,7 @@
 #include <memory>
 #include <functional>
 #include "log.h"
-#include "app_context.h"
+#include "engine_context.h"
 #include "scene.h"
 #include "render.h"
 
@@ -243,19 +243,19 @@ Render::~Render() {
 }
 
 bool Render::init(shared_ptr<Scene> scene) {
-    shared_ptr<AppContext> appContext(getAppContext());
-    if (!appContext) {
-        ALOGE("AppContext released while init Render");
+    shared_ptr<EngineContext> engineContext(getEngineContext());
+    if (!engineContext) {
+        ALOGE("EngineContext released while init Render");
         return false;
     }
 
     shared_ptr<Shader> vtxShader(new Shader(GL_VERTEX_SHADER));
-    if (!vtxShader->compileFromAsset(appContext->getAssetManager(), "vertex.shader")) {
+    if (!vtxShader->compileFromAsset(engineContext->getAssetManager(), "vertex.shader")) {
         ALOGE("error compile vertex shader");
         return false;
     }
     shared_ptr<Shader> fragShader(new Shader(GL_FRAGMENT_SHADER));
-    if (!fragShader->compileFromAsset(appContext->getAssetManager(), "fragment.shader")) {
+    if (!fragShader->compileFromAsset(engineContext->getAssetManager(), "fragment.shader")) {
         ALOGE("error compile fragment shader");
         return false;
     }
@@ -280,8 +280,8 @@ bool Render::init(shared_ptr<Scene> scene) {
     glClearColor(0.6f, 0.7f, 1.0f, 1.0f);
 
     glViewport(0, 0,
-        appContext->getSurfaceWidth(),
-        appContext->getSurfaceHeight());
+        engineContext->getSurfaceWidth(),
+        engineContext->getSurfaceHeight());
 
     return true;
 }
@@ -292,9 +292,9 @@ bool Render::release() {
 }
 
 bool Render::drawScene(shared_ptr<Scene> scene) {
-    shared_ptr<AppContext> appContext(getAppContext());
-    if (!appContext) {
-        ALOGE("AppContext released while rendering a scene");
+    shared_ptr<EngineContext> engineContext(getEngineContext());
+    if (!engineContext) {
+        ALOGE("EngineContext released while rendering a scene");
         return false;
     }
 
@@ -353,7 +353,7 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
 
     using namespace std::placeholders;
     tree.dfsTraversal(scene, bind(&Render::drawNode, this, _1, _2));
-    eglSwapBuffers(appContext->getEGLDisplay(), appContext->getEGLSurface());
+    eglSwapBuffers(engineContext->getEGLDisplay(), engineContext->getEGLSurface());
 
     return true;
 }
@@ -366,8 +366,8 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
     shared_ptr<Camera> activeCamera(scene->getActiveCamera());
     if (activeCamera) {
         //override the aspect read from model
-        float surfaceWidth = getAppContext()->getSurfaceWidth();
-        float surfaceHeight = getAppContext()->getSurfaceHeight();
+        float surfaceWidth = getEngineContext()->getSurfaceWidth();
+        float surfaceHeight = getEngineContext()->getSurfaceHeight();
         activeCamera->setAspect(surfaceWidth/surfaceHeight);
         glm::mat4 view = activeCamera->getViewMatrix(scene->mCameraModelTransform);
         glm::mat4 proj = activeCamera->getProjMatrix();
@@ -478,8 +478,8 @@ void Render::drawMesh(shared_ptr<Scene> scene, int meshIdx) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-shared_ptr<AppContext> Render::getAppContext() {
-    return mAppContext.lock();
+shared_ptr<EngineContext> Render::getEngineContext() {
+    return mEngineContext.lock();
 }
 
 const char* Render::glStatusStr() {
@@ -496,8 +496,8 @@ const char* Render::glStatusStr() {
     }
 }
 
-void Render::setAppContext(shared_ptr<AppContext> appContext) {
-    mAppContext = appContext;
+void Render::setEngineContext(shared_ptr<EngineContext> engineContext) {
+    mEngineContext = engineContext;
 }
 
 } // namespace dzy

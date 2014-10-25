@@ -2,7 +2,7 @@
 #include <fstream>
 #include <assert.h>
 #include <math.h>
-#include "app_context.h"
+#include "engine_context.h"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -495,7 +495,7 @@ void SceneManager::setCurrentScene(shared_ptr<Scene> scene) {
     }
 }
 
-shared_ptr<Scene> SceneManager::loadFile(shared_ptr<AppContext> appContext,
+shared_ptr<Scene> SceneManager::loadFile(shared_ptr<EngineContext> engineContext,
     const string &file) {
     ifstream ifs(file.c_str(), ifstream::binary);
     if (!ifs) {
@@ -526,9 +526,9 @@ shared_ptr<Scene> SceneManager::loadFile(shared_ptr<AppContext> appContext,
     return s;
 }
 
-shared_ptr<Scene> SceneManager::loadColladaAsset(shared_ptr<AppContext> appContext,
+shared_ptr<Scene> SceneManager::loadColladaAsset(shared_ptr<EngineContext> engineContext,
     const string &assetFile) {    
-    AAssetManager *assetManager = appContext->getAssetManager();
+    AAssetManager *assetManager = engineContext->getAssetManager();
     assert(assetManager != NULL);
 
     AAsset* asset = AAssetManager_open(assetManager,

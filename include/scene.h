@@ -281,7 +281,7 @@ private:
 };
 
 class SceneManager;
-class AppContext;
+class EngineContext;
 class Program;
 typedef std::vector<std::shared_ptr<Camera> >      CameraContainer;
 typedef std::vector<std::shared_ptr<Light> >       LightContainer;
@@ -334,10 +334,10 @@ public:
     std::shared_ptr<Scene> getCurrentScene();
     void setCurrentScene(std::shared_ptr<Scene> scene);
     static std::shared_ptr<Scene> loadFile(
-        std::shared_ptr<AppContext> appContext,
+        std::shared_ptr<EngineContext> engineContext,
         const std::string &file);
     static std::shared_ptr<Scene> loadColladaAsset(
-        std::shared_ptr<AppContext> appContext,
+        std::shared_ptr<EngineContext> engineContext,
         const std::string &asset);
 
     friend class Singleton<SceneManager>;

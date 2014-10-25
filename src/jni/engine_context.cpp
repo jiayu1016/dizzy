@@ -7,39 +7,39 @@
 #include <EGL/eglext.h>
 #include <GLES3/gl3.h>
 #include "log.h"
-#include "native_app.h"
+#include "native_core.h"
 #include "scene.h"
 #include "render.h"
-#include "app_context.h"
+#include "engine_context.h"
 
 using namespace std;
 
 namespace dzy {
 
-AppContext::AppContext()
+EngineContext::EngineContext()
     : mRequestQuit  (false)
     , mRendering    (false)
     , mRender       (new Render)
     , mDisplay      (EGL_NO_DISPLAY)
     , mEglContext   (EGL_NO_CONTEXT)
     , mSurface      (EGL_NO_SURFACE) {
-    ALOGD("AppContext::AppContext()");
+    ALOGD("EngineContext::EngineContext()");
 }
 
-AppContext::~AppContext() {
-    ALOGD("AppContext::~AppContext()");
+EngineContext::~EngineContext() {
+    ALOGD("EngineContext::~EngineContext()");
 }
 
-void AppContext::init(shared_ptr<NativeApp> nativeApp) {
-    mAssetManager = nativeApp->mApp->activity->assetManager;
-    mInternalDataPath = nativeApp->mApp->activity->internalDataPath;
-    mNativeApp = nativeApp;
+void EngineContext::init(shared_ptr<NativeCore> nativeCore) {
+    mAssetManager = nativeCore->mApp->activity->assetManager;
+    mInternalDataPath = nativeCore->mApp->activity->internalDataPath;
+    mNativeCore = nativeCore;
 }
 
-bool AppContext::initDisplay() {
-    shared_ptr<NativeApp> nativeApp(getNativeApp());
-    if (!nativeApp) {
-        ALOGE("NativeApp released before AppContext");
+bool EngineContext::initDisplay() {
+    shared_ptr<NativeCore> nativeCore(getNativeCore());
+    if (!nativeCore) {
+        ALOGE("NativeCore released before EngineContext");
         return false;
     }
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -76,9 +76,9 @@ bool AppContext::initDisplay() {
 
     EGLint format;
     eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
-    ANativeWindow_setBuffersGeometry(nativeApp->mApp->window, 0, 0, format);
+    ANativeWindow_setBuffersGeometry(nativeCore->mApp->window, 0, 0, format);
 
-    EGLSurface surface = eglCreateWindowSurface(display, config, nativeApp->mApp->window, NULL);
+    EGLSurface surface = eglCreateWindowSurface(display, config, nativeCore->mApp->window, NULL);
     if (surface == EGL_NO_SURFACE) {
         ALOGW("Unable to create surface: %s", eglStatusStr());
         return false;
@@ -112,12 +112,12 @@ bool AppContext::initDisplay() {
     mSurface    = surface;
     mWidth      = w;
     mHeight     = h;
-    mRender->setAppContext(shared_from_this());
+    mRender->setEngineContext(shared_from_this());
 
-    nativeApp->initView();
+    nativeCore->initView();
 }
 
-const char* AppContext::eglStatusStr() const {
+const char* EngineContext::eglStatusStr() const {
     EGLint error = eglGetError();
 
     switch (error) {
@@ -139,13 +139,13 @@ const char* AppContext::eglStatusStr() const {
     }
 }
 
-void AppContext::releaseDisplay() {
-    shared_ptr<NativeApp> nativeApp(getNativeApp());
-    if (!nativeApp) {
-        ALOGE("NativeApp released before AppContext");
+void EngineContext::releaseDisplay() {
+    shared_ptr<NativeCore> nativeCore(getNativeCore());
+    if (!nativeCore) {
+        ALOGE("NativeCore released before EngineContext");
         return;
     }
-    nativeApp->releaseView();
+    nativeCore->releaseView();
     if (mDisplay != EGL_NO_DISPLAY) {
         eglMakeCurrent(mDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         if (mEglContext != EGL_NO_CONTEXT) {
@@ -161,33 +161,33 @@ void AppContext::releaseDisplay() {
     mSurface    = EGL_NO_SURFACE;
 }
 
-bool AppContext::updateDisplay() {
-    shared_ptr<NativeApp> nativeApp(getNativeApp());
-    if (!nativeApp) {
-        ALOGE("NativeApp released before AppContext");
+bool EngineContext::updateDisplay() {
+    shared_ptr<NativeCore> nativeCore(getNativeCore());
+    if (!nativeCore) {
+        ALOGE("NativeCore released before EngineContext");
         return false;
     }
-    nativeApp->drawScene();
+    nativeCore->drawScene();
     return true;
 }
 
-AAssetManager* AppContext::getAssetManager() {
+AAssetManager* EngineContext::getAssetManager() {
     return mAssetManager;
 }
 
-shared_ptr<NativeApp> AppContext::getNativeApp() {
-    return mNativeApp.lock();
+shared_ptr<NativeCore> EngineContext::getNativeCore() {
+    return mNativeCore.lock();
 }
 
-shared_ptr<Render> AppContext::getDefaultRender() {
+shared_ptr<Render> EngineContext::getDefaultRender() {
     return mRender;
 }
 
-const string AppContext::getAppName() {
+const string EngineContext::getAppName() {
     return getAppName(getpid());
 }
 
-const string AppContext::getAppName(pid_t pid) {
+const string EngineContext::getAppName(pid_t pid) {
     stringstream ss;
     ss << "/proc/" << pid << "/cmdline";
 
@@ -204,13 +204,13 @@ const string AppContext::getAppName(pid_t pid) {
 
 }
 
-const string AppContext::getExternalDataDir() {
+const string EngineContext::getExternalDataDir() {
     stringstream ss;
     ss << "/sdcard/" << getAppName();
     return ss.str();
 }
 
-const string AppContext::getInternalDataDir() {
+const string EngineContext::getInternalDataDir() {
     if (!mInternalDataPath.empty()) {
         string appName = getAppName();
         ALOGW("app's internal data path set to /data/data/%s",
@@ -220,7 +220,7 @@ const string AppContext::getInternalDataDir() {
     return mInternalDataPath;
 }
 
-bool AppContext::listAssetFiles(const string &dir) {
+bool EngineContext::listAssetFiles(const string &dir) {
     assert(mAssetManager != NULL);
 
     AAssetDir* assetDir = AAssetManager_openDir(mAssetManager, dir.c_str());
@@ -239,39 +239,39 @@ bool AppContext::listAssetFiles(const string &dir) {
     return true;
 }
 
-void AppContext::requestQuit() {
+void EngineContext::requestQuit() {
     mRequestQuit = true;
 }
 
-bool AppContext::needQuit() {
+bool EngineContext::needQuit() {
     return mRequestQuit;
 }
 
-void AppContext::setRenderState(bool rendering) {
+void EngineContext::setRenderState(bool rendering) {
     mRendering = rendering;
 }
 
-bool AppContext::isRendering() {
+bool EngineContext::isRendering() {
     return mRendering;
 }
 
-EGLDisplay AppContext::getEGLDisplay() {
+EGLDisplay EngineContext::getEGLDisplay() {
     return mDisplay;
 }
 
-EGLContext AppContext::getEGLContext() {
+EGLContext EngineContext::getEGLContext() {
     return mEglContext;
 }
 
-EGLSurface AppContext::getEGLSurface() {
+EGLSurface EngineContext::getEGLSurface() {
     return mSurface;
 }
 
-EGLint AppContext::getSurfaceWidth() {
+EGLint EngineContext::getSurfaceWidth() {
     return mWidth;
 }
 
-EGLint AppContext::getSurfaceHeight() {
+EGLint EngineContext::getSurfaceHeight() {
     return mHeight;
 }
 

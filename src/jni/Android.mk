@@ -3,8 +3,8 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE    := dzy
 LOCAL_SRC_FILES :=          \
-    app_context.cpp         \
-    native_app.cpp          \
+    engine_context.cpp         \
+    native_core.cpp          \
     scene.cpp               \
     render.cpp              \
     assimp_adapter.cpp
