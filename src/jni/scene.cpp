@@ -231,11 +231,7 @@ bool Mesh::hasVertexColors(unsigned int channel) const {
                 mNumVertices > 0;
 }
 
-bool Mesh::hasVertexColors() const {
-    return mNumColorChannels > 0;
-}
-
-bool Mesh::hasTextureCoords(unsigned int channel) const {
+bool Mesh::hasVertexTextureCoords(unsigned int channel) const {
     if( channel >= MAX_TEXTURECOORDS)
         return false;
     else
@@ -255,8 +251,57 @@ void * Mesh::getIndexBuf() {
     return &mTriangleFaces[0];
 }
 
+unsigned int Mesh::getColorBufSize(int channel) const {
+    return mColorBytesComponent[channel] *
+        mColorNumComponents[channel] * mNumVertices;
+}
+
+unsigned int Mesh::getColorBufSize() const {
+    int totalSize = 0;
+    for (unsigned int i=0; i<getNumColorChannels(); i++)
+        totalSize += getColorBufSize(i);
+    return totalSize;
+}
+
+unsigned int Mesh::getTextureCoordBufSize(int channel) const {
+    return mTextureCoordBytesComponent[channel] *
+        mTextureCoordNumComponents[channel] * mNumVertices;
+}
+
+unsigned int Mesh::getTextureCoordBufSize() const {
+    int totalSize = 0;
+    for (unsigned int i=0; i<getNumTextureCoordChannels(); i++)
+        totalSize += getTextureCoordBufSize(i);
+    return totalSize;
+}
+
 void * Mesh::getNormalBuf() {
     return mMeshData.getBuf(mNormalOffset);
+}
+
+void * Mesh::getTangentBuf() {
+    return mMeshData.getBuf(mTangentOffset);
+}
+
+void * Mesh::getBitangentBuf() {
+    return mMeshData.getBuf(mBitangentOffset);
+}
+
+unsigned int Mesh::getVertexBufSize() const {
+    int totalSize = 0;
+    if (hasVertexPositions())       totalSize += getPositionBufSize();
+    if (hasVertexColors())          totalSize += getColorBufSize();
+    if (hasVertexTextureCoords())   totalSize += getTextureCoordBufSize();
+    if (hasVertexNormals())         totalSize += getNormalBufSize();
+    if (hasVertexTangentsAndBitangents()) {
+        totalSize += getTangentBufSize();
+        totalSize += getBitangentBufSize();
+    }
+    return totalSize;
+}
+
+void * Mesh::getVertexBuf() {
+    return mMeshData.getBuf();
 }
 
 void Mesh::appendVertexPositions(unsigned char *buf, unsigned int numVertices,
@@ -319,14 +364,14 @@ void Mesh::reserveDataStorage(int size) {
     mMeshData.reserve(size);
 }
 
-void Mesh::dumpVertexBuf(int groupSize) {
+void Mesh::dumpVertexPositionBuf(int groupSize) {
     unsigned int bufSize = getPositionBufSize();
     float *buf = (float *)getPositionBuf();
     int num = bufSize/sizeof(float);
     char format[1024];
 
     if (num)
-        PRINT("************ start Mesh::dumpVertexBuf **********");
+        PRINT("************ start Mesh::dumpVertexPositionBuf **********");
     for (int i=0; i<num; i+=groupSize) {
         int n = sprintf(format, "%8p:", buf + i);
         int left = (i+groupSize <= num) ? groupSize : num - i;
@@ -336,7 +381,7 @@ void Mesh::dumpVertexBuf(int groupSize) {
         PRINT("%s", format);
     }
     if (num)
-        PRINT("************ end Mesh::dumpVertexBuf ************");
+        PRINT("************ end Mesh::dumpVertexPositionBuf ************");
 }
 
 void Mesh::dumpIndexBuf(int groupSize) {

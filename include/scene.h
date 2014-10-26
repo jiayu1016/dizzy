@@ -152,8 +152,9 @@ public:
 
     bool            hasVertexPositions() const { return mHasPos; };
     bool            hasVertexColors(unsigned int channel) const;
-    bool            hasVertexColors() const;
-    bool            hasTextureCoords(unsigned int channel) const;
+    bool            hasVertexColors() const { return mNumColorChannels > 0; };
+    bool            hasVertexTextureCoords(unsigned int channel) const;
+    bool            hasVertexTextureCoords() const { return mNumTextureCoordChannels > 0; };
     bool            hasVertexNormals() const { return mHasNormal; };
     bool            hasVertexTangentsAndBitangents() const { return mHasTangent && mHasBitangent; };
     bool            hasFaces() const { return !mTriangleFaces.empty() && mNumFaces > 0; };
@@ -168,13 +169,36 @@ public:
     unsigned int    getPositionBufStride() const { return mPosNumComponents * mPosBytesComponent; };
     unsigned int    getPositionBufSize() const { return getPositionBufStride() * mNumVertices; };
     void *          getPositionBuf();
+    unsigned int    getPositionOffset() const { return mPosOffset; };
 
     unsigned int    getIndexBufSize() { return getNumIndices() * sizeof(unsigned int); };
     void *          getIndexBuf();
 
+    unsigned int    getColorBufSize(int channel) const;
+    unsigned int    getColorBufSize() const;
+    unsigned int    getTextureCoordBufSize(int channel) const;
+    unsigned int    getTextureCoordBufSize() const;
+
     unsigned int    getNormalNumComponent() const { return mNormalNumComponents; };
     unsigned int    getNormalBufStride() const { return mNormalNumComponents * mNormalBytesComponent; };
+    unsigned int    getNormalBufSize() const { return getNormalBufStride() * mNumVertices; };
     void *          getNormalBuf();
+    unsigned int    getNormalOffset() const { return mNormalOffset; };
+
+    unsigned int    getTangentNumComponent() const { return mTangentNumComponents; };
+    unsigned int    getTangentBufStride() const { return mTangentNumComponents * mTangentBytesComponent; };
+    unsigned int    getTangentBufSize() const { return getTangentBufStride() * mNumVertices; };
+    void *          getTangentBuf();
+    unsigned int    getTangentOffset() const { return mTangentOffset; };
+
+    unsigned int    getBitangentNumComponent() const { return mBitangentNumComponents; };
+    unsigned int    getBitangentBufStride() const { return mBitangentNumComponents * mBitangentBytesComponent; };
+    unsigned int    getBitangentBufSize() const { return getBitangentBufStride() * mNumVertices; };
+    void *          getBitangentBuf();
+    unsigned int    getBitangentOffset() const { return mBitangentOffset; };
+
+    unsigned int    getVertexBufSize() const;
+    void *          getVertexBuf();
 
     void appendVertexPositions(unsigned char *buf, unsigned int numVertices,
         unsigned int numComponents, unsigned int bytesEachComponent);
@@ -193,8 +217,7 @@ public:
 
     void reserveDataStorage(int size);
 
-    // default 3 float a float veretex
-    void            dumpVertexBuf(int groupSize = 3);
+    void            dumpVertexPositionBuf(int groupSize = 3);
     void            dumpIndexBuf (int groupSize = 3);
 
     friend class AIAdapter;

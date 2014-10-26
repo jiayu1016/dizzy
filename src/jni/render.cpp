@@ -211,8 +211,8 @@ bool Program::load(std::shared_ptr<Scene> scene) {
         glGenBuffers(1, &mVertexBOs[i]);
         glGenBuffers(1, &mIndexBOs[i]);
         glBindBuffer(GL_ARRAY_BUFFER, mVertexBOs[i]);
-        glBufferData(GL_ARRAY_BUFFER, mesh->getPositionBufSize(),
-            mesh->getPositionBuf(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, mesh->getVertexBufSize(),
+            mesh->getVertexBuf(), GL_STATIC_DRAW);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBOs[i]);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->getIndexBufSize(),
             mesh->getIndexBuf(), GL_STATIC_DRAW);
@@ -425,14 +425,14 @@ void Render::drawMesh(shared_ptr<Scene> scene, int meshIdx) {
         //    mesh->getNumVertices(),
         //    mesh->getPositionNumComponent(),
         //    mesh->getPositionBufStride());
-        //mesh->dumpVertexBuf();
+        //mesh->dumpVertexPositionBuf();
         glVertexAttribPointer(
             posLoc,
             mesh->getPositionNumComponent(),// size
             GL_FLOAT,                       // type
             GL_FALSE,                       // normalized
             mesh->getPositionBufStride(),   // stride, 0 means tightly packed
-            (void*)0                        // offset
+            (void*)mesh->getPositionOffset()// offset
         );
     }
     if (mesh->hasVertexColors()) {
@@ -441,7 +441,6 @@ void Render::drawMesh(shared_ptr<Scene> scene, int meshIdx) {
         glEnableVertexAttribArray(colorLoc);
     }
     if (mesh->hasVertexNormals()) {
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
         GLint normalLoc = mProgram->getLocation("dzyVertexNormal");
         glEnableVertexAttribArray(normalLoc);
         glVertexAttribPointer(
@@ -450,7 +449,7 @@ void Render::drawMesh(shared_ptr<Scene> scene, int meshIdx) {
             GL_FLOAT,                       // type
             GL_FALSE,                       // normalized
             mesh->getNormalBufStride(),     // stride, 0 means tightly packed
-            mesh->getNormalBuf()            // actual data
+            (void *)mesh->getNormalOffset() // offset
         );
     }
 
