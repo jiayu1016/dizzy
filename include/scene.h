@@ -150,64 +150,63 @@ public:
 
     Mesh();
 
-    bool            hasVertexPositions() const { return mHasPos; };
+    bool            hasVertexPositions() const;
     bool            hasVertexColors(unsigned int channel) const;
-    bool            hasVertexColors() const { return mNumColorChannels > 0; };
+    bool            hasVertexColors() const;
     bool            hasVertexTextureCoords(unsigned int channel) const;
-    bool            hasVertexTextureCoords() const { return mNumTextureCoordChannels > 0; };
-    bool            hasVertexNormals() const { return mHasNormal; };
-    bool            hasVertexTangentsAndBitangents() const { return mHasTangent && mHasBitangent; };
-    bool            hasFaces() const { return !mTriangleFaces.empty() && mNumFaces > 0; };
+    bool            hasVertexTextureCoords() const;
+    bool            hasVertexNormals() const;
+    bool            hasVertexTangentsAndBitangents() const;
+    bool            hasFaces() const;
 
-    unsigned int    getNumVertices() const { return mNumVertices; };
-    unsigned int    getNumTextureCoordChannels() const { return mNumTextureCoordChannels; };
-    unsigned int    getNumColorChannels() const { return mNumColorChannels; };
-    unsigned int    getNumFaces() const { return mNumFaces; };
-    unsigned int    getNumIndices() const { return mNumFaces * 3; };
+    unsigned int    getNumVertices() const;
+    unsigned int    getNumColorChannels() const;
+    unsigned int    getNumTextureCoordChannels() const;
+    unsigned int    getNumFaces() const;
+    unsigned int    getNumIndices() const;
 
-    unsigned int    getPositionNumComponent() const { return mPosNumComponents; };
-    unsigned int    getPositionBufStride() const { return mPosNumComponents * mPosBytesComponent; };
-    unsigned int    getPositionBufSize() const { return getPositionBufStride() * mNumVertices; };
+    unsigned int    getPositionNumComponent() const;
+    unsigned int    getPositionBufStride() const;
+    unsigned int    getPositionBufSize() const;
+    unsigned int    getPositionOffset() const;
     void *          getPositionBuf();
-    unsigned int    getPositionOffset() const { return mPosOffset; };
-
-    unsigned int    getIndexBufSize() { return getNumIndices() * sizeof(unsigned int); };
-    void *          getIndexBuf();
 
     unsigned int    getColorBufSize(int channel) const;
     unsigned int    getColorBufSize() const;
+
     unsigned int    getTextureCoordBufSize(int channel) const;
     unsigned int    getTextureCoordBufSize() const;
 
-    unsigned int    getNormalNumComponent() const { return mNormalNumComponents; };
-    unsigned int    getNormalBufStride() const { return mNormalNumComponents * mNormalBytesComponent; };
-    unsigned int    getNormalBufSize() const { return getNormalBufStride() * mNumVertices; };
+    unsigned int    getNormalNumComponent() const;
+    unsigned int    getNormalBufStride() const;
+    unsigned int    getNormalBufSize() const;
+    unsigned int    getNormalOffset() const;
     void *          getNormalBuf();
-    unsigned int    getNormalOffset() const { return mNormalOffset; };
 
-    unsigned int    getTangentNumComponent() const { return mTangentNumComponents; };
-    unsigned int    getTangentBufStride() const { return mTangentNumComponents * mTangentBytesComponent; };
-    unsigned int    getTangentBufSize() const { return getTangentBufStride() * mNumVertices; };
+    unsigned int    getTangentNumComponent() const;
+    unsigned int    getTangentBufStride() const;
+    unsigned int    getTangentBufSize() const;
+    unsigned int    getTangentOffset() const;
     void *          getTangentBuf();
-    unsigned int    getTangentOffset() const { return mTangentOffset; };
 
-    unsigned int    getBitangentNumComponent() const { return mBitangentNumComponents; };
-    unsigned int    getBitangentBufStride() const { return mBitangentNumComponents * mBitangentBytesComponent; };
-    unsigned int    getBitangentBufSize() const { return getBitangentBufStride() * mNumVertices; };
+    unsigned int    getBitangentNumComponent() const;
+    unsigned int    getBitangentBufStride() const;
+    unsigned int    getBitangentBufSize() const;
+    unsigned int    getBitangentOffset() const;
     void *          getBitangentBuf();
-    unsigned int    getBitangentOffset() const { return mBitangentOffset; };
 
     unsigned int    getVertexBufSize() const;
     void *          getVertexBuf();
 
+    unsigned int    getIndexBufSize() const;
+    void *          getIndexBuf();
+
     void appendVertexPositions(unsigned char *buf, unsigned int numVertices,
         unsigned int numComponents, unsigned int bytesEachComponent);
     void appendVertexColors(unsigned char *buf, unsigned int numVertices,
-        unsigned int numComponents, unsigned int bytesEachComponent,
-        unsigned int channel);
+        unsigned int numComponents, unsigned int bytesEachComponent, unsigned int channel);
     void appendVertexTextureCoords(unsigned char *buf, unsigned int numVertices,
-        unsigned int numComponents, unsigned int bytesEachComponent,
-        unsigned int channel);
+        unsigned int numComponents, unsigned int bytesEachComponent, unsigned int channel);
     void appendVertexNormals(unsigned char *buf, unsigned int numVertices,
         unsigned int numComponents, unsigned int bytesEachComponent);
     void appendVertexTangents(unsigned char *buf, unsigned int numVertices,
@@ -215,7 +214,7 @@ public:
     void appendVertexBitangents(unsigned char *buf, unsigned int numVertices,
         unsigned int numComponents, unsigned int bytesEachComponent);
 
-    void reserveDataStorage(int size);
+    void            reserveDataStorage(int size);
 
     void            dumpVertexPositionBuf(int groupSize = 3);
     void            dumpIndexBuf (int groupSize = 3);

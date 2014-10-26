@@ -221,6 +221,10 @@ Mesh::Mesh()
     memset(&mTextureCoordBytesComponent[0], 0, MAX_TEXTURECOORDS * sizeof(unsigned int));
 }
 
+bool Mesh::hasVertexPositions() const {
+    return mHasPos;
+}
+
 bool Mesh::hasVertexColors(unsigned int channel) const {
     if( channel >= MAX_COLOR_SETS)
         return false;
@@ -229,6 +233,10 @@ bool Mesh::hasVertexColors(unsigned int channel) const {
         return  mColorNumComponents[channel] &&
                 mColorBytesComponent[channel] &&
                 mNumVertices > 0;
+}
+
+bool Mesh::hasVertexColors() const {
+    return mNumColorChannels > 0;
 }
 
 bool Mesh::hasVertexTextureCoords(unsigned int channel) const {
@@ -241,14 +249,60 @@ bool Mesh::hasVertexTextureCoords(unsigned int channel) const {
                 mNumVertices > 0;
 }
 
-void * Mesh::getPositionBuf() {
-    return mMeshData.getBuf(mPosOffset);
+bool Mesh::hasVertexTextureCoords() const {
+    return mNumTextureCoordChannels > 0;
 }
 
-void * Mesh::getIndexBuf() {
-    if (mTriangleFaces.empty()) return NULL;
-    // Attention: 
-    return &mTriangleFaces[0];
+bool Mesh::hasVertexNormals() const {
+    return mHasNormal;
+}
+
+bool Mesh::hasVertexTangentsAndBitangents() const {
+    return mHasTangent && mHasBitangent;
+}
+
+bool Mesh::hasFaces() const {
+    return !mTriangleFaces.empty() && mNumFaces > 0;
+}
+
+unsigned int Mesh::getNumVertices() const {
+    return mNumVertices;
+}
+
+unsigned int Mesh::getNumColorChannels() const {
+    return mNumColorChannels;
+}
+
+unsigned int Mesh::getNumTextureCoordChannels() const {
+    return mNumTextureCoordChannels;
+}
+
+unsigned int Mesh::getNumFaces() const {
+    return mNumFaces;
+}
+
+unsigned int Mesh::getNumIndices() const {
+    return mNumFaces * 3;
+}
+
+unsigned int Mesh::getPositionNumComponent() const {
+    return mPosNumComponents;
+}
+
+unsigned int Mesh::getPositionBufStride() const {
+    return mPosNumComponents * mPosBytesComponent;
+}
+
+unsigned int Mesh::getPositionBufSize() const {
+    return getPositionBufStride() * mNumVertices;
+}
+
+unsigned int Mesh::getPositionOffset() const {
+    return mPosOffset;
+}
+
+void * Mesh::getPositionBuf() {
+    return mMeshData.getBuf(mPosOffset);
 }
 
 unsigned int Mesh::getColorBufSize(int channel) const {
@@ -275,12 +329,60 @@ unsigned int Mesh::getTextureCoordBufSize() const {
     return totalSize;
 }
 
+unsigned int Mesh::getNormalNumComponent() const {
+    return mNormalNumComponents;
+}
+
+unsigned int Mesh::getNormalBufStride() const {
+    return mNormalNumComponents * mNormalBytesComponent;
+}
+
+unsigned int Mesh::getNormalBufSize() const {
+    return getNormalBufStride() * mNumVertices;
+}
+
+unsigned int Mesh::getNormalOffset() const {
+    return mNormalOffset;
+}
+
 void * Mesh::getNormalBuf() {
     return mMeshData.getBuf(mNormalOffset);
 }
 
+unsigned int Mesh::getTangentNumComponent() const {
+    return mTangentNumComponents;
+}
+
+unsigned int Mesh::getTangentBufStride() const {
+    return mTangentNumComponents * mTangentBytesComponent;
+}
+
+unsigned int Mesh::getTangentBufSize() const {
+    return getTangentBufStride() * mNumVertices;
+}
+
+unsigned int Mesh::getTangentOffset() const {
+    return mTangentOffset;
+}
+
 void * Mesh::getTangentBuf() {
     return mMeshData.getBuf(mTangentOffset);
+}
+
+unsigned int Mesh::getBitangentNumComponent() const {
+    return mBitangentNumComponents;
+}
+
+unsigned int Mesh::getBitangentBufStride() const {
+    return mBitangentNumComponents * mBitangentBytesComponent;
+}
+
+unsigned int Mesh::getBitangentBufSize() const {
+    return getBitangentBufStride() * mNumVertices;
+}
+
+unsigned int Mesh::getBitangentOffset() const {
+    return mBitangentOffset;
 }
 
 void * Mesh::getBitangentBuf() {
@@ -304,6 +406,15 @@ void * Mesh::getVertexBuf() {
     return mMeshData.getBuf();
 }
 
+unsigned int Mesh::getIndexBufSize() const {
+    return getNumIndices() * sizeof(unsigned int);
+}
+
+void * Mesh::getIndexBuf() {
+    if (mTriangleFaces.empty()) return NULL;
+    return &mTriangleFaces[0];
+}
+
 void Mesh::appendVertexPositions(unsigned char *buf, unsigned int numVertices,
     unsigned int numComponents, unsigned int bytesEachComponent) {
     int totalSize = bytesEachComponent * numComponents * numVertices;
@@ -314,8 +425,7 @@ void Mesh::appendVertexPositions(unsigned char *buf, unsigned int numVertices,
 }
 
 void Mesh::appendVertexColors(unsigned char *buf, unsigned int numVertices,
-    unsigned int numComponents, unsigned int bytesEachComponent,
-    unsigned int channel) {
+    unsigned int numComponents, unsigned int bytesEachComponent, unsigned int channel) {
     int totalSize = bytesEachComponent * numComponents * numVertices;
     mColorOffset[channel] = mMeshData.append(totalSize, buf);
     mColorNumComponents[channel] = numComponents;
@@ -324,8 +434,7 @@ void Mesh::appendVertexColors(unsigned char *buf, unsigned int numVertices,
 }
 
 void Mesh::appendVertexTextureCoords(unsigned char *buf, unsigned int numVertices,
-    unsigned int numComponents, unsigned int bytesEachComponent,
-    unsigned int channel) {
+    unsigned int numComponents, unsigned int bytesEachComponent, unsigned int channel) {
     int totalSize = bytesEachComponent * numComponents * numVertices;
     mTextureCoordOffset[channel] = mMeshData.append(totalSize, buf);
     mTextureCoordNumComponents[channel] = numComponents;
