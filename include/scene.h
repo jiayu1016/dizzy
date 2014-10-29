@@ -350,6 +350,7 @@ private:
 
     // transient status for easy traversal
     glm::mat4           mCameraModelTransform;
+    glm::mat4           mLightModelTransform;
 };
 
 class SceneManager : public Singleton<SceneManager> {

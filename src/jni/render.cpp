@@ -316,6 +316,8 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
             scene->mCameraModelTransform = transform;
         }
 
+        scene->mLightModelTransform = glm::mat4(1.0f);
+
         // Support lighing only when we have a camera
         // Use only one light right now
         if (scene->getNumLights() > 0) {
@@ -329,23 +331,7 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
                         node = node->getParent();
                     }
                     trans = node->mTransformation * trans;
-
-                    glUniform3fv(mProgram->getLocation("dzyLight.color"),
-                        1, glm::value_ptr(light->mColorDiffuse));
-                    glUniform3fv(mProgram->getLocation("dzyLight.ambient"),
-                        1, glm::value_ptr(light->mColorAmbient));
-                    glm::mat4 view = activeCamera->getViewMatrix(scene->mCameraModelTransform);
-                    glm::vec3 lightPosEyeSpace = glm::vec3(view * trans * glm::vec4(light->mPosition, 1.0f));
-                    glUniform3fv(mProgram->getLocation("dzyLight.position"),
-                        1, glm::value_ptr(lightPosEyeSpace));
-                    glUniform1f(mProgram->getLocation("dzyLight.attenuationConstant"),
-                        light->mAttenuationConstant);
-                    glUniform1f(mProgram->getLocation("dzyLight.attenuationLinear"),
-                        light->mAttenuationLinear);
-                    glUniform1f(mProgram->getLocation("dzyLight.attenuationQuadratic"),
-                        light->mAttenuationQuadratic);
-                    glUniform1f(mProgram->getLocation("dzyLight.strength"), 1.0f);
-
+                    scene->mLightModelTransform = trans;
                 }
             }
         }
@@ -392,9 +378,31 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
             glm::mat3 mvInvTransMatrix = glm::mat3(glm::transpose(glm::inverse(mv)));
             glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(mvInvTransMatrix));
         }
+
+        glUniformMatrix4fv(mProgram->getLocation("dzyMVPMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
+
+        if (scene->getNumLights() > 0) {
+            shared_ptr<Light> light(scene->mLights[0]);
+            if (light) {
+                glUniform3fv(mProgram->getLocation("dzyLight.color"),
+                    1, glm::value_ptr(light->mColorDiffuse));
+                glUniform3fv(mProgram->getLocation("dzyLight.ambient"),
+                    1, glm::value_ptr(light->mColorAmbient));
+                glm::vec3 lightPosEyeSpace = glm::vec3(
+                    view * scene->mLightModelTransform * glm::vec4(light->mPosition, 1.0f));
+                glUniform3fv(mProgram->getLocation("dzyLight.position"),
+                    1, glm::value_ptr(lightPosEyeSpace));
+                glUniform1f(mProgram->getLocation("dzyLight.attenuationConstant"),
+                    light->mAttenuationConstant);
+                glUniform1f(mProgram->getLocation("dzyLight.attenuationLinear"),
+                    light->mAttenuationLinear);
+                glUniform1f(mProgram->getLocation("dzyLight.attenuationQuadratic"),
+                    light->mAttenuationQuadratic);
+                glUniform1f(mProgram->getLocation("dzyLight.strength"), 1.0f);
+            }
+        }
     }
 
-    glUniformMatrix4fv(mProgram->getLocation("dzyMVPMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
     for (size_t i=0; i<node->mMeshes.size(); i++) {
         int meshIdx = node->mMeshes[i];
         drawMesh(scene, meshIdx);
