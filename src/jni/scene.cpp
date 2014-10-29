@@ -527,11 +527,13 @@ void Node::addChild(shared_ptr<Node> node) {
 
     if (!exist) {
         mChildren.push_back(node);
-        node->mParent = shared_from_this();
         shared_ptr<Node> oldParent(node->mParent.lock());
+        node->mParent = shared_from_this();
         if (oldParent) {
             // remove node from oldParent
-            remove(oldParent->mChildren.begin(), oldParent->mChildren.end(), node);
+            oldParent->mChildren.erase(remove(
+                oldParent->mChildren.begin(), oldParent->mChildren.end(), node),
+                oldParent->mChildren.end());
         }
     }
 }
