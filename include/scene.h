@@ -306,17 +306,6 @@ private:
     std::shared_ptr<Node> mRoot;
 };
 
-class MatrixStack {
-public:
-    MatrixStack();
-    void push(glm::mat4 &matrix);
-    void pop();
-    glm::mat4 top();
-
-private:
-    std::stack<glm::mat4> mProduct;
-};
-
 class SceneManager;
 class EngineContext;
 class Program;
@@ -360,8 +349,6 @@ private:
     NodeTree            mNodeTree;
 
     // transient status for easy traversal
-    unsigned int        mNodeDepth;
-    MatrixStack         mMatrixStack;
     glm::mat4           mCameraModelTransform;
 };
 

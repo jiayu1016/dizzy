@@ -311,7 +311,7 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
             while(node != tree.mRoot) {
                 transform = node->mTransformation * transform;
                 node = node->getParent();
-            };
+            }
             transform = node->mTransformation * transform;
             scene->mCameraModelTransform = transform;
         }
@@ -327,7 +327,7 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
                     while(node != tree.mRoot) {
                         trans = node->mTransformation * trans;
                         node = node->getParent();
-                    };
+                    }
                     trans = node->mTransformation * trans;
 
                     glUniform3fv(mProgram->getLocation("dzyLight.color"),
@@ -359,7 +359,16 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
 }
 
 void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
-    glm::mat4 world = scene->mMatrixStack.top();
+    if (!node) return;
+
+    shared_ptr<Node> nd(node);
+    NodeTree &tree = scene->getNodeTree();
+    glm::mat4 world = glm::mat4(1.0f);
+    while(nd != tree.mRoot) {
+        world = nd->mTransformation * world;
+        nd = nd->getParent();
+    }
+    world = nd->mTransformation * world;
     glm::mat4 mvp = world;
 
     //Utils::dump(node->mName.c_str(), node->mTransformation);

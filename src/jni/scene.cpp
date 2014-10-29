@@ -585,35 +585,13 @@ shared_ptr<Node> NodeTree::findNode(const string &name) {
 }
 
 void NodeTree::dfsTraversal(shared_ptr<Scene> scene, shared_ptr<Node> node, VisitFunc visit) {
-    scene->mNodeDepth++;
-    scene->mMatrixStack.push(node->mTransformation);
     visit(scene, node);
     std::for_each(node->mChildren.begin(), node->mChildren.end(), [&] (shared_ptr<Node> c) {
         dfsTraversal(scene, c, visit);
     });
-    scene->mMatrixStack.pop();
-    scene->mNodeDepth--;
 }
 
-MatrixStack::MatrixStack() {
-    mProduct.push(glm::mat4(1.0));
-}
-
-void MatrixStack::push(glm::mat4 &current) {
-    glm::mat4 product = top();
-    mProduct.push(product * current);
-}
-
-void MatrixStack::pop() {
-    mProduct.pop();
-}
-
-glm::mat4 MatrixStack::top() {
-    return mProduct.top();
-}
-
-Scene::Scene()
-    : mNodeDepth(-1) {
+Scene::Scene() {
 }
 
 shared_ptr<Camera> Scene::getActiveCamera() {
