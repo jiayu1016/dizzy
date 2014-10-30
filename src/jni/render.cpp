@@ -345,7 +345,7 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
 }
 
 void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
-    if (!node) return;
+    if (!node || !node->isRenderable()) return;
 
     shared_ptr<Node> nd(node);
     NodeTree &tree = scene->getNodeTree();
@@ -403,10 +403,8 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
         }
     }
 
-    for (size_t i=0; i<node->mMeshes.size(); i++) {
-        int meshIdx = node->mMeshes[i];
-        drawMesh(scene, meshIdx);
-    }
+    int meshIdx = node->getMeshIndex();
+    if (meshIdx >= 0) drawMesh(scene, meshIdx);
 }
 
 void Render::drawMesh(shared_ptr<Scene> scene, int meshIdx) {

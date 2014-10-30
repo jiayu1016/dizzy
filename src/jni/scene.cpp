@@ -576,6 +576,22 @@ shared_ptr<Node> Node::findNode(const string &name) {
     return NULL;
 }
 
+bool Node::isRenderable() {
+    return false;
+}
+
+int Node::getMeshIndex() {
+    return -1;
+}
+
+bool GeoNode::isRenderable() {
+    return true;
+}
+
+int GeoNode::getMeshIndex() {
+    return mMeshIdx;
+}
+
 void NodeTree::dfsTraversal(shared_ptr<Scene> scene, VisitFunc visit) {
     dfsTraversal(scene, mRoot, visit);
 }

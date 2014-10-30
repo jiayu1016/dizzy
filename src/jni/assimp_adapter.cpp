@@ -207,11 +207,6 @@ shared_ptr<Node> AIAdapter::typeCast(aiNode *node) {
     shared_ptr<Node> n(new Node);
     n->mName = typeCast(node->mName);
     n->mTransformation = typeCast(node->mTransformation);
-    //n->mParent = node->mParent;
-    //n->mChildren = node->mChildren;
-    for (unsigned int i = 0; i < node->mNumMeshes; i++) {
-        n->mMeshes.push_back(node->mMeshes[i]);
-    }
     return n;
 }
 
@@ -253,7 +248,11 @@ void AIAdapter::linkNodeTree(shared_ptr<Node> node, aiNode *anode) {
         node->attachChild(c);
         linkNodeTree(c, anode->mChildren[i]);
     }
+    // build one GeoNode to reference one Mesh
+    for (unsigned int i = 0; i < anode->mNumMeshes; i++) {
+        shared_ptr<GeoNode> c(new GeoNode(anode->mMeshes[i]));
+        node->attachChild(c);
+    }
 }
-
 
 } // namespace dzy

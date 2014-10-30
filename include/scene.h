@@ -279,6 +279,13 @@ public:
     //void setParent(std::shared_ptr<Node> parent);
     std::shared_ptr<Node> findNode(const std::string &name);
 
+    /// attach a child node into the scene graph
+    virtual bool isRenderable();
+    /// get mesh index to the mesh array in the scene
+    ///
+    ///     @return -1 means invalid
+    virtual int getMeshIndex();
+
     friend class NodeTree;
     friend class AIAdapter;
     friend class Render;
@@ -288,8 +295,17 @@ private:
     glm::mat4                               mTransformation;
     std::weak_ptr<Node>                     mParent;
     std::vector<std::shared_ptr<Node> >     mChildren;
-    std::vector<int>                        mMeshes;
+};
 
+class GeoNode : public Node {
+public:
+    GeoNode(int meshIdx) : mMeshIdx(meshIdx) {};
+
+    virtual bool isRenderable();
+    virtual int getMeshIndex();
+private:
+    // one on one mapping between GeoNode and Mesh
+    int mMeshIdx;
 };
 
 class NodeTree {
