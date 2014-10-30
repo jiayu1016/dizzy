@@ -570,6 +570,7 @@ int GeoNode::getMeshIndex() {
 }
 
 void GeoNode::draw(Render &render, shared_ptr<Scene> scene) {
+    render.drawNode(scene, shared_from_this());
     int meshIdx = getMeshIndex();
     if (meshIdx >= 0) render.drawMesh(scene, meshIdx);
 }
