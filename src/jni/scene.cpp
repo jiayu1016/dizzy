@@ -542,31 +542,6 @@ shared_ptr<Node> Node::getParent() {
     return mParent.lock();
 }
 
-/*
-void Node::setParent(shared_ptr<Node> parent) {
-    shared_ptr<Node> oldParent(mParent.lock());
-    if (oldParent) {
-        if (oldParent != parent) {
-            // remove this node from original parent's children list
-            for (auto iter = oldParent->mChildren.begin();
-                iter != oldParent->mChildren.end();
-                iter++) {
-                if ((*iter).get() == this) {
-                    oldParent->mChildren.erase(iter);
-                    break;
-                }
-            }
-        } else {
-            ALOGD("double set, ignore");
-            return;
-        }
-    }
-
-    mParent = parent;
-    parent->insertChild(shared_from_this());
-}
-*/
-
 shared_ptr<Node> Node::findNode(const string &name) {
     if (mName == name) return shared_from_this();
     for (size_t i = 0; i < mChildren.size(); i++) {
@@ -576,35 +551,27 @@ shared_ptr<Node> Node::findNode(const string &name) {
     return NULL;
 }
 
-bool Node::isRenderable() {
-    return false;
+void Node::dfsTraversal(shared_ptr<Scene> scene, VisitFunc visit) {
+    visit(scene, shared_from_this());
+    std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<Node> c) {
+        c->dfsTraversal(scene, visit);
+    });
 }
 
-int Node::getMeshIndex() {
-    return -1;
-}
-
-bool GeoNode::isRenderable() {
-    return true;
+void Node::draw(Render &render, shared_ptr<Scene> scene) {
+    render.drawNode(scene, shared_from_this());
+    std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<Node> c) {
+        c->draw(render, scene);
+    });
 }
 
 int GeoNode::getMeshIndex() {
     return mMeshIdx;
 }
 
-void NodeTree::dfsTraversal(shared_ptr<Scene> scene, VisitFunc visit) {
-    dfsTraversal(scene, mRoot, visit);
-}
-
-shared_ptr<Node> NodeTree::findNode(const string &name) {
-    return mRoot->findNode(name);
-}
-
-void NodeTree::dfsTraversal(shared_ptr<Scene> scene, shared_ptr<Node> node, VisitFunc visit) {
-    visit(scene, node);
-    std::for_each(node->mChildren.begin(), node->mChildren.end(), [&] (shared_ptr<Node> c) {
-        dfsTraversal(scene, c, visit);
-    });
+void GeoNode::draw(Render &render, shared_ptr<Scene> scene) {
+    int meshIdx = getMeshIndex();
+    if (meshIdx >= 0) render.drawMesh(scene, meshIdx);
 }
 
 Scene::Scene() {
@@ -770,7 +737,7 @@ shared_ptr<Scene> SceneManager::loadColladaAsset(shared_ptr<EngineContext> engin
         s->mMeshes.push_back(mesh);
     }
 
-    AIAdapter::buildNodeTree(scene->mRootNode, s->mNodeTree);
+    AIAdapter::buildNodeTree(scene->mRootNode, s);
 
     long long cvtTime = cvtDuration.getMicroSeconds();
 

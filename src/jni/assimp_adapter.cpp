@@ -236,10 +236,10 @@ string AIAdapter::typeCast(const aiString &str) {
     return string(str.C_Str());
 }
 
-void AIAdapter::buildNodeTree(aiNode *aroot, NodeTree &tree) {
+void AIAdapter::buildNodeTree(aiNode *aroot, shared_ptr<Scene> scene) {
     shared_ptr<Node> root = typeCast(aroot);
     linkNodeTree(root, aroot);
-    tree.setRoot(root);
+    scene->mRootNode = root;
 }
 
 void AIAdapter::linkNodeTree(shared_ptr<Node> node, aiNode *anode) {

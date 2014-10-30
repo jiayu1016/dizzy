@@ -298,17 +298,22 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
         return false;
     }
 
+    shared_ptr<Node> rootNode = scene->getRootNode();
+    if (!rootNode) {
+        ALOGW("Scene graph empty, nothing to render");
+        return false;
+    }
+
     mProgram->use();
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     scene->mCameraModelTransform = glm::mat4(1.0f);
 
-    NodeTree &tree = scene->getNodeTree();
     shared_ptr<Camera> activeCamera(scene->getActiveCamera());
     if (activeCamera) {
-        shared_ptr<Node> node(tree.findNode(activeCamera->mName));
+        shared_ptr<Node> node(rootNode->findNode(activeCamera->mName));
         if (node) {
             glm::mat4 transform = glm::mat4(1.0f);
-            while(node != tree.mRoot) {
+            while(node != rootNode) {
                 transform = node->mTransformation * transform;
                 node = node->getParent();
             }
@@ -323,10 +328,10 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
         if (scene->getNumLights() > 0) {
             shared_ptr<Light> light(scene->mLights[0]);
             if (light) {
-                shared_ptr<Node> node(tree.findNode(light->mName));
+                shared_ptr<Node> node(rootNode->findNode(light->mName));
                 if (node) {
                     glm::mat4 trans = glm::mat4(1.0f);
-                    while(node != tree.mRoot) {
+                    while(node != rootNode) {
                         trans = node->mTransformation * trans;
                         node = node->getParent();
                     }
@@ -337,20 +342,20 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
         }
     }
 
-    using namespace std::placeholders;
-    tree.dfsTraversal(scene, bind(&Render::drawNode, this, _1, _2));
+    rootNode->draw(*this, scene);
     eglSwapBuffers(engineContext->getEGLDisplay(), engineContext->getEGLSurface());
 
     return true;
 }
 
 void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
-    if (!node || !node->isRenderable()) return;
+    if (!node) return;
 
-    shared_ptr<Node> nd(node);
-    NodeTree &tree = scene->getNodeTree();
+    shared_ptr<Node> rootNode(scene->getRootNode());
+    assert(rootNode);
     glm::mat4 world = glm::mat4(1.0f);
-    while(nd != tree.mRoot) {
+    shared_ptr<Node> nd(node);
+    while(nd != rootNode) {
         world = nd->mTransformation * world;
         nd = nd->getParent();
     }
@@ -402,9 +407,6 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
             }
         }
     }
-
-    int meshIdx = node->getMeshIndex();
-    if (meshIdx >= 0) drawMesh(scene, meshIdx);
 }
 
 void Render::drawMesh(shared_ptr<Scene> scene, int meshIdx) {

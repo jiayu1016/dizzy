@@ -265,9 +265,10 @@ private:
     unsigned int                    mMaterialIndex;
 };
 
-class NodeTree;
 class Node : public std::enable_shared_from_this<Node> {
 public:
+    typedef std::function<void(std::shared_ptr<Scene>, std::shared_ptr<Node>)> VisitFunc;
+
     Node() { }
     Node(const std::string& name) : mName(name) { }
 
@@ -278,18 +279,15 @@ public:
     std::shared_ptr<Node> getParent();
     //void setParent(std::shared_ptr<Node> parent);
     std::shared_ptr<Node> findNode(const std::string &name);
+    void dfsTraversal(std::shared_ptr<Scene> scene, VisitFunc visit);
 
-    /// attach a child node into the scene graph
-    virtual bool isRenderable();
-    /// get mesh index to the mesh array in the scene
-    ///
-    ///     @return -1 means invalid
-    virtual int getMeshIndex();
+    /// Recursively draw the node and it's children
+    virtual void draw(Render &render, std::shared_ptr<Scene> scene);
 
-    friend class NodeTree;
     friend class AIAdapter;
     friend class Render;
 private:
+    void dfsTraversal(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node, VisitFunc visit);
 
     std::string                             mName;
     glm::mat4                               mTransformation;
@@ -300,29 +298,12 @@ private:
 class GeoNode : public Node {
 public:
     GeoNode(int meshIdx) : mMeshIdx(meshIdx) {};
+    int getMeshIndex();
 
-    virtual bool isRenderable();
-    virtual int getMeshIndex();
+    virtual void draw(Render &render, std::shared_ptr<Scene> scene);
 private:
     // one on one mapping between GeoNode and Mesh
     int mMeshIdx;
-};
-
-class NodeTree {
-public:
-    typedef std::function<void(std::shared_ptr<Scene>, std::shared_ptr<Node>)> VisitFunc;
-    inline void setRoot(std::shared_ptr<Node> root) {
-        mRoot = root;
-    }
-    void dfsTraversal(std::shared_ptr<Scene> scene, VisitFunc visit);
-    std::shared_ptr<Node> findNode(const std::string &name);
-
-    friend class AIAdapter;
-    friend class Render;
-private:
-    void dfsTraversal(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node, VisitFunc visit);
-
-    std::shared_ptr<Node> mRoot;
 };
 
 class SceneManager;
@@ -344,28 +325,27 @@ public:
     inline unsigned int getNumAnimations() { return mAnimations.size(); }
     inline unsigned int getNumMaterials() { return mMaterials.size(); }
     inline unsigned int getNumMeshes() { return mMeshes.size(); }
-    //inline size_t getNumNodes() { return mNodeTree.getNumNodes(); }
     std::shared_ptr<Camera> getActiveCamera();
 
     bool atLeastOneMeshHasVertexPosition();
     bool atLeastOneMeshHasVertexColor();
     bool atLeastOneMeshHasNormal();
 
-    inline NodeTree& getNodeTree() { return mNodeTree;}
+    std::shared_ptr<Node> getRootNode() { return mRootNode;}
 
     friend class SceneManager;
     friend class Render;
     friend class Program;
-    friend class NodeTree;
+    friend class AIAdapter;
 private:
-    unsigned int        mFlags;
-    CameraContainer     mCameras;
-    LightContainer      mLights;
-    TextureContainer    mTextures;
-    AnimationContainer  mAnimations;
-    MaterialContainer   mMaterials;
-    MeshContainer       mMeshes;
-    NodeTree            mNodeTree;
+    unsigned int            mFlags;
+    CameraContainer         mCameras;
+    LightContainer          mLights;
+    TextureContainer        mTextures;
+    AnimationContainer      mAnimations;
+    MaterialContainer       mMaterials;
+    MeshContainer           mMeshes;
+    std::shared_ptr<Node>   mRootNode;
 
     // transient status for easy traversal
     glm::mat4           mCameraModelTransform;

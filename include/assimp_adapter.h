@@ -75,7 +75,7 @@ public:
     static glm::mat4                   typeCast(const aiMatrix4x4 &mat4);
     static std::string                 typeCast(const aiString &str);
 
-    static void buildNodeTree(aiNode *root, NodeTree &tree);
+    static void buildNodeTree(aiNode *root, std::shared_ptr<Scene> scene);
 private:
     static void linkNodeTree(std::shared_ptr<Node> node, aiNode *anode);
 };
