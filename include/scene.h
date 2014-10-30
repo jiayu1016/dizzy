@@ -271,7 +271,10 @@ public:
     Node() { }
     Node(const std::string& name) : mName(name) { }
 
-    void addChild(std::shared_ptr<Node> node);
+    /// attach a child node into the scene graph
+    ///
+    ///     @param childNode the child node to attach
+    void attachChild(std::shared_ptr<Node> childNode);
     std::shared_ptr<Node> getParent();
     //void setParent(std::shared_ptr<Node> parent);
     std::shared_ptr<Node> findNode(const std::string &name);

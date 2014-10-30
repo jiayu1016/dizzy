@@ -250,7 +250,7 @@ void AIAdapter::buildNodeTree(aiNode *aroot, NodeTree &tree) {
 void AIAdapter::linkNodeTree(shared_ptr<Node> node, aiNode *anode) {
     for (unsigned int i = 0; i < anode->mNumChildren; i++) {
         shared_ptr<Node> c = typeCast(anode->mChildren[i]);
-        node->addChild(c);
+        node->attachChild(c);
         linkNodeTree(c, anode->mChildren[i]);
     }
 }

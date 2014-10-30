@@ -514,11 +514,11 @@ void Mesh::dumpIndexBuf(int groupSize) {
         PRINT("************ end Mesh::dumpIndexBuf ************");
 }
 
-void Node::addChild(shared_ptr<Node> node) {
+void Node::attachChild(shared_ptr<Node> childNode) {
     // no duplicate Node in children list
     bool exist = false;
     for (auto iter = mChildren.begin(); iter != mChildren.end(); iter++) {
-        if (*iter == node) {
+        if (*iter == childNode) {
             exist = true;
             ALOGW("avoid inserting duplicate Node");
             break;
@@ -526,13 +526,13 @@ void Node::addChild(shared_ptr<Node> node) {
     }
 
     if (!exist) {
-        mChildren.push_back(node);
-        shared_ptr<Node> oldParent(node->mParent.lock());
-        node->mParent = shared_from_this();
+        mChildren.push_back(childNode);
+        shared_ptr<Node> oldParent(childNode->mParent.lock());
+        childNode->mParent = shared_from_this();
         if (oldParent) {
-            // remove node from oldParent
+            // remove childNode from oldParent
             oldParent->mChildren.erase(remove(
-                oldParent->mChildren.begin(), oldParent->mChildren.end(), node),
+                oldParent->mChildren.begin(), oldParent->mChildren.end(), childNode),
                 oldParent->mChildren.end());
         }
     }
