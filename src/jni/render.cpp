@@ -25,29 +25,11 @@ bool Render::init(shared_ptr<Scene> scene) {
         return false;
     }
 
-    shared_ptr<Shader> vtxShader(new Shader(GL_VERTEX_SHADER));
-    if (!vtxShader->compileFromAsset(engineContext->getAssetManager(), "vertex.shader")) {
-        ALOGE("error compile vertex shader");
-        return false;
-    }
-    shared_ptr<Shader> fragShader(new Shader(GL_FRAGMENT_SHADER));
-    if (!fragShader->compileFromAsset(engineContext->getAssetManager(), "fragment.shader")) {
-        ALOGE("error compile fragment shader");
-        return false;
-    }
-    shared_ptr<Program> program(new Program);
-    if (!program->link(vtxShader, fragShader)) {
-        ALOGE("error link program");
-        return false;
-    }
+    shared_ptr<Program> program(ProgramManager::get()->getDefaultProgram());
     if (!program->load(scene)) {
         ALOGE("error load data");
         return false;
     }
-
-    // if this routine called twice on the same Render object,
-    // the original Program object will be deleted after this assignment,
-    // draw routine will get mismatched program object.
     mProgram = program;
 
     glCullFace(GL_BACK);
@@ -63,7 +45,6 @@ bool Render::init(shared_ptr<Scene> scene) {
 }
 
 bool Render::release() {
-    if (mProgram) mProgram.reset();
     return true;
 }
 

@@ -287,8 +287,6 @@ public:
     friend class AIAdapter;
     friend class Render;
 private:
-    void dfsTraversal(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node, VisitFunc visit);
-
     std::string                             mName;
     glm::mat4                               mTransformation;
     std::weak_ptr<Node>                     mParent;

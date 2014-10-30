@@ -60,6 +60,20 @@ private:
     std::vector<GLuint>                         mIndexBOs;
 };
 
+class EngineContext;
+class ProgramManager : public Singleton<ProgramManager> {
+public:
+    bool preCompile(std::shared_ptr<EngineContext> engineContext);
+    std::shared_ptr<Program> getDefaultProgram();
+
+    friend class Singleton<ProgramManager>;
+
+private:
+    ProgramManager() {};
+
+    std::vector<std::shared_ptr<Program> > mPrograms;
+};
+
 } // namespace dzy
 
 #endif

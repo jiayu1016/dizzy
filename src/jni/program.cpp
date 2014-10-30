@@ -2,6 +2,7 @@
 #include <shader.h>
 #include "utils.h"
 #include "scene.h"
+#include "engine_context.h"
 #include "program.h"
 
 using namespace std;
@@ -231,6 +232,33 @@ GLint Program::getLocation(const char* name) {
         return -1;
     }
     return mLocations[name];
+}
+
+bool ProgramManager::preCompile(shared_ptr<EngineContext> engineContext) {
+    shared_ptr<Shader> vtxShader(new Shader(GL_VERTEX_SHADER));
+    if (!vtxShader->compileFromAsset(engineContext->getAssetManager(), "vertex.shader")) {
+        ALOGE("error compile vertex shader");
+        return false;
+    }
+    shared_ptr<Shader> fragShader(new Shader(GL_FRAGMENT_SHADER));
+    if (!fragShader->compileFromAsset(engineContext->getAssetManager(), "fragment.shader")) {
+        ALOGE("error compile fragment shader");
+        return false;
+    }
+    shared_ptr<Program> program(new Program);
+    if (!program->link(vtxShader, fragShader)) {
+        ALOGE("error link program");
+        return false;
+    }
+
+    mPrograms.push_back(program);
+
+    return true;
+}
+
+shared_ptr<Program> ProgramManager::getDefaultProgram() {
+    // TODO:
+    return mPrograms[0];
 }
 
 } //namespace dzy
