@@ -191,6 +191,9 @@ bool ProgramManager::preCompile(shared_ptr<EngineContext> engineContext) {
         return false;
     }
 
+    program->use();
+    program->storeLocation();
+
     mPrograms.push_back(program);
 
     return true;

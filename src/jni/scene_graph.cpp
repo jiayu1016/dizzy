@@ -72,18 +72,10 @@ shared_ptr<Program> Node::getProgram() {
     return mProgram;
 }
 
-bool Node::init() {
-    shared_ptr<Program> program(getProgram());
-    if (!program) {
-        ALOGE("no program attached to the node: %s", mName.c_str());
-        return false;
-    }
-    program->use();
-    program->storeLocation();
+bool Node::initGpuData() {
     std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<Node> c) {
-        c->init();
+        c->initGpuData();
     });
-
     return true;
 }
 
@@ -94,15 +86,7 @@ void Node::draw(Render &render, shared_ptr<Scene> scene) {
     });
 }
 
-bool GeoNode::init() {
-    shared_ptr<Program> program(getProgram());
-    if (!program) {
-        ALOGE("no program attached to the node: %s", mName.c_str());
-        return false;
-    }
-    program->use();
-    program->storeLocation();
-
+bool GeoNode::initGpuData() {
     if (!mMesh) {
         ALOGE("One GeoNode must attach one Mesh");
         return false;

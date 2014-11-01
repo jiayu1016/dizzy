@@ -42,7 +42,7 @@ public:
     std::shared_ptr<Program> getProgram();
 
     /// one time initialization of the node
-    virtual bool init();
+    virtual bool initGpuData();
 
     /// Recursively draw the node and it's children
     virtual void draw(Render &render, std::shared_ptr<Scene> scene);
@@ -62,7 +62,7 @@ class GeoNode : public Node {
 public:
     GeoNode(std::shared_ptr<Mesh> mesh) : mMesh(mesh) {};
 
-    virtual bool init();
+    virtual bool initGpuData();
     virtual void draw(Render &render, std::shared_ptr<Scene> scene);
 protected:
     // one on one mapping between GeoNode and Mesh

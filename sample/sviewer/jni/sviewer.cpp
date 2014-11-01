@@ -45,8 +45,8 @@ bool SViewer::initView() {
     shared_ptr<CubeMesh> cube(new CubeMesh());
     shared_ptr<GeoNode> cubeNode(new GeoNode(cube));
     rootNode->attachChild(cubeNode);
+    rootNode->initGpuData();
 
-    rootNode->init();
     return mRender->init();
 }
 
