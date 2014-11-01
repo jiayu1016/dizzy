@@ -13,6 +13,7 @@
 #include "program.h"
 #include "scene_graph.h"
 #include "mesh.h"
+#include "material.h"
 #include "scene.h"
 
 using namespace std;
@@ -138,37 +139,6 @@ void Light::dumpParameter() {
         mColorAmbient.x, mColorAmbient.y, mColorAmbient.z,
         mAngleInnerCone, mAngleOuterCone,
         mAttenuationConstant, mAttenuationLinear, mAttenuationQuadratic);
-}
-
-bool Material::get(MaterialType type, glm::vec3& color) {
-    switch(type) {
-    case COLOR_DIFFUSE:
-        color = mDiffuse;
-        break;
-    case COLOR_SPECULAR:
-        color = mSpecular;
-        break;
-    case COLOR_AMBIENT:
-        color = mAmbient;
-        break;
-    case COLOR_EMISSION:
-        color = mEmission;
-        break;
-    default:
-        return false;
-    }
-    return true;
-}
-
-bool Material::get(MaterialType type, float& value) {
-    switch(type) {
-    case SHININESS:
-        value = mShininess;
-        break;
-    default:
-        return false;
-    }
-    return true;
 }
 
 Scene::Scene() {

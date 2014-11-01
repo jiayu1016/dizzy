@@ -92,27 +92,6 @@ private:
 class Texture {
 };
 
-class Material {
-public:
-    enum MaterialType {
-        COLOR_DIFFUSE,
-        COLOR_SPECULAR,
-        COLOR_AMBIENT,
-        COLOR_EMISSION,
-        SHININESS,
-    };
-    bool get(MaterialType type, glm::vec3& color);
-    bool get(MaterialType type, float& value);
-
-    friend class AIAdapter;
-private:
-    glm::vec3   mDiffuse;
-    glm::vec3   mSpecular;
-    glm::vec3   mAmbient;
-    glm::vec3   mEmission;
-    float       mShininess;
-};
-
 class Animation {
 };
 
@@ -121,6 +100,7 @@ class EngineContext;
 class Program;
 class Node;
 class Mesh;
+class Material;
 typedef std::vector<std::shared_ptr<Camera> >      CameraContainer;
 typedef std::vector<std::shared_ptr<Light> >       LightContainer;
 typedef std::vector<std::shared_ptr<Animation> >   AnimationContainer;
