@@ -46,7 +46,6 @@ bool SViewer::initView() {
     shared_ptr<GeoNode> cubeNode(new GeoNode(cube));
     rootNode->attachChild(cubeNode);
 
-    rootNode->setAutoProgram();
     rootNode->init();
     return mRender->init();
 }

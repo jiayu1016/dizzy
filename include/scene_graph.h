@@ -30,7 +30,12 @@ public:
 
     /// check if the node use auto program
     bool isAutoProgram();
-    void setAutoProgram();
+
+    /// set the program that is attached to this node
+    ///
+    ///     @param program the program to be attached to this node
+    void setProgram(std::shared_ptr<Program> program);
+
     /// get the current program attached to this node
     ///
     ///     @return the current program attached to this node

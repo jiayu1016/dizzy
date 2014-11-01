@@ -11,7 +11,7 @@ using namespace std;
 namespace dzy {
 
 Node::Node()
-    : mUseAutoProgram(false) {
+    : mUseAutoProgram(true) {
 }
 
 void Node::attachChild(shared_ptr<Node> childNode) {
@@ -62,11 +62,9 @@ bool Node::isAutoProgram() {
     return mUseAutoProgram;
 }
 
-void Node::setAutoProgram() {
-    mUseAutoProgram = true;
-    std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<Node> c) {
-        c->setAutoProgram();
-    });
+void Node::setProgram(std::shared_ptr<Program> program) {
+    mUseAutoProgram = false;
+    mProgram = program;
 }
 
 shared_ptr<Program> Node::getProgram() {
