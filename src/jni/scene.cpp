@@ -10,6 +10,8 @@
 #include "assimp_adapter.h"
 #include "utils.h"
 #include "render.h"
+#include "program.h"
+#include "scene_graph.h"
 #include "scene.h"
 
 using namespace std;
@@ -514,67 +516,6 @@ void Mesh::dumpIndexBuf(int groupSize) {
         PRINT("************ end Mesh::dumpIndexBuf ************");
 }
 
-void Node::attachChild(shared_ptr<Node> childNode) {
-    // no duplicate Node in children list
-    bool exist = false;
-    for (auto iter = mChildren.begin(); iter != mChildren.end(); iter++) {
-        if (*iter == childNode) {
-            exist = true;
-            ALOGW("avoid inserting duplicate Node");
-            break;
-        }
-    }
-
-    if (!exist) {
-        mChildren.push_back(childNode);
-        shared_ptr<Node> oldParent(childNode->mParent.lock());
-        childNode->mParent = shared_from_this();
-        if (oldParent) {
-            // remove childNode from oldParent
-            oldParent->mChildren.erase(remove(
-                oldParent->mChildren.begin(), oldParent->mChildren.end(), childNode),
-                oldParent->mChildren.end());
-        }
-    }
-}
-
-shared_ptr<Node> Node::getParent() {
-    return mParent.lock();
-}
-
-shared_ptr<Node> Node::findNode(const string &name) {
-    if (mName == name) return shared_from_this();
-    for (size_t i = 0; i < mChildren.size(); i++) {
-        shared_ptr<Node> node(mChildren[i]->findNode(name));
-        if (node) return node;
-    }
-    return NULL;
-}
-
-void Node::dfsTraversal(shared_ptr<Scene> scene, VisitFunc visit) {
-    visit(scene, shared_from_this());
-    std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<Node> c) {
-        c->dfsTraversal(scene, visit);
-    });
-}
-
-void Node::draw(Render &render, shared_ptr<Scene> scene) {
-    render.drawNode(scene, shared_from_this());
-    std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<Node> c) {
-        c->draw(render, scene);
-    });
-}
-
-int GeoNode::getMeshIndex() {
-    return mMeshIdx;
-}
-
-void GeoNode::draw(Render &render, shared_ptr<Scene> scene) {
-    render.drawNode(scene, shared_from_this());
-    int meshIdx = getMeshIndex();
-    if (meshIdx >= 0) render.drawMesh(scene, meshIdx);
-}
-
 Scene::Scene() {
 }
 
@@ -738,7 +679,7 @@ shared_ptr<Scene> SceneManager::loadColladaAsset(shared_ptr<EngineContext> engin
         s->mMeshes.push_back(mesh);
     }
 
-    AIAdapter::buildNodeTree(scene->mRootNode, s);
+    AIAdapter::buildSceneGraph(s, scene->mRootNode);
 
     long long cvtTime = cvtDuration.getMicroSeconds();
 

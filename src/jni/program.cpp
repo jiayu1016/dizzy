@@ -84,19 +84,10 @@ Program::Program()
 Program::~Program() {
     ALOGD("Program::~Program()");
     if (mProgramId) glDeleteProgram(mProgramId);
-    if (!mVertexBOs.empty())
-        glDeleteBuffers(mVertexBOs.size(), &mVertexBOs[0]);
-    if (!mIndexBOs.empty())
-        glDeleteBuffers(mIndexBOs.size(), &mIndexBOs[0]);
 }
 
 void Program::use() {
     glUseProgram(mProgramId);
-}
-
-void Program::bindBufferObjects(int meshIdx) {
-    glBindBuffer(GL_ARRAY_BUFFER, mVertexBOs[meshIdx]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBOs[meshIdx]);
 }
 
 bool Program::link(std::shared_ptr<Shader> vtxShader, std::shared_ptr<Shader> fragShader) {
@@ -129,96 +120,45 @@ bool Program::link(std::shared_ptr<Shader> vtxShader, std::shared_ptr<Shader> fr
     return true;
 }
 
-bool Program::load(std::shared_ptr<Scene> scene) {
-    if (scene->atLeastOneMeshHasVertexPosition()) {
-        GLint attribLoc = glGetAttribLocation(mProgramId, "dzyVertexPosition");
-        if (attribLoc == -1) {
-            ALOGE("shader not compatible with scene: vertex position");
-            return false;
-        }
-        mLocations["dzyVertexPosition"] = attribLoc;
-    }
-    if (scene->atLeastOneMeshHasVertexColor()) {
-        GLint attribLoc = glGetAttribLocation(mProgramId, "dzyVertexColor");
-        if (attribLoc == -1) {
-            ALOGE("shader not compatible with scene: vertex color");
-            return false;
-        }
-        mLocations["dzyVertexColor"] = attribLoc;
-    }
-    if (scene->atLeastOneMeshHasNormal()) {
-        GLint attribLoc = glGetAttribLocation(mProgramId, "dzyVertexNormal");
-        if (attribLoc == -1) {
-            ALOGE("shader not compatible with scene: vertex normal");
-            return false;
-        }
-        mLocations["dzyVertexNormal"] = attribLoc;
+bool Program::storeLocation() {
+
+#define STORE_CHECK_ATTRIB_LOC(ATTRIB) {                                \
+        GLint attribLoc = glGetAttribLocation(mProgramId, ATTRIB);      \
+        if (attribLoc == -1) {                                          \
+            ALOGE("shader not compatible: %s", ATTRIB);                 \
+            return -1;                                                  \
+        }                                                               \
+        mLocations[ATTRIB] = attribLoc;                                 \
     }
 
-    GLint mvpLoc = glGetUniformLocation(mProgramId, "dzyMVPMatrix");
-    if (mvpLoc == -1) {
-        ALOGE("shader not compatible with scene: mvp matrix");
-        return false;
-    }
-    mLocations["dzyMVPMatrix"] = mvpLoc;
-
-    GLint mvLoc = glGetUniformLocation(mProgramId, "dzyMVMatrix");
-    if (mvLoc != -1)
-        mLocations["dzyMVMatrix"] = mvLoc;
-
-    GLint normalMatrixLoc = glGetUniformLocation(mProgramId, "dzyNormalMatrix");
-    if (normalMatrixLoc != -1)
-        mLocations["dzyNormalMatrix"] = normalMatrixLoc;
-
-    if (scene->getNumMaterials() > 0) {
-        GLint loc = -1;
-        loc = glGetUniformLocation(mProgramId, "dzyMaterial.diffuse");
-        if (loc != -1) mLocations["dzyMaterial.diffuse"] = loc;
-        loc = glGetUniformLocation(mProgramId, "dzyMaterial.specular");
-        if (loc != -1) mLocations["dzyMaterial.specular"] = loc;
-        loc = glGetUniformLocation(mProgramId, "dzyMaterial.ambient");
-        if (loc != -1) mLocations["dzyMaterial.ambient"] = loc;
-        loc = glGetUniformLocation(mProgramId, "dzyMaterial.emission");
-        if (loc != -1) mLocations["dzyMaterial.emission"] = loc;
-        loc = glGetUniformLocation(mProgramId, "dzyMaterial.shininess");
-        if (loc != -1) mLocations["dzyMaterial.shininess"] = loc;
+#define STORE_CHECK_UNIFORM_LOC(UNIFORM) {                              \
+        GLint uniformLoc = glGetUniformLocation(mProgramId, UNIFORM);   \
+        if (uniformLoc == -1) {                                         \
+            ALOGE("shader not compatible: %s", UNIFORM);                \
+            return -1;                                                  \
+        }                                                               \
+        mLocations[UNIFORM] = uniformLoc;                               \
     }
 
-    if (scene->getNumLights() > 0) {
-        GLint loc = -1;
-        loc = glGetUniformLocation(mProgramId, "dzyLight.color");
-        if (loc != -1) mLocations["dzyLight.color"] = loc;
-        loc = glGetUniformLocation(mProgramId, "dzyLight.ambient");
-        if (loc != -1) mLocations["dzyLight.ambient"] = loc;
-        loc = glGetUniformLocation(mProgramId, "dzyLight.position");
-        if (loc != -1) mLocations["dzyLight.position"] = loc;
-        loc = glGetUniformLocation(mProgramId, "dzyLight.attenuationConstant");
-        if (loc != -1) mLocations["dzyLight.attenuationConstant"] = loc;
-        loc = glGetUniformLocation(mProgramId, "dzyLight.attenuationLinear");
-        if (loc != -1) mLocations["dzyLight.attenuationLinear"] = loc;
-        loc = glGetUniformLocation(mProgramId, "dzyLight.attenuationQuadratic");
-        if (loc != -1) mLocations["dzyLight.attenuationQuadratic"] = loc;
-        loc = glGetUniformLocation(mProgramId, "dzyLight.strength");
-        if (loc != -1) mLocations["dzyLight.strength"] = loc;
-    }
 
-    size_t numMeshes = scene->getNumMeshes();
-    mVertexBOs.resize(numMeshes);
-    mIndexBOs.resize(numMeshes);
-    for(size_t i = 0; i < numMeshes; ++i) {
-        // Load vertex and index data into buffer object
-        shared_ptr<Mesh> mesh(scene->mMeshes[i]);
-        glGenBuffers(1, &mVertexBOs[i]);
-        glGenBuffers(1, &mIndexBOs[i]);
-        glBindBuffer(GL_ARRAY_BUFFER, mVertexBOs[i]);
-        glBufferData(GL_ARRAY_BUFFER, mesh->getVertexBufSize(),
-            mesh->getVertexBuf(), GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBOs[i]);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->getIndexBufSize(),
-            mesh->getIndexBuf(), GL_STATIC_DRAW);
-    }
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    STORE_CHECK_ATTRIB_LOC("dzyVertexPosition");
+    STORE_CHECK_ATTRIB_LOC("dzyVertexNormal");
+    STORE_CHECK_UNIFORM_LOC("dzyMVPMatrix");
+    STORE_CHECK_UNIFORM_LOC("dzyMVMatrix");
+    STORE_CHECK_UNIFORM_LOC("dzyNormalMatrix");
+    STORE_CHECK_UNIFORM_LOC("dzyMaterial.diffuse");
+    STORE_CHECK_UNIFORM_LOC("dzyMaterial.specular");
+    STORE_CHECK_UNIFORM_LOC("dzyMaterial.ambient");
+    STORE_CHECK_UNIFORM_LOC("dzyMaterial.emission");
+    STORE_CHECK_UNIFORM_LOC("dzyMaterial.shininess");
+    STORE_CHECK_UNIFORM_LOC("dzyLight.color");
+    STORE_CHECK_UNIFORM_LOC("dzyLight.ambient");
+    STORE_CHECK_UNIFORM_LOC("dzyLight.position");
+    STORE_CHECK_UNIFORM_LOC("dzyLight.attenuationConstant");
+    STORE_CHECK_UNIFORM_LOC("dzyLight.attenuationLinear");
+    STORE_CHECK_UNIFORM_LOC("dzyLight.attenuationQuadratic");
+    STORE_CHECK_UNIFORM_LOC("dzyLight.strength");
+
     return true;
 }
 

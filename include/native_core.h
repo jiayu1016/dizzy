@@ -26,11 +26,31 @@ public:
     virtual int32_t inputKeyEvent(int action, int code);
     virtual int32_t inputMotionEvent(int action);
 
-    // main interface for derived class
+    /// initialize nativie activity
+    ///
+    ///     the egl/gl context is not initialized yet,
+    ///     do one time setup for something doesn't need egl/gl context.
+    ///
+    ///     @return true if success, false otherwise
     virtual bool initActivity() = 0;
+    /// release native activity
     virtual bool releaseActivity() = 0;
+
+    /// initialize view
+    ///
+    ///     the egl/gl context has been initialized,
+    ///     do one time setup for something that need egl/gl context
+    ///
+    ///     @return true if success, false otherwise
     virtual bool initView() = 0;
+
+    /// release view
     virtual bool releaseView() = 0;
+
+    /// drawScene
+    ///
+    ///     this function is called every frame.
+    ///     @return true if success, false otherwise
     virtual bool drawScene() = 0;
 
     std::shared_ptr<EngineContext> getEngineContext();

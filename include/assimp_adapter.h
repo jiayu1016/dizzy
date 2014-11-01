@@ -75,9 +75,14 @@ public:
     static glm::mat4                   typeCast(const aiMatrix4x4 &mat4);
     static std::string                 typeCast(const aiString &str);
 
-    static void buildNodeTree(aiNode *root, std::shared_ptr<Scene> scene);
+    /// build scene graph
+    ///
+    ///     must be called AFTER the scene is built except scene graph
+    ///     @param scene the scene that hosts the scene graph being built
+    ///     @param root the root node of assimp Node
+    static void buildSceneGraph(std::shared_ptr<Scene> scene, aiNode *aroot);
 private:
-    static void linkNodeTree(std::shared_ptr<Node> node, aiNode *anode);
+    static void linkNode(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node, aiNode *anode);
 };
 
 }

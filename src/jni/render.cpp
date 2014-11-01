@@ -4,6 +4,7 @@
 #include "scene.h"
 #include "program.h"
 #include "utils.h"
+#include "scene_graph.h"
 #include "render.h"
 
 using namespace std;
@@ -18,19 +19,12 @@ Render::~Render() {
     ALOGD("Render::~Render()");
 }
 
-bool Render::init(shared_ptr<Scene> scene) {
+bool Render::init() {
     shared_ptr<EngineContext> engineContext(getEngineContext());
     if (!engineContext) {
         ALOGE("EngineContext released while init Render");
         return false;
     }
-
-    shared_ptr<Program> program(ProgramManager::get()->getDefaultProgram());
-    if (!program->load(scene)) {
-        ALOGE("error load data");
-        return false;
-    }
-    mProgram = program;
 
     glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);
@@ -61,7 +55,6 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
         return false;
     }
 
-    mProgram->use();
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     scene->mCameraModelTransform = glm::mat4(1.0f);
 
@@ -119,6 +112,7 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
     world = nd->mTransformation * world;
     glm::mat4 mvp = world;
 
+    node->getProgram()->use();
     //Utils::dump(node->mName.c_str(), node->mTransformation);
     shared_ptr<Camera> activeCamera(scene->getActiveCamera());
     if (activeCamera) {
@@ -131,46 +125,48 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
         glm::mat4 mv = view * world;
         mvp = proj * mv;
 
-        GLint mvLoc = mProgram->getLocation("dzyMVMatrix");
+        GLint mvLoc = node->getProgram()->getLocation("dzyMVMatrix");
         if (mvLoc != -1) {
             glUniformMatrix4fv(mvLoc, 1, GL_FALSE, glm::value_ptr(mv));
         }
-        GLint normalMatrixLoc = mProgram->getLocation("dzyNormalMatrix");
+        GLint normalMatrixLoc = node->getProgram()->getLocation("dzyNormalMatrix");
         if (normalMatrixLoc != -1) {
             glm::mat3 mvInvTransMatrix = glm::mat3(glm::transpose(glm::inverse(mv)));
             glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(mvInvTransMatrix));
         }
 
-        glUniformMatrix4fv(mProgram->getLocation("dzyMVPMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
+        glUniformMatrix4fv(node->getProgram()->getLocation("dzyMVPMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
 
         if (scene->getNumLights() > 0) {
             shared_ptr<Light> light(scene->mLights[0]);
             if (light) {
-                glUniform3fv(mProgram->getLocation("dzyLight.color"),
+                glUniform3fv(node->getProgram()->getLocation("dzyLight.color"),
                     1, glm::value_ptr(light->mColorDiffuse));
-                glUniform3fv(mProgram->getLocation("dzyLight.ambient"),
+                glUniform3fv(node->getProgram()->getLocation("dzyLight.ambient"),
                     1, glm::value_ptr(light->mColorAmbient));
                 glm::vec3 lightPosEyeSpace = glm::vec3(
                     view * scene->mLightModelTransform * glm::vec4(light->mPosition, 1.0f));
-                glUniform3fv(mProgram->getLocation("dzyLight.position"),
+                glUniform3fv(node->getProgram()->getLocation("dzyLight.position"),
                     1, glm::value_ptr(lightPosEyeSpace));
-                glUniform1f(mProgram->getLocation("dzyLight.attenuationConstant"),
+                glUniform1f(node->getProgram()->getLocation("dzyLight.attenuationConstant"),
                     light->mAttenuationConstant);
-                glUniform1f(mProgram->getLocation("dzyLight.attenuationLinear"),
+                glUniform1f(node->getProgram()->getLocation("dzyLight.attenuationLinear"),
                     light->mAttenuationLinear);
-                glUniform1f(mProgram->getLocation("dzyLight.attenuationQuadratic"),
+                glUniform1f(node->getProgram()->getLocation("dzyLight.attenuationQuadratic"),
                     light->mAttenuationQuadratic);
-                glUniform1f(mProgram->getLocation("dzyLight.strength"), 1.0f);
+                glUniform1f(node->getProgram()->getLocation("dzyLight.strength"), 1.0f);
             }
         }
     }
 }
 
-void Render::drawMesh(shared_ptr<Scene> scene, int meshIdx) {
-    shared_ptr<Mesh> mesh(scene->mMeshes[meshIdx]);
-    mProgram->bindBufferObjects(meshIdx);
-    //ALOGD("meshIdx: %d, mesh name: %s, material idx: %d",
-    //    meshIdx, mesh->mName.c_str(), mesh->mMaterialIndex);
+void Render::drawMesh(shared_ptr<Scene> scene, shared_ptr<Mesh> mesh,
+    shared_ptr<Program> program, GLuint vbo, GLuint ibo) {
+    // bind the BOs
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+
+    // TODO: move material to node, not mesh
     if (scene->getNumMaterials() > 0) {
         shared_ptr<Material> material(scene->mMaterials[mesh->mMaterialIndex]);
         glm::vec3 diffuse, specular, ambient, emission;
@@ -181,19 +177,19 @@ void Render::drawMesh(shared_ptr<Scene> scene, int meshIdx) {
         material->get(Material::COLOR_EMISSION, emission);
         material->get(Material::SHININESS, shininess);
 
-        glUniform3fv(mProgram->getLocation("dzyMaterial.diffuse"),
+        glUniform3fv(program->getLocation("dzyMaterial.diffuse"),
             1, glm::value_ptr(diffuse));
-        glUniform3fv(mProgram->getLocation("dzyMaterial.specular"),
+        glUniform3fv(program->getLocation("dzyMaterial.specular"),
             1, glm::value_ptr(specular));
-        glUniform3fv(mProgram->getLocation("dzyMaterial.ambient"),
+        glUniform3fv(program->getLocation("dzyMaterial.ambient"),
             1, glm::value_ptr(ambient));
-        glUniform3fv(mProgram->getLocation("dzyMaterial.emission"),
+        glUniform3fv(program->getLocation("dzyMaterial.emission"),
             1, glm::value_ptr(emission));
-        glUniform1f(mProgram->getLocation("dzyMaterial.shininess"), shininess);
+        glUniform1f(program->getLocation("dzyMaterial.shininess"), shininess);
 
     }
     if (mesh->hasVertexPositions()) {
-        GLint posLoc = mProgram->getLocation("dzyVertexPosition");
+        GLint posLoc = program->getLocation("dzyVertexPosition");
         glEnableVertexAttribArray(posLoc);
         //ALOGD("num vertices: %d, num components: %d, stride: %d",
         //    mesh->getNumVertices(),
@@ -211,11 +207,11 @@ void Render::drawMesh(shared_ptr<Scene> scene, int meshIdx) {
     }
     if (mesh->hasVertexColors()) {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
-        GLint colorLoc = mProgram->getLocation("dzyVertexColor");
+        GLint colorLoc = program->getLocation("dzyVertexColor");
         glEnableVertexAttribArray(colorLoc);
     }
     if (mesh->hasVertexNormals()) {
-        GLint normalLoc = mProgram->getLocation("dzyVertexNormal");
+        GLint normalLoc = program->getLocation("dzyVertexNormal");
         glEnableVertexAttribArray(normalLoc);
         glVertexAttribPointer(
             normalLoc,
@@ -238,15 +234,16 @@ void Render::drawMesh(shared_ptr<Scene> scene, int meshIdx) {
 
     // restore
     if (mesh->hasVertexPositions())
-        glDisableVertexAttribArray(mProgram->getLocation("dzyVertexPosition"));
+        glDisableVertexAttribArray(program->getLocation("dzyVertexPosition"));
 
     if (mesh->hasVertexColors()) {
-        glDisableVertexAttribArray(mProgram->getLocation("dzyVertexColor"));
+        glDisableVertexAttribArray(program->getLocation("dzyVertexColor"));
     }
     if (mesh->hasVertexNormals()) {
-        glDisableVertexAttribArray(mProgram->getLocation("dzyVertexNormal"));
+        glDisableVertexAttribArray(program->getLocation("dzyVertexNormal"));
     }
 
+    // unbind the BOs
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }

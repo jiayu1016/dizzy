@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <GLES3/gl3.h>
+#include "utils.h"
 
 class AAssetManager;
 
@@ -34,6 +35,7 @@ public:
     enum {
         MAX_SHADERS = 2,
     };
+
     Program();
     ~Program();
 
@@ -41,9 +43,8 @@ public:
     bool    isValid() const { return mLinked; }
     // bind program
     void    use();
-    void    bindBufferObjects(int meshIdx);
     bool    link(std::shared_ptr<Shader> vtxShader, std::shared_ptr<Shader> fragShader);
-    bool    load(std::shared_ptr<Scene> scene);
+    bool    storeLocation();
     GLint   getLocation(const char* name);
 
     friend class Shader;
@@ -52,12 +53,6 @@ private:
     GLuint                                      mProgramId;
     std::vector<std::shared_ptr<Shader> >       mShaders;
     std::map<std::string, GLint>                mLocations;
-    GLint                                       mProjectionMatrixLoc;
-    GLint                                       mColorMatrixLoc;
-    GLint                                       mColorLoc;
-    // the order must be consistent with the mesh vector in scene
-    std::vector<GLuint>                         mVertexBOs;
-    std::vector<GLuint>                         mIndexBOs;
 };
 
 class EngineContext;

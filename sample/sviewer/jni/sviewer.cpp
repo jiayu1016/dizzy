@@ -4,6 +4,7 @@
 #include "native_core.h"
 #include "engine_context.h"
 #include "render.h"
+#include "scene_graph.h"
 #include "scene.h"
 
 using namespace dzy;
@@ -52,7 +53,12 @@ bool SViewer::initView() {
     shared_ptr<Scene> scene(SceneManager::get()->getCurrentScene());
     if (!scene) return false;
 
-    return mRender->init(scene);
+    shared_ptr<Node> rootNode(scene->getRootNode());
+    if (rootNode) {
+        rootNode->setAutoProgram();
+        rootNode->init();
+    }
+    return mRender->init();
 }
 
 bool SViewer::releaseView() {

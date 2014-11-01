@@ -265,48 +265,10 @@ private:
     unsigned int                    mMaterialIndex;
 };
 
-class Node : public std::enable_shared_from_this<Node> {
-public:
-    typedef std::function<void(std::shared_ptr<Scene>, std::shared_ptr<Node>)> VisitFunc;
-
-    Node() { }
-    Node(const std::string& name) : mName(name) { }
-
-    /// attach a child node into the scene graph
-    ///
-    ///     @param childNode the child node to attach
-    void attachChild(std::shared_ptr<Node> childNode);
-    std::shared_ptr<Node> getParent();
-    //void setParent(std::shared_ptr<Node> parent);
-    std::shared_ptr<Node> findNode(const std::string &name);
-    void dfsTraversal(std::shared_ptr<Scene> scene, VisitFunc visit);
-
-    /// Recursively draw the node and it's children
-    virtual void draw(Render &render, std::shared_ptr<Scene> scene);
-
-    friend class AIAdapter;
-    friend class Render;
-private:
-    std::string                             mName;
-    glm::mat4                               mTransformation;
-    std::weak_ptr<Node>                     mParent;
-    std::vector<std::shared_ptr<Node> >     mChildren;
-};
-
-class GeoNode : public Node {
-public:
-    GeoNode(int meshIdx) : mMeshIdx(meshIdx) {};
-    int getMeshIndex();
-
-    virtual void draw(Render &render, std::shared_ptr<Scene> scene);
-private:
-    // one on one mapping between GeoNode and Mesh
-    int mMeshIdx;
-};
-
 class SceneManager;
 class EngineContext;
 class Program;
+class Node;
 typedef std::vector<std::shared_ptr<Camera> >      CameraContainer;
 typedef std::vector<std::shared_ptr<Light> >       LightContainer;
 typedef std::vector<std::shared_ptr<Animation> >   AnimationContainer;

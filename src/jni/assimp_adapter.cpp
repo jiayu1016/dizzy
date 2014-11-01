@@ -1,6 +1,7 @@
 #include <memory>
 #include "scene.h"
 #include "log.h"
+#include "scene_graph.h"
 #include "assimp_adapter.h"
 
 using namespace std;
@@ -236,21 +237,23 @@ string AIAdapter::typeCast(const aiString &str) {
     return string(str.C_Str());
 }
 
-void AIAdapter::buildNodeTree(aiNode *aroot, shared_ptr<Scene> scene) {
+void AIAdapter::buildSceneGraph(shared_ptr<Scene> scene, aiNode *aroot) {
     shared_ptr<Node> root = typeCast(aroot);
-    linkNodeTree(root, aroot);
+    linkNode(scene, root, aroot);
     scene->mRootNode = root;
 }
 
-void AIAdapter::linkNodeTree(shared_ptr<Node> node, aiNode *anode) {
+void AIAdapter::linkNode(shared_ptr<Scene> scene,
+    shared_ptr<Node> node, aiNode *anode) {
     for (unsigned int i = 0; i < anode->mNumChildren; i++) {
         shared_ptr<Node> c = typeCast(anode->mChildren[i]);
         node->attachChild(c);
-        linkNodeTree(c, anode->mChildren[i]);
+        linkNode(scene, c, anode->mChildren[i]);
     }
     // build one GeoNode to reference one Mesh
     for (unsigned int i = 0; i < anode->mNumMeshes; i++) {
-        shared_ptr<GeoNode> c(new GeoNode(anode->mMeshes[i]));
+        unsigned int meshIdx = anode->mMeshes[i];
+        shared_ptr<GeoNode> c(new GeoNode(scene->mMeshes[meshIdx]));
         node->attachChild(c);
     }
 }
