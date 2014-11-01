@@ -5,6 +5,7 @@
 #include "engine_context.h"
 #include "render.h"
 #include "scene_graph.h"
+#include "mesh.h"
 #include "scene.h"
 
 using namespace dzy;
@@ -54,10 +55,14 @@ bool SViewer::initView() {
     if (!scene) return false;
 
     shared_ptr<Node> rootNode(scene->getRootNode());
-    if (rootNode) {
-        rootNode->setAutoProgram();
-        rootNode->init();
-    }
+    if (!rootNode) return false;
+
+    shared_ptr<CubeMesh> cube(new CubeMesh());
+    shared_ptr<GeoNode> cubeNode(new GeoNode(cube));
+    rootNode->attachChild(cubeNode);
+
+    rootNode->setAutoProgram();
+    rootNode->init();
     return mRender->init();
 }
 

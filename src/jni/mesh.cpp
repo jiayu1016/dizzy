@@ -1,3 +1,4 @@
+#include <sstream>
 #include "log.h"
 #include "mesh.h"
 
@@ -5,8 +6,7 @@ using namespace std;
 
 namespace dzy {
 
-unsigned int MeshData::append(int size, unsigned char *buf) {
-    // TODO: consider optimizing
+unsigned int MeshData::append(void *buf, int size) {
     int bufSize = mBuffer.size();
     if (mBuffer.capacity() < bufSize + size) {
         ALOGD("insufficent MeshData capacity, enlarge, %d => %d",
@@ -27,9 +27,11 @@ void * MeshData::getBuf(int offset) {
     return static_cast<void *>(&mBuffer[offset]);
 }
 
-Mesh::Mesh()
-    : mPrimitiveType            (PRIMITIVE_TYPE_TRIANGLES)
-    , mNumVertices              (0)
+int Mesh::mCount = 0;
+
+Mesh::Mesh(PrimitiveType type, unsigned int numVertices)
+    : mPrimitiveType            (type)
+    , mNumVertices              (numVertices)
     , mNumFaces                 (0)
     , mMaterialIndex            (0)
     , mPosOffset                (0)
@@ -50,6 +52,9 @@ Mesh::Mesh()
     , mBitangentNumComponents   (0)
     , mBitangentBytesComponent  (0)
     , mHasBitangent             (false) {
+    ostringstream os;
+    os << "Mesh-" << mCount++;
+    mName = os.str();
     memset(&mColorOffset[0], 0, MAX_COLOR_SETS * sizeof(unsigned int));
     memset(&mColorNumComponents[0], 0, MAX_COLOR_SETS * sizeof(unsigned int));
     memset(&mColorBytesComponent[0], 0, MAX_COLOR_SETS * sizeof(unsigned int));
@@ -119,7 +124,10 @@ unsigned int Mesh::getNumFaces() const {
 }
 
 unsigned int Mesh::getNumIndices() const {
-    return mNumFaces * 3;
+    // TODO:
+    if (mPrimitiveType == PRIMITIVE_TYPE_TRIANGLE)
+        return mNumFaces * 3;
+    else return 0;
 }
 
 unsigned int Mesh::getPositionNumComponent() const {
@@ -252,58 +260,81 @@ void * Mesh::getIndexBuf() {
     return &mTriangleFaces[0];
 }
 
-void Mesh::appendVertexPositions(unsigned char *buf, unsigned int numVertices,
-    unsigned int numComponents, unsigned int bytesEachComponent) {
-    int totalSize = bytesEachComponent * numComponents * numVertices;
-    mPosOffset = mMeshData.append(totalSize, buf);
+void Mesh::appendVertexPositions(
+    void *buf,
+    unsigned int numComponents,
+    unsigned int bytesEachComponent) {
+    int totalSize = bytesEachComponent * numComponents * mNumVertices;
+    mPosOffset = mMeshData.append(buf, totalSize);
     mPosNumComponents = numComponents;
     mPosBytesComponent = bytesEachComponent;
     mHasPos = true;
 }
 
-void Mesh::appendVertexColors(unsigned char *buf, unsigned int numVertices,
-    unsigned int numComponents, unsigned int bytesEachComponent, unsigned int channel) {
-    int totalSize = bytesEachComponent * numComponents * numVertices;
-    mColorOffset[channel] = mMeshData.append(totalSize, buf);
+void Mesh::appendVertexColors(
+    void *buf,
+    unsigned int numComponents,
+    unsigned int bytesEachComponent,
+    unsigned int channel) {
+    int totalSize = bytesEachComponent * numComponents * mNumVertices;
+    mColorOffset[channel] = mMeshData.append(buf, totalSize);
     mColorNumComponents[channel] = numComponents;
     mColorBytesComponent[channel] = bytesEachComponent;
     mNumColorChannels++;
 }
 
-void Mesh::appendVertexTextureCoords(unsigned char *buf, unsigned int numVertices,
-    unsigned int numComponents, unsigned int bytesEachComponent, unsigned int channel) {
-    int totalSize = bytesEachComponent * numComponents * numVertices;
-    mTextureCoordOffset[channel] = mMeshData.append(totalSize, buf);
+void Mesh::appendVertexTextureCoords(
+    void *buf,
+    unsigned int numComponents,
+    unsigned int bytesEachComponent,
+    unsigned int channel) {
+    int totalSize = bytesEachComponent * numComponents * mNumVertices;
+    mTextureCoordOffset[channel] = mMeshData.append(buf, totalSize);
     mTextureCoordNumComponents[channel] = numComponents;
     mTextureCoordBytesComponent[channel] = bytesEachComponent;
     mNumTextureCoordChannels++;
 }
 
-void Mesh::appendVertexNormals(unsigned char *buf, unsigned int numVertices,
-    unsigned int numComponents, unsigned int bytesEachComponent) {
-    int totalSize = bytesEachComponent * numComponents * numVertices;
-    mNormalOffset = mMeshData.append(totalSize, buf);
+void Mesh::appendVertexNormals(
+    void *buf,
+    unsigned int numComponents,
+    unsigned int bytesEachComponent) {
+    int totalSize = bytesEachComponent * numComponents * mNumVertices;
+    mNormalOffset = mMeshData.append(buf, totalSize);
     mNormalNumComponents = numComponents;
     mNormalBytesComponent = bytesEachComponent;
     mHasNormal = true;
 }
 
-void Mesh::appendVertexTangents(unsigned char *buf, unsigned int numVertices,
-    unsigned int numComponents, unsigned int bytesEachComponent) {
-    int totalSize = bytesEachComponent * numComponents * numVertices;
-    mTangentOffset = mMeshData.append(totalSize, buf);
+void Mesh::appendVertexTangents(
+    void *buf,
+    unsigned int numComponents,
+    unsigned int bytesEachComponent) {
+    int totalSize = bytesEachComponent * numComponents * mNumVertices;
+    mTangentOffset = mMeshData.append(buf, totalSize);
     mTangentNumComponents = numComponents;
     mTangentBytesComponent = bytesEachComponent;
     mHasTangent++;
 }
 
-void Mesh::appendVertexBitangents(unsigned char *buf, unsigned int numVertices,
-    unsigned int numComponents, unsigned int bytesEachComponent) {
-    int totalSize = bytesEachComponent * numComponents * numVertices;
-    mBitangentOffset = mMeshData.append(totalSize, buf);
+void Mesh::appendVertexBitangents(
+    void *buf,
+    unsigned int numComponents,
+    unsigned int bytesEachComponent) {
+    int totalSize = bytesEachComponent * numComponents * mNumVertices;
+    mBitangentOffset = mMeshData.append(buf, totalSize);
     mBitangentNumComponents = numComponents;
     mBitangentBytesComponent = bytesEachComponent;
     mHasBitangent++;
+}
+
+void Mesh::buildIndexBuffer(void *buf, int numFaces) {
+    mNumFaces = numFaces;
+    mTriangleFaces.resize(mNumFaces);
+    int numIndices = 0;
+    if (mPrimitiveType == PRIMITIVE_TYPE_TRIANGLE)
+        numIndices = mNumFaces * 3;
+    memcpy(&mTriangleFaces[0].mIndices[0], buf, numIndices * sizeof(unsigned int));
 }
 
 void Mesh::reserveDataStorage(int size) {
@@ -349,6 +380,72 @@ void Mesh::dumpIndexBuf(int groupSize) {
     }
     if (num)
         PRINT("************ end Mesh::dumpIndexBuf ************");
+}
+
+void Mesh::setName(std::string name) {
+    mName = name;
+}
+
+std::string Mesh::getName() {
+    return mName;
+}
+
+CubeMesh::CubeMesh()
+    : Mesh(PRIMITIVE_TYPE_TRIANGLE, 24) {
+    float verts[] = {
+        // front
+        -0.5f, +0.5f, +0.5f,
+        -0.5f, -0.5f, +0.5f,
+        +0.5f, -0.5f, +0.5f,
+        +0.5f, +0.5f, +0.5f,
+
+        // up
+        -0.5f, +0.5f, -0.5f,
+        -0.5f, +0.5f, +0.5f,
+        +0.5f, +0.5f, +0.5f,
+        +0.5f, +0.5f, -0.5f,
+
+        // right
+        +0.5f, +0.5f, +0.5f,
+        +0.5f, -0.5f, +0.5f,
+        +0.5f, -0.5f, -0.5f,
+        +0.5f, +0.5f, -0.5f,
+
+        // back
+        +0.5f, +0.5f, -0.5f,
+        +0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, +0.5f, -0.5f,
+
+        // left
+        -0.5f, +0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f, +0.5f,
+        -0.5f, +0.5f, +0.5f,
+
+        // bottom
+        -0.5f, -0.5f, +0.5f,
+        -0.5f, -0.5f, -0.5f,
+        +0.5f, -0.5f, -0.5f,
+        +0.5f, -0.5f, +0.5f,
+    };
+    unsigned int indices[] = {
+        0, 1, 2,
+        0, 2, 3,
+        4, 5, 6,
+        4, 6, 7,
+        8, 9, 10,
+        8, 10, 11,
+        12, 13, 14,
+        12, 14, 15,
+        16, 17, 18,
+        16, 18, 19,
+        20, 21, 22,
+        20, 22, 23
+    };
+
+    Mesh::appendVertexPositions(verts, 3, sizeof(float));
+    Mesh::buildIndexBuffer(indices, 12);
 }
 
 } //namespace

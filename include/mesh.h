@@ -16,7 +16,7 @@ public:
 class MeshData {
 public:
     void reserve(int size) { mBuffer.reserve(size); };
-    unsigned int append(int size, unsigned char *buf);
+    unsigned int append(void *buf, int size);
     inline bool empty() const { return mBuffer.empty(); }
     inline unsigned int getBufSize() { return mBuffer.size(); };
 
@@ -28,6 +28,11 @@ private:
 
 class AIAdapter;
 class Render;
+/// The base class of all kind of Meshes
+///
+///     This class is used for building Mesh manuall when you already
+///     have vertex datas. If you want to create Meshes programmably,
+///     use the derivative classes instead.
 class Mesh {
 public:
     enum {
@@ -36,11 +41,11 @@ public:
     };
 
     enum PrimitiveType {
-        PRIMITIVE_TYPE_TRIANGLES = 0,
+        PRIMITIVE_TYPE_TRIANGLE = 0,
         PRIMITIVE_TYPE_NUM
     };
 
-    Mesh();
+    Mesh(PrimitiveType type, unsigned int numVertices);
 
     bool            hasVertexPositions() const;
     bool            hasVertexColors(unsigned int channel) const;
@@ -57,8 +62,8 @@ public:
     unsigned int    getNumFaces() const;
     unsigned int    getNumIndices() const;
 
-    unsigned int    getPositionNumComponent() const;
-    unsigned int    getPositionBufStride() const;
+    virtual unsigned int    getPositionNumComponent() const;
+    virtual unsigned int    getPositionBufStride() const;
     unsigned int    getPositionBufSize() const;
     unsigned int    getPositionOffset() const;
     void *          getPositionBuf();
@@ -75,8 +80,8 @@ public:
     unsigned int    getNormalOffset() const;
     void *          getNormalBuf();
 
-    unsigned int    getTangentNumComponent() const;
-    unsigned int    getTangentBufStride() const;
+    virtual unsigned int    getTangentNumComponent() const;
+    virtual unsigned int    getTangentBufStride() const;
     unsigned int    getTangentBufSize() const;
     unsigned int    getTangentOffset() const;
     void *          getTangentBuf();
@@ -93,27 +98,48 @@ public:
     unsigned int    getIndexBufSize() const;
     void *          getIndexBuf();
 
-    void appendVertexPositions(unsigned char *buf, unsigned int numVertices,
-        unsigned int numComponents, unsigned int bytesEachComponent);
-    void appendVertexColors(unsigned char *buf, unsigned int numVertices,
-        unsigned int numComponents, unsigned int bytesEachComponent, unsigned int channel);
-    void appendVertexTextureCoords(unsigned char *buf, unsigned int numVertices,
-        unsigned int numComponents, unsigned int bytesEachComponent, unsigned int channel);
-    void appendVertexNormals(unsigned char *buf, unsigned int numVertices,
-        unsigned int numComponents, unsigned int bytesEachComponent);
-    void appendVertexTangents(unsigned char *buf, unsigned int numVertices,
-        unsigned int numComponents, unsigned int bytesEachComponent);
-    void appendVertexBitangents(unsigned char *buf, unsigned int numVertices,
-        unsigned int numComponents, unsigned int bytesEachComponent);
+    // these appendVertexXXX functions are used to build MeshData's raw
+    // buffer into "structure of arrays", the order is not important, internal
+    // variables are used to track the offset
+    void appendVertexPositions(
+        void *buf,
+        unsigned int numComponents,
+        unsigned int bytesEachComponent);
+    void appendVertexColors(
+        void *buf,
+        unsigned int numComponents,
+        unsigned int bytesEachComponent,
+        unsigned int channel);
+    void appendVertexTextureCoords(
+        void *buf,
+        unsigned int numComponents,
+        unsigned int bytesEachComponent,
+        unsigned int channel);
+    void appendVertexNormals(
+        void *buf,
+        unsigned int numComponents,
+        unsigned int bytesEachComponent);
+    void appendVertexTangents(
+        void *buf,
+        unsigned int numComponents,
+        unsigned int bytesEachComponent);
+    void appendVertexBitangents(
+        void *buf,
+        unsigned int numComponents,
+        unsigned int bytesEachComponent);
+    void buildIndexBuffer(void *buf, int numFaces);
 
     void            reserveDataStorage(int size);
 
     void            dumpVertexPositionBuf(int groupSize = 3);
     void            dumpIndexBuf (int groupSize = 3);
 
+    void            setName(std::string name);
+    std::string     getName();
+
     friend class AIAdapter;
     friend class Render;
-private:
+protected:
     std::string                     mName;
     PrimitiveType                   mPrimitiveType;
 
@@ -155,8 +181,14 @@ private:
 
     // A mesh use only ONE material, otherwise it is splitted to multiple meshes
     unsigned int                    mMaterialIndex;
+    static int                      mCount;
 };
 
+class CubeMesh : public Mesh {
+public:
+    /// ctor, build a CubeMesh
+    CubeMesh();
+};
 
 }
 

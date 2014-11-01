@@ -144,12 +144,10 @@ shared_ptr<Mesh> AIAdapter::typeCast(aiMesh *mesh) {
         return NULL;
     }
 
-    shared_ptr<Mesh> me(new Mesh);
-    me->mName = typeCast(mesh->mName);
-    // TODO: support point and line pritmive types
-    me->mPrimitiveType = Mesh::PRIMITIVE_TYPE_TRIANGLES;
-    me->mNumVertices = mesh->mNumVertices;
-    me->mNumFaces = mesh->mNumFaces;
+    shared_ptr<Mesh> me(new Mesh(
+        Mesh::PRIMITIVE_TYPE_TRIANGLE,
+        mesh->mNumVertices));
+    me->setName(typeCast(mesh->mName));
 
     int estimatedSize = 0;
     if (mesh->HasPositions())
@@ -166,36 +164,36 @@ shared_ptr<Mesh> AIAdapter::typeCast(aiMesh *mesh) {
     // Attention: rely on continuous memory layout of vertices in assimp
     if (mesh->HasPositions()) {
         me->appendVertexPositions(reinterpret_cast<unsigned char*>(mesh->mVertices),
-            me->mNumVertices, 3, sizeof(float));
+            3, sizeof(float));
     }
 
     for (int i=0; i< mesh->GetNumColorChannels(); i++) {
         me->appendVertexColors(reinterpret_cast<unsigned char*>(mesh->mColors[i]),
-            me->mNumVertices, 4, sizeof(float), i);
+            4, sizeof(float), i);
     }
 
     for (int i=0; i< mesh->GetNumUVChannels(); i++) {
         me->appendVertexTextureCoords(reinterpret_cast<unsigned char*>(mesh->mTextureCoords[i]),
-            me->mNumVertices, mesh->mNumUVComponents[i], sizeof(float), i);
+            mesh->mNumUVComponents[i], sizeof(float), i);
     }
 
     if (mesh->HasNormals()) {
         me->appendVertexNormals(reinterpret_cast<unsigned char*>(mesh->mNormals),
-            me->mNumVertices, 3, sizeof(float));
+            3, sizeof(float));
     }
 
     if (mesh->HasTangentsAndBitangents()) {
         me->appendVertexTangents(reinterpret_cast<unsigned char*>(mesh->mTangents),
-            me->mNumVertices, 3, sizeof(float));
+            3, sizeof(float));
         me->appendVertexBitangents(reinterpret_cast<unsigned char*>(mesh->mBitangents),
-            me->mNumVertices, 3, sizeof(float));
+            3, sizeof(float));
     }
     if (mesh->HasFaces()) {
-        ALOGD("mNumFaces: %u", me->mNumFaces);
+        // cannot use Mesh::buildIndexBuffer,  assimp aiFace's indices buffer
+        // in the neighbouring faces are not continuous
+        me->mNumFaces = mesh->mNumFaces;
         me->mTriangleFaces.resize(me->mNumFaces);
-        // TODO: consider optimizing, avoid looping
         for (int i=0; i<me->mNumFaces; i++) {
-            // Attention: support triange faces only
             assert(mesh->mFaces[i].mNumIndices == 3);
             me->mTriangleFaces[i].mIndices[0] = mesh->mFaces[i].mIndices[0];
             me->mTriangleFaces[i].mIndices[1] = mesh->mFaces[i].mIndices[1];
