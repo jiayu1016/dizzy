@@ -5,6 +5,7 @@
 #include "program.h"
 #include "utils.h"
 #include "scene_graph.h"
+#include "mesh.h"
 #include "render.h"
 
 using namespace std;

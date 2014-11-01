@@ -2,6 +2,7 @@
 #include "program.h"
 #include "scene.h"
 #include "render.h"
+#include "mesh.h"
 #include "scene_graph.h"
 
 using namespace std;

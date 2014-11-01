@@ -6,6 +6,7 @@ LOCAL_SRC_FILES :=          \
     engine_context.cpp      \
     native_core.cpp         \
     scene.cpp               \
+    mesh.cpp                \
     scene_graph.cpp         \
     render.cpp              \
     assimp_adapter.cpp      \

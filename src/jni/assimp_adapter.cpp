@@ -2,6 +2,7 @@
 #include "scene.h"
 #include "log.h"
 #include "scene_graph.h"
+#include "mesh.h"
 #include "assimp_adapter.h"
 
 using namespace std;
