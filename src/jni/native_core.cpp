@@ -126,6 +126,14 @@ int32_t NativeCore::inputKeyEvent(int action, int code) {
     return ret;
 }
 
+bool NativeCore::initActivity() {
+    return true;
+}
+
+bool NativeCore::releaseActivity() {
+    return true;
+}
+
 shared_ptr<EngineContext> NativeCore::getEngineContext() {
     return mEngineContext;
 }

@@ -32,9 +32,9 @@ public:
     ///     do one time setup for something doesn't need egl/gl context.
     ///
     ///     @return true if success, false otherwise
-    virtual bool initActivity() = 0;
+    virtual bool initActivity();
     /// release native activity
-    virtual bool releaseActivity() = 0;
+    virtual bool releaseActivity();
 
     /// initialize view
     ///
