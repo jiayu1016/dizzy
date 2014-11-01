@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "log.h"
 #include "program.h"
 #include "scene.h"

@@ -5,6 +5,7 @@
 #include "mesh.h"
 #include "material.h"
 #include "camera.h"
+#include "light.h"
 #include "assimp_adapter.h"
 
 using namespace std;
