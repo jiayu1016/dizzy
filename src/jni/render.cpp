@@ -7,6 +7,7 @@
 #include "scene_graph.h"
 #include "mesh.h"
 #include "material.h"
+#include "camera.h"
 #include "render.h"
 
 using namespace std;

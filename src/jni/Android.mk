@@ -8,6 +8,7 @@ LOCAL_SRC_FILES :=          \
     scene.cpp               \
     mesh.cpp                \
     material.cpp            \
+    camera.cpp              \
     scene_graph.cpp         \
     render.cpp              \
     assimp_adapter.cpp      \

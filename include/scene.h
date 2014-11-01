@@ -16,42 +16,6 @@
 
 namespace dzy {
 
-class AIAdapter;
-class Scene;
-class Render;
-
-class Camera {
-public:
-    Camera();
-    Camera(
-        glm::vec3           position,
-        glm::vec3           up,
-        glm::vec3           lookAt,
-        float               horizontalFOV,
-        float               clipPlaneNear,
-        float               clipPlaneFar,
-        float               aspect);
-
-    void        setAspect(float aspect);
-    glm::mat4   getViewMatrix();
-    glm::mat4   getViewMatrix(glm::mat4 transform);
-    glm::mat4   getProjMatrix();
-    void        dump(glm::vec3 pos, glm::vec3 at, glm::vec3 up);
-    void        dumpParameter();
-
-    friend class Render;
-    friend class AIAdapter;
-private:
-    std::string         mName;
-    glm::vec3           mPosition;
-    glm::vec3           mUp;
-    glm::vec3           mLookAt;
-    float               mHorizontalFOV;
-    float               mClipPlaneNear;
-    float               mClipPlaneFar;
-    float               mAspect;
-};
-
 class Light {
 public:
     enum LightSourceType {
@@ -101,6 +65,7 @@ class Program;
 class Node;
 class Mesh;
 class Material;
+class Camera;
 typedef std::vector<std::shared_ptr<Camera> >      CameraContainer;
 typedef std::vector<std::shared_ptr<Light> >       LightContainer;
 typedef std::vector<std::shared_ptr<Animation> >   AnimationContainer;
