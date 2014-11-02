@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <sstream>
+#include <functional>
 #define GLM_FORCE_RADIANS
 #include <glm/gtc/matrix_transform.hpp>
 #include "log.h"
@@ -65,10 +66,17 @@ shared_ptr<Node> Node::findNode(const string &name) {
     return NULL;
 }
 
-void Node::dfsTraversal(shared_ptr<Scene> scene, VisitFunc visit) {
+void Node::dfsTraversal(shared_ptr<Scene> scene, VisitSceneFunc visit) {
     visit(scene, shared_from_this());
     std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<Node> c) {
         c->dfsTraversal(scene, visit);
+    });
+}
+
+void Node::dfsTraversal(VisitFunc visit) {
+    visit(shared_from_this());
+    std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<Node> c) {
+        c->dfsTraversal(visit);
     });
 }
 
@@ -100,6 +108,10 @@ void Node::draw(Render &render, shared_ptr<Scene> scene) {
     });
 }
 
+void Node::resetTransform() {
+    mTransformation = glm::mat4(1.0f);
+}
+
 void Node::translate(float x, float y, float z) {
     glm::vec3 v(x, y, z);
     mTransformation = glm::translate(mTransformation, v);
@@ -121,6 +133,28 @@ void Node::setName(string name) {
 
 string Node::getName() {
     return mName;
+}
+
+void Node::dumpHierarchy() {
+    dump(0);
+}
+
+void Node::dump(int depth) {
+    ostringstream os;
+    for(int i=0; i<depth; i++) os << "    ";
+    os << "%s";
+    PRINT(os.str().c_str(), mName.c_str());
+
+    std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<Node> c) {
+        depth++;
+        c->dump(depth);
+        depth--;
+    });
+}
+
+GeoNode::GeoNode(shared_ptr<Mesh> mesh)
+    : Node(string("GeoNode-") + mesh->getName())
+    , mMesh(mesh) {
 }
 
 bool GeoNode::initGpuData() {

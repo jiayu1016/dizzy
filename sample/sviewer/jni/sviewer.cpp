@@ -42,11 +42,19 @@ bool SViewer::initView() {
     shared_ptr<Node> rootNode(scene->getRootNode());
     if (!rootNode) return false;
 
-    shared_ptr<CubeMesh> cube(new CubeMesh());
-    shared_ptr<GeoNode> cubeNode(new GeoNode(cube));
+    shared_ptr<CubeMesh> cube(new CubeMesh("mycube"));
+    shared_ptr<Node> cubeNode(new GeoNode(cube));
     cubeNode->rotate(-0.25f * 3.1415927, 0.f, 1.f, 0.f);
     cubeNode->translate(3.f, 0.f, 0.f);
+
+    shared_ptr<Node> sphereNode(rootNode->findNode("Sphere"));
+    if (sphereNode) {
+        sphereNode->resetTransform();
+        //sphereNode->translate(3.5f, 2.5f, 0.f);
+        cubeNode->attachChild(sphereNode);
+    }
     rootNode->attachChild(cubeNode);
+    rootNode->dumpHierarchy();
 
     rootNode->initGpuData();
 

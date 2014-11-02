@@ -251,7 +251,10 @@ void AIAdapter::linkNode(shared_ptr<Scene> scene,
         node->attachChild(c);
         linkNode(scene, c, anode->mChildren[i]);
     }
-    // build one GeoNode to reference one Mesh
+    // build one GeoNode to reference one Mesh,
+    // only GeoNode allowed to attach one and only one Mesh,
+    // this can simplify scene graph code, but may increase
+    // scene graph depth compared to assimp
     for (unsigned int i = 0; i < anode->mNumMeshes; i++) {
         unsigned int meshIdx = anode->mMeshes[i];
         shared_ptr<GeoNode> c(new GeoNode(scene->mMeshes[meshIdx]));

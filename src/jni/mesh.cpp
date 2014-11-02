@@ -390,8 +390,9 @@ string Mesh::getName() {
     return mName;
 }
 
-CubeMesh::CubeMesh()
+CubeMesh::CubeMesh(const string& name)
     : Mesh(PRIMITIVE_TYPE_TRIANGLE, 24) {
+    setName(name);
     float verts[] = {
         // front
         -0.5f, +0.5f, +0.5f,

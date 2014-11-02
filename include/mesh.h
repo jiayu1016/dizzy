@@ -187,7 +187,7 @@ protected:
 class CubeMesh : public Mesh {
 public:
     /// ctor, build a CubeMesh
-    CubeMesh();
+    CubeMesh(const std::string& name);
 };
 
 }

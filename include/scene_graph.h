@@ -17,7 +17,8 @@ class Scene;
 class Mesh;
 class Node : public std::enable_shared_from_this<Node> {
 public:
-    typedef std::function<void(std::shared_ptr<Scene>, std::shared_ptr<Node>)> VisitFunc;
+    typedef std::function<void(std::shared_ptr<Scene>, std::shared_ptr<Node>)> VisitSceneFunc;
+    typedef std::function<void(std::shared_ptr<Node>)> VisitFunc;
 
     Node();
     Node(const std::string& name);
@@ -26,9 +27,29 @@ public:
     ///
     ///     @param childNode the child node to attach
     void attachChild(std::shared_ptr<Node> childNode);
+
+    /// get parent node
     std::shared_ptr<Node> getParent();
+
+    /// find a node by name
     std::shared_ptr<Node> findNode(const std::string &name);
-    void dfsTraversal(std::shared_ptr<Scene> scene, VisitFunc visit);
+
+    /// dfs traversal of the scene graph(tree)
+    ///
+    ///     function template to do dfs traversal, starting from the current node,
+    ///     not from the root of the whole scene graph
+    ///
+    ///     @param scene the scene that hosts the scene graph
+    ///     @param visit the functor gets called whenever a node is visited
+    void dfsTraversal(std::shared_ptr<Scene> scene, VisitSceneFunc visit);
+
+    /// dfs traversal of the scene graph(tree)
+    ///
+    ///     function template to do dfs traversal, starting from the current node,
+    ///     not from the root of the whole scene graph
+    ///
+    ///     @param visit the functor gets called whenever a node is visited
+    void dfsTraversal(VisitFunc visit);
 
     /// check if the node use auto program
     bool isAutoProgram();
@@ -49,6 +70,7 @@ public:
     /// Recursively draw the node and it's children
     virtual void draw(Render &render, std::shared_ptr<Scene> scene);
 
+    void resetTransform();
     void translate(float x, float y, float z);
     void scale(float x, float y, float z);
     void rotate(float radian, float axisX, float axisY, float axisZ);
@@ -56,9 +78,14 @@ public:
     void            setName(std::string name);
     std::string     getName();
 
+    /// dump the scene graph hierarchy starting from the current node.
+    void dumpHierarchy();
+
     friend class AIAdapter;
     friend class Render;
 protected:
+    void dump(int depth);
+
     std::string                             mName;
     glm::mat4                               mTransformation;
     std::weak_ptr<Node>                     mParent;
@@ -70,7 +97,7 @@ protected:
 
 class GeoNode : public Node {
 public:
-    GeoNode(std::shared_ptr<Mesh> mesh) : mMesh(mesh) {};
+    GeoNode(std::shared_ptr<Mesh> mesh);
 
     virtual bool initGpuData();
     virtual void draw(Render &render, std::shared_ptr<Scene> scene);
