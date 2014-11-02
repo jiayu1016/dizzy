@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <sstream>
 #include <functional>
+#include <queue>
+#include <stack>
 #define GLM_FORCE_RADIANS
 #include <glm/gtc/matrix_transform.hpp>
 #include "log.h"
@@ -14,22 +16,71 @@ using namespace std;
 
 namespace dzy {
 
-int Node::mMonoCount = 0;
+int NodeObj::mMonoCount = 0;
 
-Node::Node()
-    : mUseAutoProgram(true) {
-    ostringstream os;
-    os << "Node-" << mMonoCount++;
-    mName = os.str();
-}
-
-Node::Node(const string& name)
+NodeObj::NodeObj(const string& name)
     : mName(name)
     , mUseAutoProgram(true) {
     mMonoCount++;
 }
 
-void Node::attachChild(shared_ptr<Node> childNode) {
+NodeObj::~NodeObj() {
+}
+
+void NodeObj::resetTransform() {
+    mTransformation = glm::mat4(1.0f);
+}
+
+void NodeObj::translate(float x, float y, float z) {
+    glm::vec3 v(x, y, z);
+    mTransformation = glm::translate(mTransformation, v);
+}
+
+void NodeObj::scale(float x, float y, float z) {
+    glm::vec3 v(x, y, z);
+    mTransformation = glm::scale(mTransformation, v);
+}
+
+void NodeObj::rotate(float radian, float axisX, float axisY, float axisZ) {
+    glm::vec3 axis(axisX, axisY, axisZ);
+    mTransformation = glm::rotate(mTransformation, radian, axis);
+}
+
+void NodeObj::setName(string name) {
+    mName = name;
+}
+
+string NodeObj::getName() {
+    return mName;
+}
+
+shared_ptr<Node> NodeObj::getParent() {
+    return mParent.lock();
+}
+
+void NodeObj::setParent(shared_ptr<Node> parent) {
+    mParent = parent;
+}
+
+bool NodeObj::isAutoProgram() {
+    return mUseAutoProgram;
+}
+
+void NodeObj::setProgram(std::shared_ptr<Program> program) {
+    mUseAutoProgram = false;
+    mProgram = program;
+}
+
+shared_ptr<Program> NodeObj::getProgram() {
+    if (mUseAutoProgram) return ProgramManager::get()->getDefaultProgram();
+    return mProgram;
+}
+
+Node::Node(const string& name)
+    : NodeObj(name) {
+}
+
+void Node::attachChild(shared_ptr<NodeObj> childNode) {
     // no duplicate Node in children list
     bool exist = false;
     for (auto iter = mChildren.begin(); iter != mChildren.end(); iter++) {
@@ -42,8 +93,8 @@ void Node::attachChild(shared_ptr<Node> childNode) {
 
     if (!exist) {
         mChildren.push_back(childNode);
-        shared_ptr<Node> oldParent(childNode->mParent.lock());
-        childNode->mParent = shared_from_this();
+        shared_ptr<Node> oldParent(childNode->getParent());
+        childNode->setParent(shared_from_this());
         if (oldParent) {
             // remove childNode from oldParent
             oldParent->mChildren.erase(remove(
@@ -53,49 +104,64 @@ void Node::attachChild(shared_ptr<Node> childNode) {
     }
 }
 
-shared_ptr<Node> Node::getParent() {
-    return mParent.lock();
+shared_ptr<NodeObj> Node::getChild(int idx) {
+    return mChildren[idx];
 }
 
-shared_ptr<Node> Node::findNode(const string &name) {
-    if (mName == name) return shared_from_this();
-    for (size_t i = 0; i < mChildren.size(); i++) {
-        shared_ptr<Node> node(mChildren[i]->findNode(name));
-        if (node) return node;
+shared_ptr<NodeObj> Node::getChild(const string &name) {
+    queue<shared_ptr<NodeObj> > q;
+    q.push(shared_from_this());
+    while(!q.empty()) {
+        shared_ptr<NodeObj> nodeObj(q.front());
+        q.pop();
+        if (nodeObj->getName() == name) return nodeObj;
+        else if (!nodeObj->isLeaf()) {
+            // no rtti support
+            Node *node = (Node *)nodeObj.get();
+            for (size_t i = 0; i < node->mChildren.size(); i++) {
+                q.push(node->mChildren[i]);
+            }
+        }
     }
-    return NULL;
+    return nullptr;
 }
 
-void Node::dfsTraversal(shared_ptr<Scene> scene, VisitSceneFunc visit) {
-    visit(scene, shared_from_this());
-    std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<Node> c) {
-        c->dfsTraversal(scene, visit);
-    });
+void Node::depthFirstTraversal(shared_ptr<Scene> scene, VisitSceneFunc visit) {
+    stack<shared_ptr<NodeObj> > stk;
+    stk.push(shared_from_this());
+    while (!stk.empty()) {
+        shared_ptr<NodeObj> nodeObj = stk.top();
+        stk.pop();
+        visit(scene, nodeObj);
+        if (!nodeObj->isLeaf()) {
+            // no rtti support
+            Node * node = (Node *)(nodeObj.get());
+            for (auto it = node->mChildren.rbegin(); it != node->mChildren.rend(); ++it) {
+                stk.push(*it);
+            }
+        }
+    }
 }
 
-void Node::dfsTraversal(VisitFunc visit) {
-    visit(shared_from_this());
-    std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<Node> c) {
-        c->dfsTraversal(visit);
-    });
-}
-
-bool Node::isAutoProgram() {
-    return mUseAutoProgram;
-}
-
-void Node::setProgram(std::shared_ptr<Program> program) {
-    mUseAutoProgram = false;
-    mProgram = program;
-}
-
-shared_ptr<Program> Node::getProgram() {
-    if (mUseAutoProgram) return ProgramManager::get()->getDefaultProgram();
-    return mProgram;
+void Node::depthFirstTraversal(VisitFunc visit) {
+    stack<shared_ptr<NodeObj> > stk;
+    stk.push(shared_from_this());
+    while (!stk.empty()) {
+        shared_ptr<NodeObj> nodeObj = stk.top();
+        stk.pop();
+        visit(nodeObj);
+        if (!nodeObj->isLeaf()) {
+            // no rtti support
+            Node * node = (Node *)(nodeObj.get());
+            for (auto it = node->mChildren.rbegin(); it != node->mChildren.rend(); ++it) {
+                stk.push(*it);
+            }
+        }
+    }
 }
 
 bool Node::initGpuData() {
-    std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<Node> c) {
+    std::for_each(mChildren.begin(), mChildren.end(), [] (shared_ptr<NodeObj> c) {
         c->initGpuData();
     });
     return true;
@@ -103,63 +169,50 @@ bool Node::initGpuData() {
 
 void Node::draw(Render &render, shared_ptr<Scene> scene) {
     render.drawNode(scene, shared_from_this());
-    std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<Node> c) {
+    std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<NodeObj> c) {
         c->draw(render, scene);
     });
 }
 
-void Node::resetTransform() {
-    mTransformation = glm::mat4(1.0f);
-}
-
-void Node::translate(float x, float y, float z) {
-    glm::vec3 v(x, y, z);
-    mTransformation = glm::translate(mTransformation, v);
-}
-
-void Node::scale(float x, float y, float z) {
-    glm::vec3 v(x, y, z);
-    mTransformation = glm::scale(mTransformation, v);
-}
-
-void Node::rotate(float radian, float axisX, float axisY, float axisZ) {
-    glm::vec3 axis(axisX, axisY, axisZ);
-    mTransformation = glm::rotate(mTransformation, radian, axis);
-}
-
-void Node::setName(string name) {
-    mName = name;
-}
-
-string Node::getName() {
-    return mName;
+bool Node::isLeaf() {
+    return false;
 }
 
 void Node::dumpHierarchy() {
-    dump(0);
+    typedef pair<shared_ptr<NodeObj>, int> STACK_ELEM;
+    stack<STACK_ELEM> stk;
+    stk.push(make_pair(shared_from_this(), 0));
+    while (!stk.empty()) {
+        STACK_ELEM elem = stk.top();
+        stk.pop();
+        shared_ptr<NodeObj> nodeObj = elem.first;
+        int depth = elem.second;
+        ostringstream os;
+        for (int i=0; i<depth; i++) os << "    ";
+        os << "%d:%s";
+        PRINT(os.str().c_str(), depth, nodeObj->getName().c_str());
+        if (!nodeObj->isLeaf()) {
+            Node * node = (Node *)(nodeObj.get());
+            for (auto it = node->mChildren.rbegin(); it != node->mChildren.rend(); ++it) {
+                stk.push(make_pair(*it, depth+1));
+            }
+        }
+    }
 }
 
-void Node::dump(int depth) {
-    ostringstream os;
-    for(int i=0; i<depth; i++) os << "    ";
-    os << "%s";
-    PRINT(os.str().c_str(), mName.c_str());
-
-    std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<Node> c) {
-        depth++;
-        c->dump(depth);
-        depth--;
-    });
-}
-
-GeoNode::GeoNode(shared_ptr<Mesh> mesh)
-    : Node(string("GeoNode-") + mesh->getName())
+Geometry::Geometry(shared_ptr<Mesh> mesh)
+    : NodeObj(string("Geometry-") + mesh->getName())
     , mMesh(mesh) {
 }
 
-bool GeoNode::initGpuData() {
+Geometry::Geometry(const string& name, shared_ptr<Mesh> mesh)
+    : NodeObj(name)
+    , mMesh(mesh) {
+}
+
+bool Geometry::initGpuData() {
     if (!mMesh) {
-        ALOGE("One GeoNode must attach one Mesh");
+        ALOGE("One Geometry must attach one Mesh");
         return false;
     }
 
@@ -178,9 +231,13 @@ bool GeoNode::initGpuData() {
     return true;
 }
 
-void GeoNode::draw(Render &render, shared_ptr<Scene> scene) {
+void Geometry::draw(Render &render, shared_ptr<Scene> scene) {
     render.drawNode(scene, shared_from_this());
     render.drawMesh(scene, mMesh, getProgram(), mVertexBO, mIndexBO);
+}
+
+bool Geometry::isLeaf() {
+    return true;
 }
 
 } //namespace

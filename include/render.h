@@ -8,7 +8,7 @@ namespace dzy {
 
 class EngineContext;
 class Scene;
-class Node;
+class NodeObj;
 class Mesh;
 class Program;
 class Render {
@@ -29,7 +29,7 @@ public:
     ///
     ///     @param scene the scene that hosts the scene graph
     ///     @param the node current being drawn
-    void drawNode(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node);
+    void drawNode(std::shared_ptr<Scene> scene, std::shared_ptr<NodeObj> node);
 
     /// draw a mesh
     ///
