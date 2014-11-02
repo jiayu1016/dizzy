@@ -27,7 +27,7 @@ void * MeshData::getBuf(int offset) {
     return static_cast<void *>(&mBuffer[offset]);
 }
 
-int Mesh::mCount = 0;
+int Mesh::mMonoCount = 0;
 
 Mesh::Mesh(PrimitiveType type, unsigned int numVertices)
     : mPrimitiveType            (type)
@@ -53,7 +53,7 @@ Mesh::Mesh(PrimitiveType type, unsigned int numVertices)
     , mBitangentBytesComponent  (0)
     , mHasBitangent             (false) {
     ostringstream os;
-    os << "Mesh-" << mCount++;
+    os << "Mesh-" << mMonoCount++;
     mName = os.str();
     memset(&mColorOffset[0], 0, MAX_COLOR_SETS * sizeof(unsigned int));
     memset(&mColorNumComponents[0], 0, MAX_COLOR_SETS * sizeof(unsigned int));
@@ -382,11 +382,11 @@ void Mesh::dumpIndexBuf(int groupSize) {
         PRINT("************ end Mesh::dumpIndexBuf ************");
 }
 
-void Mesh::setName(std::string name) {
+void Mesh::setName(string name) {
     mName = name;
 }
 
-std::string Mesh::getName() {
+string Mesh::getName() {
     return mName;
 }
 

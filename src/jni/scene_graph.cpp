@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <sstream>
 #define GLM_FORCE_RADIANS
 #include <glm/gtc/matrix_transform.hpp>
 #include "log.h"
@@ -12,8 +13,19 @@ using namespace std;
 
 namespace dzy {
 
+int Node::mMonoCount = 0;
+
 Node::Node()
     : mUseAutoProgram(true) {
+    ostringstream os;
+    os << "Node-" << mMonoCount++;
+    mName = os.str();
+}
+
+Node::Node(const string& name)
+    : mName(name)
+    , mUseAutoProgram(true) {
+    mMonoCount++;
 }
 
 void Node::attachChild(shared_ptr<Node> childNode) {
@@ -101,6 +113,14 @@ void Node::scale(float x, float y, float z) {
 void Node::rotate(float radian, float axisX, float axisY, float axisZ) {
     glm::vec3 axis(axisX, axisY, axisZ);
     mTransformation = glm::rotate(mTransformation, radian, axis);
+}
+
+void Node::setName(string name) {
+    mName = name;
+}
+
+string Node::getName() {
+    return mName;
 }
 
 bool GeoNode::initGpuData() {

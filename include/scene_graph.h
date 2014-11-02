@@ -20,7 +20,7 @@ public:
     typedef std::function<void(std::shared_ptr<Scene>, std::shared_ptr<Node>)> VisitFunc;
 
     Node();
-    Node(const std::string& name) : mName(name) { }
+    Node(const std::string& name);
 
     /// attach a child node into the scene graph
     ///
@@ -53,6 +53,9 @@ public:
     void scale(float x, float y, float z);
     void rotate(float radian, float axisX, float axisY, float axisZ);
 
+    void            setName(std::string name);
+    std::string     getName();
+
     friend class AIAdapter;
     friend class Render;
 protected:
@@ -62,6 +65,7 @@ protected:
     std::vector<std::shared_ptr<Node> >     mChildren;
     bool                                    mUseAutoProgram;
     std::shared_ptr<Program>                mProgram;
+    static int                              mMonoCount;
 };
 
 class GeoNode : public Node {

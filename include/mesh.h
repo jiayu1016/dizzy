@@ -181,7 +181,7 @@ protected:
 
     // A mesh use only ONE material, otherwise it is splitted to multiple meshes
     unsigned int                    mMaterialIndex;
-    static int                      mCount;
+    static int                      mMonoCount;
 };
 
 class CubeMesh : public Mesh {

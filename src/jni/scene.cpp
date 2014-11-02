@@ -22,7 +22,8 @@ using namespace std;
 
 namespace dzy {
 
-Scene::Scene() {
+Scene::Scene()
+    : mRootNode(new Node("root")) {
 }
 
 shared_ptr<Camera> Scene::getActiveCamera() {

@@ -207,8 +207,7 @@ shared_ptr<Mesh> AIAdapter::typeCast(aiMesh *mesh) {
 }
 
 shared_ptr<Node> AIAdapter::typeCast(aiNode *node) {
-    shared_ptr<Node> n(new Node);
-    n->mName = typeCast(node->mName);
+    shared_ptr<Node> n(new Node(typeCast(node->mName)));
     n->mTransformation = typeCast(node->mTransformation);
     return n;
 }
@@ -242,7 +241,7 @@ string AIAdapter::typeCast(const aiString &str) {
 void AIAdapter::buildSceneGraph(shared_ptr<Scene> scene, aiNode *aroot) {
     shared_ptr<Node> root = typeCast(aroot);
     linkNode(scene, root, aroot);
-    scene->mRootNode = root;
+    scene->mRootNode->attachChild(root);
 }
 
 void AIAdapter::linkNode(shared_ptr<Scene> scene,
