@@ -1,4 +1,6 @@
 #include <algorithm>
+#define GLM_FORCE_RADIANS
+#include <glm/gtc/matrix_transform.hpp>
 #include "log.h"
 #include "program.h"
 #include "scene.h"
@@ -84,6 +86,21 @@ void Node::draw(Render &render, shared_ptr<Scene> scene) {
     std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<Node> c) {
         c->draw(render, scene);
     });
+}
+
+void Node::translate(float x, float y, float z) {
+    glm::vec3 v(x, y, z);
+    mTransformation = glm::translate(mTransformation, v);
+}
+
+void Node::scale(float x, float y, float z) {
+    glm::vec3 v(x, y, z);
+    mTransformation = glm::scale(mTransformation, v);
+}
+
+void Node::rotate(float radian, float axisX, float axisY, float axisZ) {
+    glm::vec3 axis(axisX, axisY, axisZ);
+    mTransformation = glm::rotate(mTransformation, radian, axis);
 }
 
 bool GeoNode::initGpuData() {

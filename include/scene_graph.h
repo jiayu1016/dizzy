@@ -6,6 +6,8 @@
 #include <memory>
 #include <functional>
 #include <GLES3/gl3.h>
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
 
 namespace dzy {
 
@@ -46,6 +48,10 @@ public:
 
     /// Recursively draw the node and it's children
     virtual void draw(Render &render, std::shared_ptr<Scene> scene);
+
+    void translate(float x, float y, float z);
+    void scale(float x, float y, float z);
+    void rotate(float radian, float axisX, float axisY, float axisZ);
 
     friend class AIAdapter;
     friend class Render;
