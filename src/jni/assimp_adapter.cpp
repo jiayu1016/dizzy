@@ -257,7 +257,9 @@ void AIAdapter::linkNode(shared_ptr<Scene> scene,
     // scene graph depth compared to assimp
     for (unsigned int i = 0; i < anode->mNumMeshes; i++) {
         unsigned int meshIdx = anode->mMeshes[i];
-        shared_ptr<Geometry> c(new Geometry(scene->mMeshes[meshIdx]));
+        shared_ptr<Mesh> mesh(scene->mMeshes[meshIdx]);
+        shared_ptr<Geometry> c(new Geometry(mesh));
+        c->setMaterial(scene->mMaterials[mesh->mMaterialIndex]);
         node->attachChild(c);
     }
 }

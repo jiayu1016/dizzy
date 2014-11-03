@@ -162,6 +162,30 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<NodeObj> node) {
             }
         }
     }
+
+    if (node->isLeaf()) {
+        Geometry *geometry = (Geometry *)node.get();
+        if (scene->getNumMaterials() > 0) {
+            shared_ptr<Material> material(geometry->getMaterial());
+            glm::vec3 diffuse, specular, ambient, emission;
+            float shininess;
+            material->get(Material::COLOR_DIFFUSE, diffuse);
+            material->get(Material::COLOR_SPECULAR, specular);
+            material->get(Material::COLOR_AMBIENT, ambient);
+            material->get(Material::COLOR_EMISSION, emission);
+            material->get(Material::SHININESS, shininess);
+
+            glUniform3fv(node->getProgram()->getLocation("dzyMaterial.diffuse"),
+                1, glm::value_ptr(diffuse));
+            glUniform3fv(node->getProgram()->getLocation("dzyMaterial.specular"),
+                1, glm::value_ptr(specular));
+            glUniform3fv(node->getProgram()->getLocation("dzyMaterial.ambient"),
+                1, glm::value_ptr(ambient));
+            glUniform3fv(node->getProgram()->getLocation("dzyMaterial.emission"),
+                1, glm::value_ptr(emission));
+            glUniform1f(node->getProgram()->getLocation("dzyMaterial.shininess"), shininess);
+        }
+    }
 }
 
 void Render::drawMesh(shared_ptr<Scene> scene, shared_ptr<Mesh> mesh,
@@ -170,28 +194,6 @@ void Render::drawMesh(shared_ptr<Scene> scene, shared_ptr<Mesh> mesh,
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 
-    // TODO: move material to node, not mesh
-    if (scene->getNumMaterials() > 0) {
-        shared_ptr<Material> material(scene->mMaterials[mesh->mMaterialIndex]);
-        glm::vec3 diffuse, specular, ambient, emission;
-        float shininess;
-        material->get(Material::COLOR_DIFFUSE, diffuse);
-        material->get(Material::COLOR_SPECULAR, specular);
-        material->get(Material::COLOR_AMBIENT, ambient);
-        material->get(Material::COLOR_EMISSION, emission);
-        material->get(Material::SHININESS, shininess);
-
-        glUniform3fv(program->getLocation("dzyMaterial.diffuse"),
-            1, glm::value_ptr(diffuse));
-        glUniform3fv(program->getLocation("dzyMaterial.specular"),
-            1, glm::value_ptr(specular));
-        glUniform3fv(program->getLocation("dzyMaterial.ambient"),
-            1, glm::value_ptr(ambient));
-        glUniform3fv(program->getLocation("dzyMaterial.emission"),
-            1, glm::value_ptr(emission));
-        glUniform1f(program->getLocation("dzyMaterial.shininess"), shininess);
-
-    }
     if (mesh->hasVertexPositions()) {
         GLint posLoc = program->getLocation("dzyVertexPosition");
         glEnableVertexAttribArray(posLoc);

@@ -10,6 +10,7 @@
 #include "scene.h"
 #include "render.h"
 #include "mesh.h"
+#include "material.h"
 #include "scene_graph.h"
 
 using namespace std;
@@ -238,6 +239,14 @@ void Geometry::draw(Render &render, shared_ptr<Scene> scene) {
 
 bool Geometry::isLeaf() {
     return true;
+}
+
+void Geometry::setMaterial(shared_ptr<Material> material) {
+    mMaterial = material;
+}
+
+shared_ptr<Material> Geometry::getMaterial() {
+    return mMaterial;
 }
 
 } //namespace

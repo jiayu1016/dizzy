@@ -44,12 +44,6 @@ bool SViewer::initView() {
 
     shared_ptr<Node> myNode(new Node("mynode"));
 
-    shared_ptr<CubeMesh> cube(new CubeMesh("mycube"));
-    shared_ptr<Geometry> cubeGeo(new Geometry(cube));
-    cubeGeo->rotate(-0.25f * 3.1415927, 0.f, 1.f, 0.f);
-    cubeGeo->translate(3.f, 0.f, 0.f);
-    myNode->attachChild(cubeGeo);
-
     shared_ptr<NodeObj> sphereNode(rootNode->getChild("Sphere"));
     if (sphereNode) {
         sphereNode->resetTransform();
@@ -63,6 +57,16 @@ bool SViewer::initView() {
         torusGeometry->translate(0.f, 0.f, 3.f);
         myNode->attachChild(torusGeometry);
     }
+
+    shared_ptr<CubeMesh> cube(new CubeMesh("mycube"));
+    shared_ptr<Geometry> cubeGeo(new Geometry(cube));
+    cubeGeo->rotate(-0.25f * 3.1415927, 0.f, 1.f, 0.f);
+    cubeGeo->translate(3.f, 0.f, 0.f);
+    if (torusGeometry) {
+        shared_ptr<Material> material = ((Geometry *)(torusGeometry.get()))->getMaterial();
+        cubeGeo->setMaterial(material);
+    }
+    myNode->attachChild(cubeGeo);
 
     rootNode->attachChild(myNode);
 

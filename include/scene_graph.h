@@ -17,6 +17,7 @@ class Render;
 class Scene;
 class Mesh;
 class Node;
+class Material;
 class NodeObj {
 public:
     NodeObj(const std::string& name);
@@ -133,14 +134,18 @@ public:
     virtual void draw(Render &render, std::shared_ptr<Scene> scene);
     virtual bool isLeaf();
 
+    void setMaterial(std::shared_ptr<Material> material);
+    std::shared_ptr<Material> getMaterial();
+
 protected:
     // one on one mapping between Geometry and Mesh
-    std::shared_ptr<Mesh>     mMesh;
+    std::shared_ptr<Mesh>       mMesh;
+    std::shared_ptr<Material>   mMaterial;
     // one vertex and index buffer object per Geometry
     // logically BO handles should be put in Mesh class,
     // but I prefer not to have Mesh class depend on gl
-    GLuint  mVertexBO;
-    GLuint  mIndexBO;
+    GLuint                      mVertexBO;
+    GLuint                      mIndexBO;
 };
 
 }
