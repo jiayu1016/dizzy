@@ -116,7 +116,8 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<NodeObj> node) {
     world = nd->mTransformation * world;
     glm::mat4 mvp = world;
 
-    node->getProgram()->use();
+    shared_ptr<Program> currentProgram(node->getProgram());
+    currentProgram->use();
     //Utils::dump(node->mName.c_str(), node->mTransformation);
     shared_ptr<Camera> activeCamera(scene->getActiveCamera());
     if (activeCamera) {
@@ -129,36 +130,36 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<NodeObj> node) {
         glm::mat4 mv = view * world;
         mvp = proj * mv;
 
-        GLint mvLoc = node->getProgram()->getLocation("dzyMVMatrix");
+        GLint mvLoc = currentProgram->getLocation("dzyMVMatrix");
         if (mvLoc != -1) {
             glUniformMatrix4fv(mvLoc, 1, GL_FALSE, glm::value_ptr(mv));
         }
-        GLint normalMatrixLoc = node->getProgram()->getLocation("dzyNormalMatrix");
+        GLint normalMatrixLoc = currentProgram->getLocation("dzyNormalMatrix");
         if (normalMatrixLoc != -1) {
             glm::mat3 mvInvTransMatrix = glm::mat3(glm::transpose(glm::inverse(mv)));
             glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(mvInvTransMatrix));
         }
 
-        glUniformMatrix4fv(node->getProgram()->getLocation("dzyMVPMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
+        glUniformMatrix4fv(currentProgram->getLocation("dzyMVPMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
 
         if (scene->getNumLights() > 0) {
             shared_ptr<Light> light(scene->mLights[0]);
             if (light) {
-                glUniform3fv(node->getProgram()->getLocation("dzyLight.color"),
+                glUniform3fv(currentProgram->getLocation("dzyLight.color"),
                     1, glm::value_ptr(light->mColorDiffuse));
-                glUniform3fv(node->getProgram()->getLocation("dzyLight.ambient"),
+                glUniform3fv(currentProgram->getLocation("dzyLight.ambient"),
                     1, glm::value_ptr(light->mColorAmbient));
                 glm::vec3 lightPosEyeSpace = glm::vec3(
                     view * scene->mLightModelTransform * glm::vec4(light->mPosition, 1.0f));
-                glUniform3fv(node->getProgram()->getLocation("dzyLight.position"),
+                glUniform3fv(currentProgram->getLocation("dzyLight.position"),
                     1, glm::value_ptr(lightPosEyeSpace));
-                glUniform1f(node->getProgram()->getLocation("dzyLight.attenuationConstant"),
+                glUniform1f(currentProgram->getLocation("dzyLight.attenuationConstant"),
                     light->mAttenuationConstant);
-                glUniform1f(node->getProgram()->getLocation("dzyLight.attenuationLinear"),
+                glUniform1f(currentProgram->getLocation("dzyLight.attenuationLinear"),
                     light->mAttenuationLinear);
-                glUniform1f(node->getProgram()->getLocation("dzyLight.attenuationQuadratic"),
+                glUniform1f(currentProgram->getLocation("dzyLight.attenuationQuadratic"),
                     light->mAttenuationQuadratic);
-                glUniform1f(node->getProgram()->getLocation("dzyLight.strength"), 1.0f);
+                glUniform1f(currentProgram->getLocation("dzyLight.strength"), 1.0f);
             }
         }
     }
@@ -175,15 +176,15 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<NodeObj> node) {
             material->get(Material::COLOR_EMISSION, emission);
             material->get(Material::SHININESS, shininess);
 
-            glUniform3fv(node->getProgram()->getLocation("dzyMaterial.diffuse"),
+            glUniform3fv(currentProgram->getLocation("dzyMaterial.diffuse"),
                 1, glm::value_ptr(diffuse));
-            glUniform3fv(node->getProgram()->getLocation("dzyMaterial.specular"),
+            glUniform3fv(currentProgram->getLocation("dzyMaterial.specular"),
                 1, glm::value_ptr(specular));
-            glUniform3fv(node->getProgram()->getLocation("dzyMaterial.ambient"),
+            glUniform3fv(currentProgram->getLocation("dzyMaterial.ambient"),
                 1, glm::value_ptr(ambient));
-            glUniform3fv(node->getProgram()->getLocation("dzyMaterial.emission"),
+            glUniform3fv(currentProgram->getLocation("dzyMaterial.emission"),
                 1, glm::value_ptr(emission));
-            glUniform1f(node->getProgram()->getLocation("dzyMaterial.shininess"), shininess);
+            glUniform1f(currentProgram->getLocation("dzyMaterial.shininess"), shininess);
         }
     }
 }
