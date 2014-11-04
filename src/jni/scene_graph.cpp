@@ -77,6 +77,14 @@ shared_ptr<Program> NodeObj::getProgram() {
     return mProgram;
 }
 
+void NodeObj::setMaterial(shared_ptr<Material> material) {
+    mMaterial = material;
+}
+
+shared_ptr<Material> NodeObj::getMaterial() {
+    return mMaterial;
+}
+
 Node::Node(const string& name)
     : NodeObj(name) {
 }
@@ -239,14 +247,6 @@ void Geometry::draw(Render &render, shared_ptr<Scene> scene) {
 
 bool Geometry::isLeaf() {
     return true;
-}
-
-void Geometry::setMaterial(shared_ptr<Material> material) {
-    mMaterial = material;
-}
-
-shared_ptr<Material> Geometry::getMaterial() {
-    return mMaterial;
 }
 
 } //namespace

@@ -55,6 +55,9 @@ public:
     ///     @return the current program attached to this node
     std::shared_ptr<Program> getProgram();
 
+    void setMaterial(std::shared_ptr<Material> material);
+    std::shared_ptr<Material> getMaterial();
+
     /// one time initialization of the node
     virtual bool initGpuData() = 0;
 
@@ -76,6 +79,7 @@ protected:
     std::weak_ptr<Node>                     mParent;
     bool                                    mUseAutoProgram;
     std::shared_ptr<Program>                mProgram;
+    std::shared_ptr<Material>               mMaterial;
     static int                              mMonoCount;
 };
 
@@ -134,13 +138,9 @@ public:
     virtual void draw(Render &render, std::shared_ptr<Scene> scene);
     virtual bool isLeaf();
 
-    void setMaterial(std::shared_ptr<Material> material);
-    std::shared_ptr<Material> getMaterial();
-
 protected:
     // one on one mapping between Geometry and Mesh
     std::shared_ptr<Mesh>       mMesh;
-    std::shared_ptr<Material>   mMaterial;
     // one vertex and index buffer object per Geometry
     // logically BO handles should be put in Mesh class,
     // but I prefer not to have Mesh class depend on gl
