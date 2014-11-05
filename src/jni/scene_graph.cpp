@@ -124,9 +124,8 @@ shared_ptr<NodeObj> Node::getChild(const string &name) {
         shared_ptr<NodeObj> nodeObj(q.front());
         q.pop();
         if (nodeObj->getName() == name) return nodeObj;
-        else if (!nodeObj->isLeaf()) {
-            // no rtti support
-            Node *node = (Node *)nodeObj.get();
+        shared_ptr<Node> node = dynamic_pointer_cast<Node>(nodeObj);
+        if (node) {
             for (size_t i = 0; i < node->mChildren.size(); i++) {
                 q.push(node->mChildren[i]);
             }
@@ -142,9 +141,8 @@ void Node::depthFirstTraversal(shared_ptr<Scene> scene, VisitSceneFunc visit) {
         shared_ptr<NodeObj> nodeObj = stk.top();
         stk.pop();
         visit(scene, nodeObj);
-        if (!nodeObj->isLeaf()) {
-            // no rtti support
-            Node * node = (Node *)(nodeObj.get());
+        shared_ptr<Node> node = dynamic_pointer_cast<Node>(nodeObj);
+        if (!node) {
             for (auto it = node->mChildren.rbegin(); it != node->mChildren.rend(); ++it) {
                 stk.push(*it);
             }
@@ -159,9 +157,8 @@ void Node::depthFirstTraversal(VisitFunc visit) {
         shared_ptr<NodeObj> nodeObj = stk.top();
         stk.pop();
         visit(nodeObj);
-        if (!nodeObj->isLeaf()) {
-            // no rtti support
-            Node * node = (Node *)(nodeObj.get());
+        shared_ptr<Node> node = dynamic_pointer_cast<Node>(nodeObj);
+        if (node) {
             for (auto it = node->mChildren.rbegin(); it != node->mChildren.rend(); ++it) {
                 stk.push(*it);
             }
@@ -183,10 +180,6 @@ void Node::draw(Render &render, shared_ptr<Scene> scene) {
     });
 }
 
-bool Node::isLeaf() {
-    return false;
-}
-
 void Node::dumpHierarchy() {
     typedef pair<shared_ptr<NodeObj>, int> STACK_ELEM;
     stack<STACK_ELEM> stk;
@@ -200,8 +193,8 @@ void Node::dumpHierarchy() {
         for (int i=0; i<depth; i++) os << "    ";
         os << "%d:%s";
         PRINT(os.str().c_str(), depth, nodeObj->getName().c_str());
-        if (!nodeObj->isLeaf()) {
-            Node * node = (Node *)(nodeObj.get());
+        shared_ptr<Node> node = dynamic_pointer_cast<Node>(nodeObj);
+        if (node) {
             for (auto it = node->mChildren.rbegin(); it != node->mChildren.rend(); ++it) {
                 stk.push(make_pair(*it, depth+1));
             }
@@ -243,10 +236,6 @@ bool Geometry::initGpuData() {
 void Geometry::draw(Render &render, shared_ptr<Scene> scene) {
     render.drawNode(scene, shared_from_this());
     render.drawMesh(scene, mMesh, getProgram(), mVertexBO, mIndexBO);
-}
-
-bool Geometry::isLeaf() {
-    return true;
 }
 
 } //namespace

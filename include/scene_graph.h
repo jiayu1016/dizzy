@@ -64,12 +64,6 @@ public:
     /// Recursively draw the node and it's children
     virtual void draw(Render &render, std::shared_ptr<Scene> scene) = 0;
 
-    /// tell whether this NodeObj is leaf or not
-    ///
-    ///     leaf node doesn't have any children, this function is used by internal algorithm
-    ///     @return true if is leaf, false otherwise
-    virtual bool isLeaf() = 0;
-
     friend class AIAdapter;
     friend class Render;
 
@@ -120,7 +114,6 @@ public:
 
     virtual bool initGpuData();
     virtual void draw(Render &render, std::shared_ptr<Scene> scene);
-    virtual bool isLeaf();
 
     /// dump the scene graph hierarchy starting from the current node.
     void dumpHierarchy();
@@ -136,7 +129,6 @@ public:
 
     virtual bool initGpuData();
     virtual void draw(Render &render, std::shared_ptr<Scene> scene);
-    virtual bool isLeaf();
 
 protected:
     // one on one mapping between Geometry and Mesh

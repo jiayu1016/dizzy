@@ -164,8 +164,8 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<NodeObj> node) {
         }
     }
 
-    if (node->isLeaf()) {
-        Geometry *geometry = (Geometry *)node.get();
+    shared_ptr<Geometry> geometry = dynamic_pointer_cast<Geometry>(node);
+    if (geometry) {
         if (scene->getNumMaterials() > 0) {
             shared_ptr<Material> material(geometry->getMaterial());
             glm::vec3 diffuse, specular, ambient, emission;
