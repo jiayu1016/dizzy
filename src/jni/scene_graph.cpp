@@ -234,7 +234,7 @@ bool Geometry::initGpuData() {
 }
 
 void Geometry::draw(Render &render, shared_ptr<Scene> scene) {
-    render.drawNode(scene, shared_from_this());
+    render.drawGeometry(scene, shared_from_this());
     render.drawMesh(scene, mMesh, getProgram(), mVertexBO, mIndexBO);
 }
 

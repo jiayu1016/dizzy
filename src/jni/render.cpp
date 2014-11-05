@@ -102,13 +102,16 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
     return true;
 }
 
-void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<NodeObj> node) {
-    if (!node) return;
+void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
+}
+
+void Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry) {
+    if (!geometry || !scene) return;
 
     shared_ptr<Node> rootNode(scene->getRootNode());
     assert(rootNode);
     glm::mat4 world = glm::mat4(1.0f);
-    shared_ptr<NodeObj> nd(node);
+    shared_ptr<NodeObj> nd(geometry);
     while(nd != rootNode) {
         world = nd->mTransformation * world;
         nd = nd->getParent();
@@ -116,9 +119,8 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<NodeObj> node) {
     world = nd->mTransformation * world;
     glm::mat4 mvp = world;
 
-    shared_ptr<Program> currentProgram(node->getProgram());
+    shared_ptr<Program> currentProgram(geometry->getProgram());
     currentProgram->use();
-    //Utils::dump(node->mName.c_str(), node->mTransformation);
     shared_ptr<Camera> activeCamera(scene->getActiveCamera());
     if (activeCamera) {
         //override the aspect read from model
@@ -164,28 +166,25 @@ void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<NodeObj> node) {
         }
     }
 
-    shared_ptr<Geometry> geometry = dynamic_pointer_cast<Geometry>(node);
-    if (geometry) {
-        if (scene->getNumMaterials() > 0) {
-            shared_ptr<Material> material(geometry->getMaterial());
-            glm::vec3 diffuse, specular, ambient, emission;
-            float shininess;
-            material->get(Material::COLOR_DIFFUSE, diffuse);
-            material->get(Material::COLOR_SPECULAR, specular);
-            material->get(Material::COLOR_AMBIENT, ambient);
-            material->get(Material::COLOR_EMISSION, emission);
-            material->get(Material::SHININESS, shininess);
+    if (scene->getNumMaterials() > 0) {
+        shared_ptr<Material> material(geometry->getMaterial());
+        glm::vec3 diffuse, specular, ambient, emission;
+        float shininess;
+        material->get(Material::COLOR_DIFFUSE, diffuse);
+        material->get(Material::COLOR_SPECULAR, specular);
+        material->get(Material::COLOR_AMBIENT, ambient);
+        material->get(Material::COLOR_EMISSION, emission);
+        material->get(Material::SHININESS, shininess);
 
-            glUniform3fv(currentProgram->getLocation("dzyMaterial.diffuse"),
-                1, glm::value_ptr(diffuse));
-            glUniform3fv(currentProgram->getLocation("dzyMaterial.specular"),
-                1, glm::value_ptr(specular));
-            glUniform3fv(currentProgram->getLocation("dzyMaterial.ambient"),
-                1, glm::value_ptr(ambient));
-            glUniform3fv(currentProgram->getLocation("dzyMaterial.emission"),
-                1, glm::value_ptr(emission));
-            glUniform1f(currentProgram->getLocation("dzyMaterial.shininess"), shininess);
-        }
+        glUniform3fv(currentProgram->getLocation("dzyMaterial.diffuse"),
+            1, glm::value_ptr(diffuse));
+        glUniform3fv(currentProgram->getLocation("dzyMaterial.specular"),
+            1, glm::value_ptr(specular));
+        glUniform3fv(currentProgram->getLocation("dzyMaterial.ambient"),
+            1, glm::value_ptr(ambient));
+        glUniform3fv(currentProgram->getLocation("dzyMaterial.emission"),
+            1, glm::value_ptr(emission));
+        glUniform1f(currentProgram->getLocation("dzyMaterial.shininess"), shininess);
     }
 }
 
