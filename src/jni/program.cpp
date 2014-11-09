@@ -9,10 +9,22 @@ using namespace std;
 
 namespace dzy {
 
-Shader::Shader(GLenum type)
-    : mShaderType(type)
-    , mShaderId(0)
+Shader::Shader(ShaderType type)
+    : mShaderId(0)
     , mInitialized(false) {
+    switch (type) {
+    case Vertex:
+        mShaderType = GL_VERTEX_SHADER;
+        break;
+    case Fragment:
+        mShaderType = GL_FRAGMENT_SHADER;
+        break;
+    case Geometry:
+        // TODO:
+        break;
+    default:
+        break;
+    }
 }
 
 Shader::~Shader() {
@@ -122,23 +134,21 @@ bool Program::link(std::shared_ptr<Shader> vtxShader, std::shared_ptr<Shader> fr
 
 bool Program::storeLocation() {
 
-#define STORE_CHECK_ATTRIB_LOC(ATTRIB) {                                \
+#define STORE_CHECK_ATTRIB_LOC(ATTRIB) do {                             \
         GLint attribLoc = glGetAttribLocation(mProgramId, ATTRIB);      \
         if (attribLoc == -1) {                                          \
-            ALOGE("shader not compatible: %s", ATTRIB);                 \
-            return -1;                                                  \
+            break;                                                      \
         }                                                               \
         mLocations[ATTRIB] = attribLoc;                                 \
-    }
+    } while(0)
 
-#define STORE_CHECK_UNIFORM_LOC(UNIFORM) {                              \
+#define STORE_CHECK_UNIFORM_LOC(UNIFORM) do {                           \
         GLint uniformLoc = glGetUniformLocation(mProgramId, UNIFORM);   \
         if (uniformLoc == -1) {                                         \
-            ALOGE("shader not compatible: %s", UNIFORM);                \
-            return -1;                                                  \
+            break;                                                      \
         }                                                               \
         mLocations[UNIFORM] = uniformLoc;                               \
-    }
+    } while(0)
 
 
     STORE_CHECK_ATTRIB_LOC("dzyVertexPosition");
@@ -175,12 +185,12 @@ GLint Program::getLocation(const char* name) {
 }
 
 bool ProgramManager::preCompile(shared_ptr<EngineContext> engineContext) {
-    shared_ptr<Shader> vtxShader(new Shader(GL_VERTEX_SHADER));
+    shared_ptr<Shader> vtxShader(new Shader(Shader::Vertex));
     if (!vtxShader->compileFromAsset(engineContext->getAssetManager(), "vertex.shader")) {
         ALOGE("error compile vertex shader");
         return false;
     }
-    shared_ptr<Shader> fragShader(new Shader(GL_FRAGMENT_SHADER));
+    shared_ptr<Shader> fragShader(new Shader(Shader::Fragment));
     if (!fragShader->compileFromAsset(engineContext->getAssetManager(), "fragment.shader")) {
         ALOGE("error compile fragment shader");
         return false;

@@ -13,7 +13,8 @@ LOCAL_SRC_FILES :=          \
     scene_graph.cpp         \
     render.cpp              \
     assimp_adapter.cpp      \
-    program.cpp
+    program.cpp             \
+    shader_generator.cpp
 LOCAL_C_INCLUDES:= $(LOCAL_PATH)/../../include
 LOCAL_CPPFLAGS  := -std=c++11
 LOCAL_STATIC_LIBRARIES := android_native_app_glue ndk_helper

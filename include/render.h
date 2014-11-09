@@ -32,7 +32,7 @@ public:
     ///     @param the node current being drawn
     void drawNode(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node);
 
-    void drawGeometry(std::shared_ptr<Scene> scene, std::shared_ptr<Geometry> geometry);
+    bool drawGeometry(std::shared_ptr<Scene> scene, std::shared_ptr<Geometry> geometry);
 
 
     /// draw a mesh

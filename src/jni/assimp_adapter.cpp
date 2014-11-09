@@ -111,11 +111,11 @@ shared_ptr<Material> AIAdapter::typeCast(aiMaterial *material) {
     material->Get(AI_MATKEY_COLOR_AMBIENT, ambient);
     material->Get(AI_MATKEY_COLOR_EMISSIVE, emission);
     material->Get(AI_MATKEY_SHININESS, shininess);
-    ma->mDiffuse = typeCast(diffuse);
-    ma->mSpecular = typeCast(specular);
-    ma->mAmbient = typeCast(ambient);
-    ma->mEmission = typeCast(emission);
-    ma->mShininess = shininess;
+    ma->setDiffuse(typeCast(diffuse));
+    ma->setSpecular(typeCast(specular));
+    ma->setAmbient(typeCast(ambient));
+    ma->setEmission(typeCast(emission));
+    ma->setShininess(shininess);
     return ma;
 }
 

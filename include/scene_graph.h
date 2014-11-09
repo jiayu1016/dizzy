@@ -11,13 +11,13 @@
 
 namespace dzy {
 
-/// Abstract class for "element" in the scene graph
 class Program;
 class Render;
 class Scene;
 class Mesh;
 class Node;
 class Material;
+/// Base class for "element" in the scene graph
 class NodeObj {
 public:
     NodeObj(const std::string& name);
@@ -50,10 +50,22 @@ public:
     ///     @param program the program to be attached to this node
     void setProgram(std::shared_ptr<Program> program);
 
-    /// get the current program attached to this node
+    /// get the program that is attached to this node
     ///
     ///     @return the current program attached to this node
     std::shared_ptr<Program> getProgram();
+
+    /// get the current program attached to this node
+    ///
+    ///     if using auto program, the material and mesh are used to
+    ///     generate program
+    ///
+    ///     @param material the material used to generate program
+    ///     @param mesh the mesh used to generate program
+    ///     @return the current program attached to this node
+    std::shared_ptr<Program> getProgram(
+        std::shared_ptr<Material> material,
+        std::shared_ptr<Mesh> mesh);
 
     void setMaterial(std::shared_ptr<Material> material);
     std::shared_ptr<Material> getMaterial();
@@ -129,6 +141,8 @@ public:
 
     virtual bool initGpuData();
     virtual void draw(Render &render, std::shared_ptr<Scene> scene);
+
+    std::shared_ptr<Mesh> getMesh();
 
 protected:
     // one on one mapping between Geometry and Mesh

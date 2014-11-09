@@ -13,7 +13,13 @@ namespace dzy {
 
 class Shader {
 public:
-    Shader(GLenum type);
+    enum ShaderType {
+        Vertex,
+        Fragment,
+        Geometry
+    };
+
+    Shader(ShaderType type);
     ~Shader();
     GLenum getShaderType();
     GLuint getShaderID();

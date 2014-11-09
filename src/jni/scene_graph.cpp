@@ -67,13 +67,24 @@ bool NodeObj::isAutoProgram() {
     return mUseAutoProgram;
 }
 
-void NodeObj::setProgram(std::shared_ptr<Program> program) {
+void NodeObj::setProgram(shared_ptr<Program> program) {
     mUseAutoProgram = false;
     mProgram = program;
 }
 
 shared_ptr<Program> NodeObj::getProgram() {
-    if (mUseAutoProgram) return ProgramManager::get()->getDefaultProgram();
+    return mProgram;
+}
+
+shared_ptr<Program> NodeObj::getProgram(
+    shared_ptr<Material> material, shared_ptr<Mesh> mesh) {
+    if (!mProgram) {
+        if (mUseAutoProgram) {
+            mProgram = ShaderGenerator().generateProgram(material, mesh);
+        } else {
+            ALOGE("No shader program found");
+        }
+    }
     return mProgram;
 }
 
@@ -234,8 +245,13 @@ bool Geometry::initGpuData() {
 }
 
 void Geometry::draw(Render &render, shared_ptr<Scene> scene) {
-    render.drawGeometry(scene, shared_from_this());
-    render.drawMesh(scene, mMesh, getProgram(), mVertexBO, mIndexBO);
+    if (render.drawGeometry(scene, shared_from_this()))
+        // program attached to Geometry node only when drawGeometry returns true
+        render.drawMesh(scene, mMesh, getProgram(), mVertexBO, mIndexBO);
+}
+
+std::shared_ptr<Mesh> Geometry::getMesh() {
+    return mMesh;
 }
 
 } //namespace

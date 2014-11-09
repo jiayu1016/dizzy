@@ -105,8 +105,16 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
 void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
 }
 
-void Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry) {
-    if (!geometry || !scene) return;
+bool Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry) {
+    if (!geometry || !scene) {
+        ALOGE("Invalid argument");
+        return false;
+    }
+
+    if (scene->getNumLights() == 0 && geometry->isAutoProgram()) {
+        ALOGE("built-in auto programs require light");
+        return false;
+    }
 
     shared_ptr<Node> rootNode(scene->getRootNode());
     assert(rootNode);
@@ -119,8 +127,20 @@ void Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry
     world = nd->mTransformation * world;
     glm::mat4 mvp = world;
 
-    shared_ptr<Program> currentProgram(geometry->getProgram());
+    shared_ptr<Material> material(geometry->getMaterial());
+    if (!material) {
+        material = Material::getDefault();
+    }
+    ShaderGenerator shaderGenerator;
+    shared_ptr<Program> currentProgram(
+        geometry->getProgram(material, geometry->getMesh()));
+    if (!currentProgram) {
+        ALOGE("No built-in program generated for material: %s, mesh: %s",
+            material->getName().c_str(), geometry->getMesh()->getName().c_str());
+        return false;
+    }
     currentProgram->use();
+
     shared_ptr<Camera> activeCamera(scene->getActiveCamera());
     if (activeCamera) {
         //override the aspect read from model
@@ -132,19 +152,22 @@ void Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry
         glm::mat4 mv = view * world;
         mvp = proj * mv;
 
-        GLint mvLoc = currentProgram->getLocation("dzyMVMatrix");
-        if (mvLoc != -1) {
-            glUniformMatrix4fv(mvLoc, 1, GL_FALSE, glm::value_ptr(mv));
-        }
-        GLint normalMatrixLoc = currentProgram->getLocation("dzyNormalMatrix");
-        if (normalMatrixLoc != -1) {
-            glm::mat3 mvInvTransMatrix = glm::mat3(glm::transpose(glm::inverse(mv)));
-            glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(mvInvTransMatrix));
+        if (geometry->getMesh()->hasVertexNormals()) {
+            GLint mvLoc = currentProgram->getLocation("dzyMVMatrix");
+            if (mvLoc != -1) {
+                glUniformMatrix4fv(mvLoc, 1, GL_FALSE, glm::value_ptr(mv));
+            }
+            GLint normalMatrixLoc = currentProgram->getLocation("dzyNormalMatrix");
+            if (normalMatrixLoc != -1) {
+                glm::mat3 mvInvTransMatrix = glm::mat3(glm::transpose(glm::inverse(mv)));
+                glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(mvInvTransMatrix));
+            }
         }
 
-        glUniformMatrix4fv(currentProgram->getLocation("dzyMVPMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
+        if (geometry->getMesh()->hasVertexPositions())
+            glUniformMatrix4fv(currentProgram->getLocation("dzyMVPMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
 
-        if (scene->getNumLights() > 0) {
+        if (scene->getNumLights() > 0 && geometry->getMesh()->hasVertexNormals()) {
             shared_ptr<Light> light(scene->mLights[0]);
             if (light) {
                 glUniform3fv(currentProgram->getLocation("dzyLight.color"),
@@ -168,13 +191,11 @@ void Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry
 
     if (scene->getNumMaterials() > 0) {
         shared_ptr<Material> material(geometry->getMaterial());
-        glm::vec3 diffuse, specular, ambient, emission;
-        float shininess;
-        material->get(Material::COLOR_DIFFUSE, diffuse);
-        material->get(Material::COLOR_SPECULAR, specular);
-        material->get(Material::COLOR_AMBIENT, ambient);
-        material->get(Material::COLOR_EMISSION, emission);
-        material->get(Material::SHININESS, shininess);
+        glm::vec3 diffuse = material->getDiffuse();
+        glm::vec3 specular = material->getSpecular();
+        glm::vec3 ambient = material->getAmbient();
+        glm::vec3 emission = material->getEmission();
+        float shininess = material->getShininess();
 
         glUniform3fv(currentProgram->getLocation("dzyMaterial.diffuse"),
             1, glm::value_ptr(diffuse));
@@ -186,6 +207,7 @@ void Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry
             1, glm::value_ptr(emission));
         glUniform1f(currentProgram->getLocation("dzyMaterial.shininess"), shininess);
     }
+    return true;
 }
 
 void Render::drawMesh(shared_ptr<Scene> scene, shared_ptr<Mesh> mesh,
