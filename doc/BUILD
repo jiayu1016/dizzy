@@ -1,11 +1,3 @@
-dizzy
-=====
-
-*** Directories ***
-
-src: main dizzy code
-sample/sviewer: scene viewer
-
 *** Build assimp 3.1.1 ***
 0. environment
 android-ndk-r9d x86_64 on ubuntu 14.04 64bit, assimp 3.1.1
