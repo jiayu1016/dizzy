@@ -68,8 +68,12 @@ public:
     unsigned int    getPositionOffset() const;
     void *          getPositionBuf();
 
+    unsigned int    getColorNumComponent(int channel) const;
+    unsigned int    getColorBufStride(int channel) const;
     unsigned int    getColorBufSize(int channel) const;
     unsigned int    getColorBufSize() const;
+    unsigned int    getColorOffset(int channel) const;
+    void *          getColorBuf(int channel);
 
     unsigned int    getTextureCoordBufSize(int channel) const;
     unsigned int    getTextureCoordBufSize() const;
@@ -131,7 +135,7 @@ public:
 
     void            reserveDataStorage(int size);
 
-    void            dumpVertexPositionBuf(int groupSize = 3);
+    void            dumpBuf(float *buf, unsigned int bufSize, int groupSize = 3);
     void            dumpIndexBuf (int groupSize = 3);
 
     void            setName(std::string name);

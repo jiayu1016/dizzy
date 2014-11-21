@@ -61,10 +61,12 @@ public:
     ///     generate program
     ///
     ///     @param material the material used to generate program
+    ///     @param hasLight the scene has light
     ///     @param mesh the mesh used to generate program
     ///     @return the current program attached to this node
     std::shared_ptr<Program> getProgram(
         std::shared_ptr<Material> material,
+        bool hasLight,
         std::shared_ptr<Mesh> mesh);
 
     void setMaterial(std::shared_ptr<Material> material);

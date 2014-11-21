@@ -3,6 +3,9 @@
 #include "utils.h"
 #include "scene.h"
 #include "engine_context.h"
+#include "mesh.h"
+#include "material.h"
+#include "light.h"
 #include "program.h"
 
 using namespace std;
@@ -84,8 +87,8 @@ bool Shader::compileFromAsset(
 
 Program::Program()
     : mLinked(false)
-    , mProgramId(0) {
-    ALOGD("Program::Program()");
+    , mProgramId(0)
+    , mRequirement(0) {
     mProgramId = glCreateProgram();
     if (!mProgramId) {
         ALOGE("glCreateProgram error");
@@ -94,7 +97,6 @@ Program::Program()
 }
 
 Program::~Program() {
-    ALOGD("Program::~Program()");
     if (mProgramId) glDeleteProgram(mProgramId);
 }
 
@@ -152,6 +154,7 @@ bool Program::storeLocation() {
 
 
     STORE_CHECK_ATTRIB_LOC("dzyVertexPosition");
+    STORE_CHECK_ATTRIB_LOC("dzyVertexColor");
     STORE_CHECK_ATTRIB_LOC("dzyVertexNormal");
     STORE_CHECK_UNIFORM_LOC("dzyMVPMatrix");
     STORE_CHECK_UNIFORM_LOC("dzyMVMatrix");
@@ -172,6 +175,109 @@ bool Program::storeLocation() {
     return true;
 }
 
+static const char VERTEX_simple_vertex_color[] =
+"#version 300 es\n"
+"uniform mat4 dzyMVPMatrix;\n"
+"in vec3 dzyVertexPosition;\n"
+"in vec3 dzyVertexColor;\n"
+"out vec3 vVertexColor;\n"
+"void main() {\n"
+"    gl_Position = dzyMVPMatrix * vec4(dzyVertexPosition, 1.0);\n"
+"    vVertexColor = dzyVertexColor;\n"
+"}\n";
+
+static const char FRAGMENT_simple_vertex_color[] =
+"#version 300 es\n"
+"precision mediump float;\n"
+"in vec3 vVertexColor;\n"
+"out vec4 fragColor;\n"
+"void main() {\n"
+"    fragColor = vec4(vVertexColor, 1.0);\n"
+"}\n";
+
+static const char VERTEX_simple_constant_color[] =
+"#version 300 es\n"
+"uniform mat4 dzyMVPMatrix;\n"
+"in vec3 dzyVertexPosition;\n"
+"void main() {\n"
+"    gl_Position = dzyMVPMatrix * vec4(dzyVertexPosition, 1.0);\n"
+"}\n";
+
+static const char FRAGMENT_simple_constant_color[] =
+"#version 300 es\n"
+"precision mediump float;\n"
+"uniform vec3 dzyConstantColor;\n"
+"out vec4 fragColor;\n"
+"void main() {\n"
+"    fragColor = vec4(dzyConstantColor, 1.0);\n"
+"}\n";
+
+/// built-in shaders, mvp & vertex position are mandatory
+static struct ShaderTable {
+    const char *technique;
+    bool        hasGeometry;
+    bool        requireVertexColor;
+    bool        requireVertexNormal;
+    bool        requireMaterial;
+    bool        requireLight;
+    const char *vertexSrc;
+    int         vertexLen;
+    const char *fragmentSrc;
+    int         fragmentLen;
+    const char *gometrySrc;
+    int         geometryLen;
+} builtInShaderTable[] = {
+#define SHADER_DEF(NAME, VC, VN, MT, LT) {  \
+        #NAME,                              \
+        false,                              \
+        VC,                                 \
+        VN,                                 \
+        MT,                                 \
+        LT,                                 \
+        VERTEX_ ##NAME,                     \
+        sizeof(VERTEX_ ##NAME),             \
+        FRAGMENT_ ##NAME,                   \
+        sizeof(FRAGMENT_ ##NAME),           \
+        NULL,                               \
+        0                                   \
+    }
+
+#define SHADER_DEF2(NAME, VC, VN, MT, LT) { \
+        #NAME,                              \
+        true,                               \
+        VC,                                 \
+        VN,                                 \
+        MT,                                 \
+        LT,                                 \
+        VERTEX_ ##NAME,                     \
+        sizeof(VERTEX_ ##NAME),             \
+        FRAGMENT_ ##NAME,                   \
+        sizeof(FRAGMENT_ ##NAME),           \
+        GEOMETRY_ ##NAME,                   \
+        sizeof(GEOMETRY_ ##NAME)            \
+    }
+
+#define SHADER_DEF_END() \
+    {NULL, false, false, false, false, false, NULL, 0, NULL, 0, NULL, 0}
+
+    //SHADER_DEF("per_pixel_shading",                   false,  true,   true,   true),
+    //SHADER_DEF("normal_mapping",                      false,  true,   true,   true),
+    //SHADER_DEF("gloss_mapping",                       false,  true,   true,   true),
+    //SHADER_DEF("glow_mapping",                        false,  true,   true,   true),
+    //SHADER_DEF("high_dynamic_range_shading",          false,  true,   true,   true),
+    //SHADER_DEF("cartoon_shading",                     false,  true,   true,   true),
+    //SHADER_DEF("simple_material_texture_light",       false,  false,  true,   true),
+    //SHADER_DEF("simple_vertex_color_light",           true,   false,  false,  true),
+    //SHADER_DEF("simple_material_texture",             false,  false,  true,   false),
+    SHADER_DEF(simple_vertex_color,         true, false, false, false),
+    SHADER_DEF(simple_constant_color,       false, false, false, false),
+    SHADER_DEF_END()
+
+#undef SHADER_DEF
+#undef SHADER_DEF2
+#undef SHADER_DEF_END
+};
+
 GLint Program::getLocation(const char* name) {
     if (!isValid()) {
         ALOGE("Program not valid");
@@ -184,34 +290,81 @@ GLint Program::getLocation(const char* name) {
     return mLocations[name];
 }
 
+void Program::setRequirement(
+            bool requireVertexColor,
+            bool requireVertexNormal,
+            bool requireMaterial,
+            bool requireLight) {
+    if (requireVertexColor)     mRequirement |= 1 << REQUIRE_VERTEX_COLOR;
+    else                        mRequirement &= ~(1 << REQUIRE_VERTEX_COLOR);
+    if (requireVertexNormal)    mRequirement |= 1 << REQUIRE_VERTEX_NORMAL;
+    else                        mRequirement &= ~(1 << REQUIRE_VERTEX_NORMAL);
+    if (requireMaterial)        mRequirement |= 1 << REQUIRE_MATERIAL;
+    else                        mRequirement &= ~(1 << REQUIRE_MATERIAL);
+    if (requireLight)           mRequirement |= 1 << REQUIRE_LIGHT;
+    else                        mRequirement &= ~(1 << REQUIRE_LIGHT);
+}
+
+bool Program::hasRequirement(Requirement requirement) {
+    return (mRequirement & (1 << requirement)) != 0;
+}
+
 bool ProgramManager::preCompile(shared_ptr<EngineContext> engineContext) {
-    shared_ptr<Shader> vtxShader(new Shader(Shader::Vertex));
-    if (!vtxShader->compileFromAsset(engineContext->getAssetManager(), "vertex.shader")) {
-        ALOGE("error compile vertex shader");
-        return false;
-    }
-    shared_ptr<Shader> fragShader(new Shader(Shader::Fragment));
-    if (!fragShader->compileFromAsset(engineContext->getAssetManager(), "fragment.shader")) {
-        ALOGE("error compile fragment shader");
-        return false;
-    }
-    shared_ptr<Program> program(new Program);
-    if (!program->link(vtxShader, fragShader)) {
-        ALOGE("error link program");
-        return false;
-    }
+    for (int i=0; builtInShaderTable[i].technique; i++) {
+        shared_ptr<Shader> vtxShader(new Shader(Shader::Vertex));
+        if (!vtxShader->compileFromMemory(builtInShaderTable[i].vertexSrc, builtInShaderTable[i].vertexLen)) {
+            ALOGE("error compile vertex shader");
+            return false;
+        }
+        shared_ptr<Shader> fragShader(new Shader(Shader::Fragment));
+        if (!fragShader->compileFromMemory(builtInShaderTable[i].fragmentSrc, builtInShaderTable[i].fragmentLen)) {
+            ALOGE("error compile fragment shader");
+            return false;
+        }
+        shared_ptr<Program> program(new Program);
+        if (!program->link(vtxShader, fragShader)) {
+            ALOGE("error link program");
+            return false;
+        }
+        program->setRequirement(
+            builtInShaderTable[i].requireVertexColor,
+            builtInShaderTable[i].requireVertexNormal,
+            builtInShaderTable[i].requireMaterial,
+            builtInShaderTable[i].requireLight);
+        program->use();
+        program->storeLocation();
 
-    program->use();
-    program->storeLocation();
-
-    mPrograms.push_back(program);
+        mPrograms.push_back(program);
+    }
 
     return true;
 }
 
-shared_ptr<Program> ProgramManager::getDefaultProgram() {
-    // TODO:
-    return mPrograms[0];
+shared_ptr<Program> ProgramManager::getCompatibleProgram(
+    shared_ptr<Material> material, bool hasLight, shared_ptr<Mesh> mesh) {
+    for (auto it = mPrograms.begin(); it != mPrograms.end(); it++) {
+        shared_ptr<Program> program(*it);
+        bool compatible = isCompatible(mesh->hasVertexColors(),
+            program->hasRequirement(Program::REQUIRE_VERTEX_COLOR));
+        if (!compatible) continue;
+        compatible = compatible && isCompatible(mesh->hasVertexNormals(),
+            program->hasRequirement(Program::REQUIRE_VERTEX_NORMAL));
+        if (!compatible) continue;
+        compatible = compatible && isCompatible(material != nullptr,
+            program->hasRequirement(Program::REQUIRE_MATERIAL));
+        if (!compatible) continue;
+        // FIXME: deal with the case that program has no light,
+        // but scene has light in it, simple ignore and pass
+        // compatibility check for now.
+        //compatible = compatible && isCompatible(hasLight,
+        //    program->hasRequirement(Program::REQUIRE_LIGHT));
+        if (compatible) return program;
+    }
+    return nullptr;
+}
+
+bool ProgramManager::isCompatible(bool b1, bool b2) {
+    return (b1 && b2) || (!b1 && !b2);
 }
 
 } //namespace dzy

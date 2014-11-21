@@ -77,7 +77,7 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
 
         scene->mLightModelTransform = glm::mat4(1.0f);
 
-        // Support lighing only when we have a camera
+        // Support lighting only when we have a camera
         // Use only one light right now
         if (scene->getNumLights() > 0) {
             shared_ptr<Light> light(scene->mLights[0]);
@@ -128,15 +128,15 @@ bool Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry
     glm::mat4 mvp = world;
 
     shared_ptr<Material> material(geometry->getMaterial());
-    if (!material) {
-        material = Material::getDefault();
-    }
+    //if (!material) {
+    //    material = Material::getDefault();
+    //}
     ShaderGenerator shaderGenerator;
     shared_ptr<Program> currentProgram(
-        geometry->getProgram(material, geometry->getMesh()));
+        geometry->getProgram(material, scene->getNumLights() > 0, geometry->getMesh()));
     if (!currentProgram) {
         ALOGE("No built-in program generated for material: %s, mesh: %s",
-            material->getName().c_str(), geometry->getMesh()->getName().c_str());
+            material ? material->getName().c_str() : "NULL", geometry->getMesh()->getName().c_str());
         return false;
     }
     currentProgram->use();
@@ -191,21 +191,23 @@ bool Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry
 
     if (scene->getNumMaterials() > 0) {
         shared_ptr<Material> material(geometry->getMaterial());
-        glm::vec3 diffuse = material->getDiffuse();
-        glm::vec3 specular = material->getSpecular();
-        glm::vec3 ambient = material->getAmbient();
-        glm::vec3 emission = material->getEmission();
-        float shininess = material->getShininess();
+        if (material) {
+            glm::vec3 diffuse = material->getDiffuse();
+            glm::vec3 specular = material->getSpecular();
+            glm::vec3 ambient = material->getAmbient();
+            glm::vec3 emission = material->getEmission();
+            float shininess = material->getShininess();
 
-        glUniform3fv(currentProgram->getLocation("dzyMaterial.diffuse"),
-            1, glm::value_ptr(diffuse));
-        glUniform3fv(currentProgram->getLocation("dzyMaterial.specular"),
-            1, glm::value_ptr(specular));
-        glUniform3fv(currentProgram->getLocation("dzyMaterial.ambient"),
-            1, glm::value_ptr(ambient));
-        glUniform3fv(currentProgram->getLocation("dzyMaterial.emission"),
-            1, glm::value_ptr(emission));
-        glUniform1f(currentProgram->getLocation("dzyMaterial.shininess"), shininess);
+            glUniform3fv(currentProgram->getLocation("dzyMaterial.diffuse"),
+                1, glm::value_ptr(diffuse));
+            glUniform3fv(currentProgram->getLocation("dzyMaterial.specular"),
+                1, glm::value_ptr(specular));
+            glUniform3fv(currentProgram->getLocation("dzyMaterial.ambient"),
+                1, glm::value_ptr(ambient));
+            glUniform3fv(currentProgram->getLocation("dzyMaterial.emission"),
+                1, glm::value_ptr(emission));
+            glUniform1f(currentProgram->getLocation("dzyMaterial.shininess"), shininess);
+        }
     }
     return true;
 }
@@ -219,11 +221,12 @@ void Render::drawMesh(shared_ptr<Scene> scene, shared_ptr<Mesh> mesh,
     if (mesh->hasVertexPositions()) {
         GLint posLoc = program->getLocation("dzyVertexPosition");
         glEnableVertexAttribArray(posLoc);
-        //ALOGD("num vertices: %d, num components: %d, stride: %d",
-        //    mesh->getNumVertices(),
-        //    mesh->getPositionNumComponent(),
-        //    mesh->getPositionBufStride());
-        //mesh->dumpVertexPositionBuf();
+        ALOGD("num vertices: %d, num components: %d, stride: %d, offset: %d",
+            mesh->getNumVertices(),
+            mesh->getPositionNumComponent(),
+            mesh->getPositionBufStride(),
+            mesh->getPositionOffset());
+        mesh->dumpBuf((float *)mesh->getPositionBuf(), mesh->getPositionBufSize());
         glVertexAttribPointer(
             posLoc,
             mesh->getPositionNumComponent(),// size
@@ -234,9 +237,16 @@ void Render::drawMesh(shared_ptr<Scene> scene, shared_ptr<Mesh> mesh,
         );
     }
     if (mesh->hasVertexColors()) {
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
         GLint colorLoc = program->getLocation("dzyVertexColor");
         glEnableVertexAttribArray(colorLoc);
+        glVertexAttribPointer(
+            colorLoc,
+            mesh->getColorNumComponent(0),
+            GL_FLOAT,
+            GL_FALSE,
+            mesh->getColorBufStride(0),
+            (void*)mesh->getColorOffset(0)
+        );
     }
     if (mesh->hasVertexNormals()) {
         GLint normalLoc = program->getLocation("dzyVertexNormal");
@@ -251,9 +261,6 @@ void Render::drawMesh(shared_ptr<Scene> scene, shared_ptr<Mesh> mesh,
         );
     }
 
-    //ALOGD("num indices: %d, indices buf size: %d",
-    //    mesh->getNumIndices(), mesh->getIndexBufSize());
-    //mesh->dumpIndexBuf();
     // support only GL_UNSIGNED_INT right now
     glDrawElements(GL_TRIANGLES,            // mode
         mesh->getNumIndices(),              // indices count

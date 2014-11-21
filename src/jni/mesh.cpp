@@ -150,6 +150,14 @@ void * Mesh::getPositionBuf() {
     return mMeshData.getBuf(mPosOffset);
 }
 
+unsigned int Mesh::getColorNumComponent(int channel) const {
+    return mColorNumComponents[channel];
+}
+
+unsigned int Mesh::getColorBufStride(int channel) const {
+    return mColorNumComponents[channel] * mColorBytesComponent[channel];
+}
+
 unsigned int Mesh::getColorBufSize(int channel) const {
     return mColorBytesComponent[channel] *
         mColorNumComponents[channel] * mNumVertices;
@@ -160,6 +168,14 @@ unsigned int Mesh::getColorBufSize() const {
     for (unsigned int i=0; i<getNumColorChannels(); i++)
         totalSize += getColorBufSize(i);
     return totalSize;
+}
+
+unsigned int Mesh::getColorOffset(int channel) const {
+    return mColorOffset[channel];
+}
+
+void * Mesh::getColorBuf(int channel) {
+    return mMeshData.getBuf(mColorOffset[channel]);
 }
 
 unsigned int Mesh::getTextureCoordBufSize(int channel) const {
@@ -341,14 +357,11 @@ void Mesh::reserveDataStorage(int size) {
     mMeshData.reserve(size);
 }
 
-void Mesh::dumpVertexPositionBuf(int groupSize) {
-    unsigned int bufSize = getPositionBufSize();
-    float *buf = (float *)getPositionBuf();
+void Mesh::dumpBuf(float *buf, unsigned int bufSize, int groupSize) {
     int num = bufSize/sizeof(float);
     char format[1024];
 
-    if (num)
-        PRINT("************ start Mesh::dumpVertexPositionBuf **********");
+    PRINT("************ start Mesh::dumpBuf **********");
     for (int i=0; i<num; i+=groupSize) {
         int n = sprintf(format, "%8p:", buf + i);
         int left = (i+groupSize <= num) ? groupSize : num - i;
@@ -357,8 +370,7 @@ void Mesh::dumpVertexPositionBuf(int groupSize) {
         }
         PRINT("%s", format);
     }
-    if (num)
-        PRINT("************ end Mesh::dumpVertexPositionBuf ************");
+    PRINT("************ end Mesh::dumpBuf ************");
 }
 
 void Mesh::dumpIndexBuf(int groupSize) {
@@ -430,6 +442,45 @@ CubeMesh::CubeMesh(const string& name)
         +0.5f, -0.5f, -0.5f,
         +0.5f, -0.5f, +0.5f,
     };
+
+    float colors[] = {
+        // front
+        1.f, 0.f, 0.f,
+        0.f, 1.f, 0.f,
+        0.f, 0.f, 1.f,
+        0.f, 0.5f, 0.5f,
+
+        // up
+        1.f, 0.f, 0.f,
+        0.f, 1.f, 0.f,
+        0.f, 0.f, 1.f,
+        0.f, 0.5f, 0.5f,
+
+        // right
+        1.f, 0.f, 0.f,
+        0.f, 1.f, 0.f,
+        0.f, 0.f, 1.f,
+        0.f, 0.5f, 0.5f,
+
+        // back
+        1.f, 0.f, 0.f,
+        0.f, 1.f, 0.f,
+        0.f, 0.f, 1.f,
+        0.f, 0.5f, 0.5f,
+
+        // left
+        1.f, 0.f, 0.f,
+        0.f, 1.f, 0.f,
+        0.f, 0.f, 1.f,
+        0.f, 0.5f, 0.5f,
+
+        // bottom
+        1.f, 0.f, 0.f,
+        0.f, 1.f, 0.f,
+        0.f, 0.f, 1.f,
+        0.f, 0.5f, 0.5f,
+    };
+
     unsigned int indices[] = {
         0, 1, 2,
         0, 2, 3,
@@ -446,6 +497,7 @@ CubeMesh::CubeMesh(const string& name)
     };
 
     Mesh::appendVertexPositions(verts, 3, sizeof(float));
+    Mesh::appendVertexColors(colors, 3, sizeof(float), 0);
     Mesh::buildIndexBuffer(indices, 12);
 }
 

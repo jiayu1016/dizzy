@@ -64,7 +64,7 @@ bool SViewer::initView() {
     cubeGeo->translate(3.f, 0.f, 0.f);
     if (torusGeometry) {
         shared_ptr<Material> material = torusGeometry->getMaterial();
-        cubeGeo->setMaterial(material);
+        //cubeGeo->setMaterial(material);
     }
     myNode->attachChild(cubeGeo);
 

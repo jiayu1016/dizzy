@@ -116,7 +116,7 @@ bool EngineContext::initDisplay() {
     mRender->setEngineContext(shared_from_this());
 
     // ProgramManager::preCompile must be called after setting up egl context
-    //ProgramManager::get()->preCompile(shared_from_this());
+    ProgramManager::get()->preCompile(shared_from_this());
     nativeCore->initView();
 }
 
