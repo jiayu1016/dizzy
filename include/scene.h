@@ -33,6 +33,7 @@ typedef std::vector<std::shared_ptr<Mesh> >        MeshContainer;
 class Scene {
 public:
     Scene();
+    ~Scene();
 
     inline unsigned int getNumCameras() { return mCameras.size(); }
     inline unsigned int getNumLights() { return mLights.size(); }
@@ -83,7 +84,8 @@ public:
 
     friend class Singleton<SceneManager>;
 private:    
-    explicit SceneManager();
+    SceneManager();
+    ~SceneManager();
 
     std::vector<std::shared_ptr<Scene> >    mScenes;
     std::shared_ptr<Scene>                  mCurrentScene;

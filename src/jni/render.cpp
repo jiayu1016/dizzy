@@ -16,11 +16,11 @@ using namespace std;
 namespace dzy {
 
 Render::Render() {
-    ALOGD("Render::Render()");
+    ALOGV("Render::Render()");
 }
 
 Render::~Render() {
-    ALOGD("Render::~Render()");
+    ALOGV("Render::~Render()");
 }
 
 bool Render::init() {

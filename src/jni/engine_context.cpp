@@ -24,11 +24,11 @@ EngineContext::EngineContext()
     , mDisplay      (EGL_NO_DISPLAY)
     , mEglContext   (EGL_NO_CONTEXT)
     , mSurface      (EGL_NO_SURFACE) {
-    ALOGD("EngineContext::EngineContext()");
+    ALOGV("EngineContext::EngineContext()");
 }
 
 EngineContext::~EngineContext() {
-    ALOGD("EngineContext::~EngineContext()");
+    ALOGV("EngineContext::~EngineContext()");
 }
 
 void EngineContext::init(shared_ptr<NativeCore> nativeCore) {

@@ -85,13 +85,11 @@ bool Shader::compileFromAsset(
     return compileFromMemory(buffer.get(), sz);
 }
 
-int Program::count = 0;
 Program::Program()
     : mLinked(false)
     , mProgramId(0)
     , mRequirement(0) {
-    count++;
-    ALOGD("Program::Program(), count: %d", count);
+    ALOGV("Program::Program()");
     mProgramId = glCreateProgram();
     if (!mProgramId) {
         ALOGE("glCreateProgram error");
@@ -100,8 +98,7 @@ Program::Program()
 }
 
 Program::~Program() {
-    --count;
-    ALOGD("Program::~Program(), count: %d", count);
+    ALOGV("Program::~Program()");
     if (mProgramId) glDeleteProgram(mProgramId);
 }
 
@@ -686,6 +683,14 @@ shared_ptr<Program> ProgramManager::getCompatibleProgram(
     }
     return nullptr;
 }
+
+ProgramManager::ProgramManager() {
+    ALOGV("ProgramManager::ProgramManager()");
+};
+
+ProgramManager::~ProgramManager() {
+    ALOGV("ProgramManager::~ProgramManager()");
+};
 
 shared_ptr<Program> ProgramManager::createProgram(const string& name) {
     if (name == "Blin_Phong_shading")

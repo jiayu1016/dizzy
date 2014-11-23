@@ -106,6 +106,7 @@ public:
     typedef std::function<void(std::shared_ptr<NodeObj>)> VisitFunc;
 
     Node(const std::string& name);
+    ~Node();
 
     /// attach a child node into the scene graph
     ///
@@ -149,6 +150,7 @@ class Geometry : public NodeObj, public std::enable_shared_from_this<Geometry> {
 public:
     Geometry(std::shared_ptr<Mesh> mesh);
     Geometry(const std::string& name, std::shared_ptr<Mesh> mesh);
+    ~Geometry();
 
     virtual bool initGpuData();
     virtual void draw(Render &render, std::shared_ptr<Scene> scene);

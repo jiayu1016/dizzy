@@ -10,11 +10,11 @@ using namespace std;
 namespace dzy {
 
 NativeCore::NativeCore() {
-    ALOGD("NativeCore::NativeCore()");
+    ALOGV("NativeCore::NativeCore()");
 }
 
 NativeCore::~NativeCore() {
-    ALOGD("NativeCore::~NativeCore()");
+    ALOGV("NativeCore::~NativeCore()");
 }
 
 bool NativeCore::init(struct android_app* app) {

@@ -118,7 +118,6 @@ protected:
     std::vector<std::shared_ptr<Shader> >       mShaders;
     std::map<std::string, GLint>                mLocations;
     int                                         mRequirement;
-    static int count;
 };
 
 ///////////////////////////////////////////
@@ -206,7 +205,8 @@ public:
     friend class Singleton<ProgramManager>;
 
 private:
-    ProgramManager() {};
+    ProgramManager();
+    virtual ~ProgramManager();
 
     std::shared_ptr<Program> createProgram(const std::string& name);
     bool isCompatible(bool b1, bool b2);

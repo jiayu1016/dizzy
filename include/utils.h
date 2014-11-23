@@ -34,6 +34,7 @@ public:
     }
 protected:
     Singleton() {};
+    virtual ~Singleton() {};
     static T *mInstance;
 };
 

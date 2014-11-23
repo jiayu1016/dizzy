@@ -26,6 +26,10 @@ Scene::Scene()
     : mRootNode(new Node("root")) {
 }
 
+Scene::~Scene() {
+    ALOGV("Scene::~Scene()");
+}
+
 shared_ptr<Camera> Scene::getActiveCamera() {
     // TODO: support muliple cameras in a scene
     if (getNumCameras() > 0)
@@ -70,6 +74,11 @@ bool Scene::atLeastOneMeshHasNormal() {
 }
 
 SceneManager::SceneManager() {
+    ALOGV("SceneManager::SceneManager()");
+}
+
+SceneManager::~SceneManager() {
+    ALOGV("SceneManager::~SceneManager()");
 }
 
 void SceneManager::addScene(shared_ptr<Scene> scene) {

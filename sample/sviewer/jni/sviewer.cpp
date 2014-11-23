@@ -78,6 +78,7 @@ bool SViewer::initView() {
 }
 
 bool SViewer::releaseView() {
+    SceneManager::release();
     return mRender->release();
 }
 

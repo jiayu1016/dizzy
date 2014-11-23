@@ -26,6 +26,7 @@ NodeObj::NodeObj(const string& name)
 }
 
 NodeObj::~NodeObj() {
+    ALOGV("NodeObj::~NodeObj(), %s", getName().c_str());
 }
 
 void NodeObj::resetTransform() {
@@ -106,6 +107,10 @@ shared_ptr<Camera> NodeObj::getCamera() {
 
 Node::Node(const string& name)
     : NodeObj(name) {
+}
+
+Node::~Node() {
+    ALOGV("Node::~Node(), %s", getName().c_str());
 }
 
 void Node::attachChild(shared_ptr<NodeObj> childNode) {
@@ -229,6 +234,10 @@ Geometry::Geometry(shared_ptr<Mesh> mesh)
 Geometry::Geometry(const string& name, shared_ptr<Mesh> mesh)
     : NodeObj(name)
     , mMesh(mesh) {
+}
+
+Geometry::~Geometry() {
+    ALOGV("Geometry::~Geometry(), %s", getName().c_str());
 }
 
 bool Geometry::initGpuData() {
