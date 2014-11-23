@@ -24,6 +24,19 @@ public:
         float           angleInnerCone,
         float           angleOuterCone);
 
+    glm::vec3 getPosition();
+    glm::vec3 getDirection();
+    float getAttenuationConstant();
+    float getAttenuationLinear();
+    float getAttenuationQuadratic();
+    glm::vec3 getColorDiffuse();
+    glm::vec3 getColorSpecular();
+    glm::vec3 getColorAmbient();
+    float getAngleInnerCone();
+    float getAngleOuterCone();
+    glm::mat4 getTransform();
+    void setTransform(const glm::mat4& trans);
+
     void dumpParameter();
 
     friend class Render;
@@ -41,6 +54,7 @@ private:
     glm::vec3           mColorAmbient;
     float               mAngleInnerCone;
     float               mAngleOuterCone;
+    glm::mat4           mTransform;
 };
 
 }

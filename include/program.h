@@ -146,6 +146,19 @@ public:
     virtual bool updateMeshData(std::shared_ptr<Mesh> mesh, GLuint vbo);
 };
 
+class Program100 : public Program {
+public:
+    Program100();
+    virtual bool uploadData(
+        std::shared_ptr<Camera> camera,
+        std::shared_ptr<Light> light,
+        std::shared_ptr<Material> material,
+        glm::mat4& world,
+        glm::mat4& view,
+        glm::mat4& proj);
+    virtual bool updateMeshData(std::shared_ptr<Mesh> mesh, GLuint vbo);
+};
+
 class EngineContext;
 class Material;
 class Mesh;

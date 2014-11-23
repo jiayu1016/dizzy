@@ -440,41 +440,176 @@ bool Program020::updateMeshData(shared_ptr<Mesh> mesh, GLuint vbo) {
     return true;
 }
 
-static const char VERTEX_simple_vertex_color_light[] =
-"#version 300 es\n"
-"uniform mat4 dzyMVPMatrix;\n"
-"uniform mat4 dzyMVMatrix;\n"
-"uniform mat3 dzyNormalMatrix;\n"
-"in vec3 dzyVertexPosition;\n"
-"in vec3 dzyVertexColor;\n"
-"in vec3 dzyVertexNormal;\n"
-"out vec3 vVertexPositionEyeSpace;\n"
-"out vec3 vVertexNormalEyeSpace;\n"
-"void main() {\n"
-"    gl_Position = dzyMVPMatrix * vec4(dzyVertexPosition, 1.0);\n"
-"    vVertexPositionEyeSpace = vec3(dzyMVMatrix * vec4(dzyVertexPosition, 1.0));\n"
-"    vVertexNormalEyeSpace = dzyNormalMatrix * dzyVertexNormal;\n"
-"}\n";
+static const char VERTEX_Blin_Phong_shading[] =
+"#version 300 es\n\
+uniform mat4 dzyMVPMatrix;\n\
+uniform mat4 dzyMVMatrix;\n\
+uniform mat3 dzyNormalMatrix;\n\
+in vec3 dzyVertexPosition;\n\
+in vec3 dzyVertexNormal;\n\
+out vec3 vVertexPositionEyeSpace;\n\
+out vec3 vVertexNormalEyeSpace;\n\
+void main() {\n\
+    gl_Position = dzyMVPMatrix * vec4(dzyVertexPosition, 1.0);\n\
+    vVertexPositionEyeSpace = vec3(dzyMVMatrix * vec4(dzyVertexPosition, 1.0));\n\
+    vVertexNormalEyeSpace = dzyNormalMatrix * dzyVertexNormal;\n\
+}";
 
-static const char FRAGMENT_simple_vertex_color_light[] =
-"#version 300 es\n"
-"precision mediump float;\n"
-"in vec3 vVertexPositionEyeSpace;\n"
-"in vec3 vVertexNormalEyeSpace;\n"
-"struct PointLight {\n"
-"    vec3 color;\n"
-"    vec3 ambient;\n"
-"    vec3 position;\n"
-"    float attenuationConstant;\n"
-"    float attenuationLinear;\n"
-"    float attenuationQuadratic;\n"
-"    float strength;\n"
-"};\n"
-"uniform PointLight dzyLight;\n"
-"out vec4 fragColor;\n"
-"void main() {\n"
-"    fragColor = vec4(vVertexColor, 1.0);\n"
-"}\n";
+static const char FRAGMENT_Blin_Phong_shading[] =
+"#version 300 es\n\
+precision mediump float;\n\
+in vec3 vVertexPositionEyeSpace;\n\
+in vec3 vVertexNormalEyeSpace;\n\
+struct Material {\n\
+    vec3 diffuse;\n\
+    vec3 specular;\n\
+    vec3 ambient;\n\
+    vec3 emission;\n\
+    float shininess;\n\
+};\n\
+struct PointLight {\n\
+    vec3 color;\n\
+    vec3 ambient;\n\
+    vec3 position; // in eye space\n\
+    float attenuationConstant;\n\
+    float attenuationLinear;\n\
+    float attenuationQuadratic;\n\
+    float strength;\n\
+};\n\
+uniform Material dzyMaterial;\n\
+uniform PointLight dzyLight;\n\
+// eye direction in eye space is constant\n\
+const vec3 EYE_DIRECTION = vec3(0.0, 0.0, 1.0);\n\
+// or this ?\n\
+//const vec3 EYE_DIRECTION = vec3(0.0, 0.0, 0.0) - vVertexPositionEyeSpace;\n\
+out vec4 fragColor;\n\
+void main() {\n\
+    vec3 lightDirection = dzyLight.position - vVertexPositionEyeSpace;\n\
+    float lightDistance = length(lightDirection);\n\
+    // normalize lightDirection\n\
+    lightDirection = lightDirection / lightDistance;\n\
+    float attenuation = 1.0 / (dzyLight.attenuationConstant +\n\
+        dzyLight.attenuationLinear * lightDistance +\n\
+        dzyLight.attenuationQuadratic * lightDistance * lightDistance);\n\
+    vec3 halfVector = normalize(lightDirection + EYE_DIRECTION);\n\
+    float diffuse  = max(dot(vVertexNormalEyeSpace, lightDirection), 0.0);\n\
+    // Blin-Phong Shading\n\
+    float specular = max(dot(vVertexNormalEyeSpace, halfVector), 0.0);\n\
+    if (diffuse == 0.0)\n\
+        specular = 0.0;\n\
+    else\n\
+        specular = pow(specular, dzyMaterial.shininess) * dzyLight.strength;\n\
+    vec3 scatteredLight = dzyLight.ambient * dzyMaterial.ambient * attenuation\n\
+        + dzyLight.color * dzyMaterial.diffuse * diffuse * attenuation;\n\
+    vec3 reflectedLight = dzyLight.color * dzyMaterial.specular * specular * attenuation;\n\
+    // FIXME: use material diffuse color for the time being\n\
+    vec4 objColor = vec4(dzyMaterial.diffuse, 1.0);\n\
+    vec3 rgb = min(vec3(1.0),\n\
+        dzyMaterial.emission + objColor.rgb * scatteredLight + reflectedLight);\n\
+    fragColor = vec4(rgb, objColor.a);\n\
+}";
+
+Program100::Program100() {
+    setRequirement(false, true, true, true);
+}
+
+bool Program100::uploadData(
+    shared_ptr<Camera> camera,
+    shared_ptr<Light> light,
+    shared_ptr<Material> material,
+    glm::mat4& world,
+    glm::mat4& view,
+    glm::mat4& proj) {
+    glm::mat4 mv = view * world;
+    glUniformMatrix4fv(getLocation("dzyMVMatrix"), 1, GL_FALSE, glm::value_ptr(mv));
+    glm::mat4 mvp = proj * mv;
+    glUniformMatrix4fv(getLocation("dzyMVPMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
+    glm::mat3 mvInvTransMatrix = glm::mat3(glm::transpose(glm::inverse(mv)));
+    glUniformMatrix3fv(getLocation("dzyNormalMatrix"), 1, GL_FALSE, glm::value_ptr(mvInvTransMatrix));
+
+    if (light) {
+        glUniform3fv(getLocation("dzyLight.color"),
+            1, glm::value_ptr(light->getColorDiffuse()));
+        glUniform3fv(getLocation("dzyLight.ambient"),
+            1, glm::value_ptr(light->getColorAmbient()));
+        glm::vec3 lightPosEyeSpace = glm::vec3(
+            view * light->getTransform() * glm::vec4(light->getPosition(), 1.0f));
+        glUniform3fv(getLocation("dzyLight.position"),
+            1, glm::value_ptr(lightPosEyeSpace));
+        glUniform1f(getLocation("dzyLight.attenuationConstant"),
+            light->getAttenuationConstant());
+        glUniform1f(getLocation("dzyLight.attenuationLinear"),
+            light->getAttenuationLinear());
+        glUniform1f(getLocation("dzyLight.attenuationQuadratic"),
+            light->getAttenuationQuadratic());
+        glUniform1f(getLocation("dzyLight.strength"), 1.0f);
+    }
+
+    if (material) {
+        glm::vec3 diffuse = material->getDiffuse();
+        glm::vec3 specular = material->getSpecular();
+        glm::vec3 ambient = material->getAmbient();
+        glm::vec3 emission = material->getEmission();
+        float shininess = material->getShininess();
+
+        glUniform3fv(getLocation("dzyMaterial.diffuse"),
+            1, glm::value_ptr(diffuse));
+        glUniform3fv(getLocation("dzyMaterial.specular"),
+            1, glm::value_ptr(specular));
+        glUniform3fv(getLocation("dzyMaterial.ambient"),
+            1, glm::value_ptr(ambient));
+        glUniform3fv(getLocation("dzyMaterial.emission"),
+            1, glm::value_ptr(emission));
+        glUniform1f(getLocation("dzyMaterial.shininess"), shininess);
+    }
+
+    return true;
+}
+
+bool Program100::updateMeshData(shared_ptr<Mesh> mesh, GLuint vbo) {
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    if (mesh->hasVertexPositions()) {
+        GLint posLoc = getLocation("dzyVertexPosition");
+        glEnableVertexAttribArray(posLoc);
+        glVertexAttribPointer(
+            posLoc,
+            mesh->getPositionNumComponent(),// size
+            GL_FLOAT,                       // type
+            GL_FALSE,                       // normalized
+            mesh->getPositionBufStride(),   // stride, 0 means tightly packed
+            (void*)mesh->getPositionOffset()// offset
+        );
+    }
+
+    if (mesh->hasVertexColors()) {
+        GLint colorLoc = getLocation("dzyVertexColor");
+        glEnableVertexAttribArray(colorLoc);
+        glVertexAttribPointer(
+            colorLoc,
+            mesh->getColorNumComponent(0),
+            GL_FLOAT,
+            GL_FALSE,
+            mesh->getColorBufStride(0),
+            (void*)mesh->getColorOffset(0)
+        );
+    }
+
+    if (mesh->hasVertexNormals()) {
+        GLint normalLoc = getLocation("dzyVertexNormal");
+        glEnableVertexAttribArray(normalLoc);
+        glVertexAttribPointer(
+            normalLoc,
+            mesh->getNormalNumComponent(),  // size
+            GL_FLOAT,                       // type
+            GL_FALSE,                       // normalized
+            mesh->getNormalBufStride(),     // stride, 0 means tightly packed
+            (void *)mesh->getNormalOffset() // offset
+        );
+    }
+
+    return true;
+}
 
 /// built-in shaders, mvp & vertex position are mandatory
 ProgramManager::ProgramTable ProgramManager::builtInProgramTable[] = {
@@ -508,7 +643,7 @@ ProgramManager::ProgramTable ProgramManager::builtInProgramTable[] = {
     //PROG_TBL_ENTRY_DEF("glow_mapping",                        false,  true,   true,   true),
     //PROG_TBL_ENTRY_DEF("high_dynamic_range_shading",          false,  true,   true,   true),
     //PROG_TBL_ENTRY_DEF("cartoon_shading",                     false,  true,   true,   true),
-    //PROG_TBL_ENTRY_DEF("simple_material_light",       false,  false,  true,   true),
+    PROG_TBL_ENTRY_DEF(Blin_Phong_shading),
     PROG_TBL_ENTRY_DEF(simple_material),
     PROG_TBL_ENTRY_DEF(simple_vertex_color),
     PROG_TBL_ENTRY_DEF(simple_constant_color),
@@ -570,6 +705,8 @@ shared_ptr<Program> ProgramManager::getCompatibleProgram(
 }
 
 shared_ptr<Program> ProgramManager::createProgram(const string& name) {
+    if (name == "Blin_Phong_shading")
+        return shared_ptr<Program>(new Program100);
     if (name == "simple_material")
         return shared_ptr<Program>(new Program020);
     if (name == "simple_vertex_color")

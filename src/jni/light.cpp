@@ -29,6 +29,54 @@ Light::Light(
     , mAngleOuterCone       (angleOuterCone) {
 } 
 
+glm::vec3 Light::getPosition() {
+    return mPosition;
+}
+
+glm::vec3 Light::getDirection() {
+    return mDirection;
+}
+
+float Light::getAttenuationConstant() {
+    return mAttenuationConstant;
+}
+
+float Light::getAttenuationLinear() {
+    return mAttenuationLinear;
+}
+
+float Light::getAttenuationQuadratic() {
+    return mAttenuationQuadratic;
+}
+
+glm::vec3 Light::getColorDiffuse() {
+    return mColorDiffuse;
+}
+
+glm::vec3 Light::getColorSpecular() {
+    return mColorSpecular;
+}
+
+glm::vec3 Light::getColorAmbient() {
+    return mColorAmbient;
+}
+
+float Light::getAngleInnerCone() {
+    return mAngleInnerCone;
+}
+
+float Light::getAngleOuterCone() {
+    return mAngleOuterCone;
+}
+
+glm::mat4 Light::getTransform() {
+    return mTransform;
+}
+
+void Light::setTransform(const glm::mat4& trans) {
+    mTransform = trans;
+}
+
 void Light::dumpParameter() {
     ALOGD("light: %s\n"
         "position: (%f, %f, %f), direction: (%f, %f, %f)\n"

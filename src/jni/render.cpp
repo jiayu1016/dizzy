@@ -208,6 +208,7 @@ bool Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry
     */
 
     shared_ptr<Light> light(scene->getLight(0));
+    light->setTransform(scene->mLightModelTransform);
     currentProgram->uploadData(activeCamera, light, material, world, view, proj);
     return true;
 }
