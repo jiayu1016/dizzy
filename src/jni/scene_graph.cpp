@@ -88,6 +88,22 @@ shared_ptr<Material> NodeObj::getMaterial() {
     return mMaterial;
 }
 
+void NodeObj::setLight(shared_ptr<Light> light) {
+    mLight = light;
+}
+
+shared_ptr<Light> NodeObj::getLight() {
+    return mLight;
+}
+
+void NodeObj::setCamera(shared_ptr<Camera> camera) {
+    mCamera = camera;
+}
+
+shared_ptr<Camera> NodeObj::getCamera() {
+    return mCamera;
+}
+
 Node::Node(const string& name)
     : NodeObj(name) {
 }

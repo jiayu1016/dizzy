@@ -18,6 +18,8 @@ class Scene;
 class Mesh;
 class Node;
 class Material;
+class Camera;
+class Light;
 /// Base class for "element" in the scene graph
 class NodeObj : public NameObj {
 public:
@@ -70,6 +72,14 @@ public:
     void setMaterial(std::shared_ptr<Material> material);
     std::shared_ptr<Material> getMaterial();
 
+    // TODO: support multiple lights
+    void setLight(std::shared_ptr<Light> light);
+    std::shared_ptr<Light> getLight();
+
+    void setCamera(std::shared_ptr<Camera> camera);
+    std::shared_ptr<Camera> getCamera();
+
+
     /// one time initialization of the node
     virtual bool initGpuData() = 0;
 
@@ -85,6 +95,8 @@ protected:
     bool                                    mUseAutoProgram;
     std::shared_ptr<Program>                mProgram;
     std::shared_ptr<Material>               mMaterial;
+    std::shared_ptr<Light>                  mLight;
+    std::shared_ptr<Camera>                 mCamera;
     static int                              mMonoCount;
 };
 

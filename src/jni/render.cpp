@@ -127,25 +127,30 @@ bool Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry
     shared_ptr<Program> currentProgram(
         geometry->getProgram(material, scene->getNumLights() > 0, geometry->getMesh()));
     if (!currentProgram) {
-        ALOGV("No built-in program generated for material: %s, mesh: %s",
+        ALOGE("No built-in program generated for material: %s, mesh: %s",
             material ? material->getName().c_str() : "NULL", geometry->getMesh()->getName().c_str());
         return false;
     }
     currentProgram->use();
 
-    shared_ptr<Camera> activeCamera(scene->getActiveCamera());
-    if (activeCamera) {
-        //override the aspect read from model
-        float surfaceWidth = getEngineContext()->getSurfaceWidth();
-        float surfaceHeight = getEngineContext()->getSurfaceHeight();
-        activeCamera->setAspect(surfaceWidth/surfaceHeight);
-        view = activeCamera->getViewMatrix(scene->mCameraModelTransform);
-        proj = activeCamera->getProjMatrix();
+    shared_ptr<Camera> camera(geometry->getCamera());
+    if (!camera)
+        camera = scene->getActiveCamera();
+    if (!camera) {
+        ALOGE("No camera available in scene");
+        return false;
     }
+    //override the aspect read from model
+    float surfaceWidth = getEngineContext()->getSurfaceWidth();
+    float surfaceHeight = getEngineContext()->getSurfaceHeight();
+    camera->setAspect(surfaceWidth/surfaceHeight);
+    view = camera->getViewMatrix(scene->mCameraModelTransform);
+    proj = camera->getProjMatrix();
 
-    shared_ptr<Light> light(scene->getLight(0));
-    light->setTransform(scene->mLightModelTransform);
-    currentProgram->uploadData(activeCamera, light, material, world, view, proj);
+    shared_ptr<Light> light(geometry->getLight());
+    if (!light) light = scene->getLight(0);
+    if (light) light->setTransform(scene->mLightModelTransform);
+    currentProgram->uploadData(camera, light, material, world, view, proj);
     return true;
 }
 
