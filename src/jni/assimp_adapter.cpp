@@ -42,7 +42,7 @@ void AssetIOStream::Flush() {
 }
 
 shared_ptr<Camera> AIAdapter::typeCast(aiCamera *camera) {
-    shared_ptr<Camera> ret(new Camera(
+    shared_ptr<Camera> cam(new Camera(
         typeCast(camera->mPosition),
         typeCast(camera->mUp),
         typeCast(camera->mLookAt),
@@ -50,9 +50,9 @@ shared_ptr<Camera> AIAdapter::typeCast(aiCamera *camera) {
         camera->mClipPlaneNear,
         camera->mClipPlaneFar,
         camera->mAspect));
-    ret->mName = typeCast(camera->mName);
+    cam->setName(typeCast(camera->mName));
 
-    return ret;
+    return cam;
 }
 
 shared_ptr<Light> AIAdapter::typeCast(aiLight *light) {
@@ -82,7 +82,7 @@ shared_ptr<Light> AIAdapter::typeCast(aiLight *light) {
         light->mAttenuationQuadratic,
         light->mAngleInnerCone,
         light->mAngleOuterCone));
-    lt->mName          = typeCast(light->mName);
+    lt->setName(typeCast(light->mName));
     lt->mPosition      = typeCast(light->mPosition);
     lt->mDirection     = typeCast(light->mDirection);
     lt->mColorDiffuse  = typeCast(light->mColorDiffuse);

@@ -4,10 +4,11 @@
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include "shader_generator.h"
+#include "nameobj.h"
 
 namespace dzy {
 
-class Material {
+class Material : public NameObj {
 public:
     Material(const std::string& name = "");
     Material(const Material& rhs);
@@ -39,9 +40,6 @@ public:
     float getShininess() const;
     void setShininess(float shininess);
 
-    std::string getName();
-    void setName(const std::string& name);
-
 private:
     enum Flags {
         F_AMBIENT     = 0x001,
@@ -50,7 +48,6 @@ private:
         F_EMISSION    = 0x008,
     };
 
-    std::string mName;
     glm::vec3   mDiffuse;
     glm::vec3   mSpecular;
     glm::vec3   mAmbient;

@@ -12,8 +12,8 @@ ShaderVariable::ShaderVariable() {
 }
 
 ShaderVariable::ShaderVariable(const std::string &type, const std::string &name)
-    : mType(type)
-    , mName(name) {
+    : NameObj(name)
+    , mType(type) {
 }
 
 string ShaderVariable::getType() const {
@@ -24,32 +24,16 @@ void ShaderVariable::setType(const string &type) {
     mType = type;
 }
 
-string ShaderVariable::getName() const {
-    return mName;
-}
-
-void ShaderVariable::setName(const string &name) {
-    mName = name;
-}
-
 string ShaderVariable::str() const {
-    return mType + " " + mName + ";\n";
+    return mType + " " + getName() + ";\n";
 }
 
 ShaderStruct::ShaderStruct(const string& name)
-    : mName(name) {
+    : NameObj(name) {
 }
 
 ShaderStruct& ShaderStruct::operator<<(const ShaderVariable& shaderVariable) {
     mMembers.push_back(shaderVariable);
-}
-
-void ShaderStruct::setName(const string& name) {
-    mName = name;
-}
-
-string ShaderStruct::getName() const {
-    return mName;
 }
 
 const vector<ShaderVariable>& ShaderStruct::getMembers() const {
@@ -58,7 +42,7 @@ const vector<ShaderVariable>& ShaderStruct::getMembers() const {
 
 string ShaderStruct::str() const {
     ostringstream oss;
-    oss << "struct " << mName << " {\n";
+    oss << "struct " << getName() << " {\n";
     for_each(mMembers.begin(), mMembers.end(), [&oss](ShaderVariable shaderVariable){
         oss << "\t" << shaderVariable.str() << "\n";
     });

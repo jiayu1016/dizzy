@@ -8,6 +8,7 @@
 #include <GLES3/gl3.h>
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
+#include "nameobj.h"
 
 namespace dzy {
 
@@ -18,7 +19,7 @@ class Mesh;
 class Node;
 class Material;
 /// Base class for "element" in the scene graph
-class NodeObj {
+class NodeObj : public NameObj {
 public:
     NodeObj(const std::string& name);
     virtual ~NodeObj();
@@ -27,9 +28,6 @@ public:
     void translate(float x, float y, float z);
     void scale(float x, float y, float z);
     void rotate(float radian, float axisX, float axisY, float axisZ);
-
-    void            setName(std::string name);
-    std::string     getName();
 
     /// get parent of this node
     ///
@@ -82,7 +80,6 @@ public:
     friend class Render;
 
 protected:
-    std::string                             mName;
     glm::mat4                               mTransformation;
     std::weak_ptr<Node>                     mParent;
     bool                                    mUseAutoProgram;

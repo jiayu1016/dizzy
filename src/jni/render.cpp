@@ -64,7 +64,7 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
 
     shared_ptr<Camera> activeCamera(scene->getActiveCamera());
     if (activeCamera) {
-        shared_ptr<NodeObj> node(rootNode->getChild(activeCamera->mName));
+        shared_ptr<NodeObj> node(rootNode->getChild(activeCamera->getName()));
         if (node) {
             glm::mat4 transform = glm::mat4(1.0f);
             while(node != rootNode) {
@@ -82,7 +82,7 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
         if (scene->getNumLights() > 0) {
             shared_ptr<Light> light(scene->mLights[0]);
             if (light) {
-                shared_ptr<NodeObj> node(rootNode->getChild(light->mName));
+                shared_ptr<NodeObj> node(rootNode->getChild(light->getName()));
                 if (node) {
                     glm::mat4 trans = glm::mat4(1.0f);
                     while(node != rootNode) {

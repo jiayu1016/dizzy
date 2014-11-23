@@ -4,13 +4,14 @@
 #include <string>
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
+#include "nameobj.h"
 
 namespace dzy {
 
 class AIAdapter;
 class Scene;
 class Render;
-class Camera {
+class Camera : public NameObj {
 public:
     Camera();
     Camera(
@@ -32,7 +33,6 @@ public:
     friend class Render;
     friend class AIAdapter;
 private:
-    std::string         mName;
     glm::vec3           mPosition;
     glm::vec3           mUp;
     glm::vec3           mLookAt;

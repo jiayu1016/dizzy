@@ -83,7 +83,7 @@ void Light::dumpParameter() {
         "diffuse: (%f, %f, %f), specular: (%f, %f, %f), ambient: (%f, %f, %f)\n"
         "mAngleInnerCone: %f , mAngleOuterCone: %f\n"
         "mAttenuationConstant: %f, mAttenuationLinear: %f, mAttenuationQuadratic: %f",
-        mName.c_str(),
+        getName().c_str(),
         mPosition.x, mPosition.y, mPosition.z,
         mDirection.x, mDirection.y, mDirection.z,
         mColorDiffuse.x, mColorDiffuse.y, mColorDiffuse.z,

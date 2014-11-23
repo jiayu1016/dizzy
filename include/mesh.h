@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include "nameobj.h"
 
 namespace dzy {
 
@@ -33,7 +34,7 @@ class Render;
 ///     This class is used for building Mesh manuall when you already
 ///     have vertex datas. If you want to create Meshes programmably,
 ///     use the derivative classes instead.
-class Mesh {
+class Mesh : public NameObj {
 public:
     enum {
         MAX_COLOR_SETS          = 0x8,
@@ -138,13 +139,9 @@ public:
     void            dumpBuf(float *buf, unsigned int bufSize, int groupSize = 3);
     void            dumpIndexBuf (int groupSize = 3);
 
-    void            setName(std::string name);
-    std::string     getName();
-
     friend class AIAdapter;
     friend class Render;
 protected:
-    std::string                     mName;
     PrimitiveType                   mPrimitiveType;
 
     unsigned int                    mNumVertices;

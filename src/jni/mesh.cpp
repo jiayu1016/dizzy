@@ -54,7 +54,7 @@ Mesh::Mesh(PrimitiveType type, unsigned int numVertices)
     , mHasBitangent             (false) {
     ostringstream os;
     os << "Mesh-" << mMonoCount++;
-    mName = os.str();
+    setName(os.str());
     memset(&mColorOffset[0], 0, MAX_COLOR_SETS * sizeof(unsigned int));
     memset(&mColorNumComponents[0], 0, MAX_COLOR_SETS * sizeof(unsigned int));
     memset(&mColorBytesComponent[0], 0, MAX_COLOR_SETS * sizeof(unsigned int));
@@ -392,14 +392,6 @@ void Mesh::dumpIndexBuf(int groupSize) {
     }
     if (num)
         PRINT("************ end Mesh::dumpIndexBuf ************");
-}
-
-void Mesh::setName(string name) {
-    mName = name;
-}
-
-string Mesh::getName() {
-    return mName;
 }
 
 CubeMesh::CubeMesh(const string& name)

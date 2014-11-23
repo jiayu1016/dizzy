@@ -4,10 +4,11 @@
 #include <string>
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
+#include "nameobj.h"
 
 namespace dzy {
 
-class Light {
+class Light : public NameObj {
 public:
     enum LightSourceType {
         LIGHT_SOURCE_UNDEFINED      = 0x0,
@@ -42,7 +43,6 @@ public:
     friend class Render;
     friend class AIAdapter;
 private:
-    std::string         mName;
     LightSourceType     mType;
     glm::vec3           mPosition;
     glm::vec3           mDirection;

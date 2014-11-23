@@ -20,7 +20,7 @@ namespace dzy {
 int NodeObj::mMonoCount = 0;
 
 NodeObj::NodeObj(const string& name)
-    : mName(name)
+    : NameObj(name)
     , mUseAutoProgram(true) {
     mMonoCount++;
 }
@@ -45,14 +45,6 @@ void NodeObj::scale(float x, float y, float z) {
 void NodeObj::rotate(float radian, float axisX, float axisY, float axisZ) {
     glm::vec3 axis(axisX, axisY, axisZ);
     mTransformation = glm::rotate(mTransformation, radian, axis);
-}
-
-void NodeObj::setName(string name) {
-    mName = name;
-}
-
-string NodeObj::getName() {
-    return mName;
 }
 
 shared_ptr<Node> NodeObj::getParent() {

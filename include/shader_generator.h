@@ -4,39 +4,33 @@
 #include <string>
 #include <sstream>
 #include <vector>
-
 #include "program.h"
+#include "nameobj.h"
 
 namespace dzy {
 
-class ShaderVariable {
+class ShaderVariable : public NameObj {
 public:
     ShaderVariable();
     ShaderVariable(const std::string &type, const std::string &name);
 
     std::string getType() const;
     void setType(const std::string &type);
-    std::string getName() const;
-    void setName(const std::string &name);
 
     std::string str() const;
 
 private:
     std::string mType;
-    std::string mName;
 };
 
-class ShaderStruct {
+class ShaderStruct : public NameObj {
 public:
     ShaderStruct(const std::string& name);
     ShaderStruct& operator<<(const ShaderVariable& shaderVariable);
 
-    void setName(const std::string& name);
-    std::string getName() const;
     const std::vector<ShaderVariable>& getMembers() const;
     std::string str() const;
 private:
-    std::string                 mName;
     std::string                 mPrefix;
     std::vector<ShaderVariable> mMembers;
 };

@@ -5,8 +5,7 @@ using namespace std;
 namespace dzy {
 
 Material::Material(const string& name)
-    : mName(name)
-    , mDiffuse(0.f, 0.f, 0.f)
+    : mDiffuse(0.f, 0.f, 0.f)
     , mSpecular(0.f, 0.f, 0.f)
     , mAmbient(1.f, 1.f, 1.f)
     , mEmission(0.f, 0.f, 0.f)
@@ -20,7 +19,7 @@ Material::Material(const Material& rhs) {
 
 Material& Material::operator =(const Material& rhs) {
     if (this != &rhs) {
-        mName       = rhs.mName;
+        NameObj::operator=(rhs);
         mDiffuse    = rhs.mDiffuse;
         mSpecular   = rhs.mSpecular;
         mAmbient    = rhs.mAmbient;
@@ -116,14 +115,6 @@ float Material::getShininess() const {
 
 void Material::setShininess(float shininess) {
     mShininess = shininess;
-}
-
-string Material::getName() {
-    return mName;
-}
-
-void Material::setName(const string& name) {
-    mName = name;
 }
 
 } //namespace
