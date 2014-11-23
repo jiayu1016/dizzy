@@ -146,66 +146,7 @@ bool Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry
         activeCamera->setAspect(surfaceWidth/surfaceHeight);
         view = activeCamera->getViewMatrix(scene->mCameraModelTransform);
         proj = activeCamera->getProjMatrix();
-/*
-        if (geometry->getMesh()->hasVertexNormals()) {
-            GLint mvLoc = currentProgram->getLocation("dzyMVMatrix");
-            if (mvLoc != -1) {
-                glUniformMatrix4fv(mvLoc, 1, GL_FALSE, glm::value_ptr(view*world));
-            }
-            GLint normalMatrixLoc = currentProgram->getLocation("dzyNormalMatrix");
-            if (normalMatrixLoc != -1) {
-                glm::mat3 mvInvTransMatrix = glm::mat3(glm::transpose(glm::inverse(mv)));
-                glUniformMatrix3fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(mvInvTransMatrix));
-            }
-        }
-
-        if (geometry->getMesh()->hasVertexPositions())
-            glUniformMatrix4fv(currentProgram->getLocation("dzyMVPMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
-
-        if (scene->getNumLights() > 0 && geometry->getMesh()->hasVertexNormals()) {
-            shared_ptr<Light> light(scene->mLights[0]);
-            if (light) {
-                glUniform3fv(currentProgram->getLocation("dzyLight.color"),
-                    1, glm::value_ptr(light->mColorDiffuse));
-                glUniform3fv(currentProgram->getLocation("dzyLight.ambient"),
-                    1, glm::value_ptr(light->mColorAmbient));
-                glm::vec3 lightPosEyeSpace = glm::vec3(
-                    view * scene->mLightModelTransform * glm::vec4(light->mPosition, 1.0f));
-                glUniform3fv(currentProgram->getLocation("dzyLight.position"),
-                    1, glm::value_ptr(lightPosEyeSpace));
-                glUniform1f(currentProgram->getLocation("dzyLight.attenuationConstant"),
-                    light->mAttenuationConstant);
-                glUniform1f(currentProgram->getLocation("dzyLight.attenuationLinear"),
-                    light->mAttenuationLinear);
-                glUniform1f(currentProgram->getLocation("dzyLight.attenuationQuadratic"),
-                    light->mAttenuationQuadratic);
-                glUniform1f(currentProgram->getLocation("dzyLight.strength"), 1.0f);
-            }
-        }
-*/
     }
-/*
-    if (scene->getNumMaterials() > 0) {
-        shared_ptr<Material> material(geometry->getMaterial());
-        if (material) {
-            glm::vec3 diffuse = material->getDiffuse();
-            glm::vec3 specular = material->getSpecular();
-            glm::vec3 ambient = material->getAmbient();
-            glm::vec3 emission = material->getEmission();
-            float shininess = material->getShininess();
-
-            glUniform3fv(currentProgram->getLocation("dzyMaterial.diffuse"),
-                1, glm::value_ptr(diffuse));
-            glUniform3fv(currentProgram->getLocation("dzyMaterial.specular"),
-                1, glm::value_ptr(specular));
-            glUniform3fv(currentProgram->getLocation("dzyMaterial.ambient"),
-                1, glm::value_ptr(ambient));
-            glUniform3fv(currentProgram->getLocation("dzyMaterial.emission"),
-                1, glm::value_ptr(emission));
-            glUniform1f(currentProgram->getLocation("dzyMaterial.shininess"), shininess);
-        }
-    }
-    */
 
     shared_ptr<Light> light(scene->getLight(0));
     light->setTransform(scene->mLightModelTransform);
@@ -222,23 +163,6 @@ void Render::drawMesh(shared_ptr<Scene> scene, shared_ptr<Mesh> mesh,
         mesh->getNumIndices(),              // indices count
         GL_UNSIGNED_INT,                    // type
         (void *)0);                         // offset
-
-#if 0
-    // restore
-    if (mesh->hasVertexPositions())
-        glDisableVertexAttribArray(program->getLocation("dzyVertexPosition"));
-
-    if (mesh->hasVertexColors()) {
-        glDisableVertexAttribArray(program->getLocation("dzyVertexColor"));
-    }
-    if (mesh->hasVertexNormals()) {
-        glDisableVertexAttribArray(program->getLocation("dzyVertexNormal"));
-    }
-
-    // unbind the BOs
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-#endif
 }
 
 shared_ptr<EngineContext> Render::getEngineContext() {

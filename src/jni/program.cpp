@@ -397,33 +397,6 @@ bool Program020::updateMeshData(shared_ptr<Mesh> mesh, GLuint vbo) {
             (void*)mesh->getPositionOffset()// offset
         );
     }
-/*
-    if (mesh->hasVertexColors()) {
-        GLint colorLoc = getLocation("dzyVertexColor");
-        glEnableVertexAttribArray(colorLoc);
-        glVertexAttribPointer(
-            colorLoc,
-            mesh->getColorNumComponent(0),
-            GL_FLOAT,
-            GL_FALSE,
-            mesh->getColorBufStride(0),
-            (void*)mesh->getColorOffset(0)
-        );
-    }
-
-    if (mesh->hasVertexNormals()) {
-        GLint normalLoc = getLocation("dzyVertexNormal");
-        glEnableVertexAttribArray(normalLoc);
-        glVertexAttribPointer(
-            normalLoc,
-            mesh->getNormalNumComponent(),  // size
-            GL_FLOAT,                       // type
-            GL_FALSE,                       // normalized
-            mesh->getNormalBufStride(),     // stride, 0 means tightly packed
-            (void *)mesh->getNormalOffset() // offset
-        );
-    }
-*/
     return true;
 }
 
@@ -647,12 +620,12 @@ ProgramManager::ProgramTable ProgramManager::builtInProgramTable[] = {
 
 #define PROG_TBL_ENTRY_DEF_END() {NULL, false, NULL, 0, NULL, 0, NULL, 0}
 
-    //PROG_TBL_ENTRY_DEF("per_pixel_shading",                   false,  true,   true,   true),
-    //PROG_TBL_ENTRY_DEF("normal_mapping",                      false,  true,   true,   true),
-    //PROG_TBL_ENTRY_DEF("gloss_mapping",                       false,  true,   true,   true),
-    //PROG_TBL_ENTRY_DEF("glow_mapping",                        false,  true,   true,   true),
-    //PROG_TBL_ENTRY_DEF("high_dynamic_range_shading",          false,  true,   true,   true),
-    //PROG_TBL_ENTRY_DEF("cartoon_shading",                     false,  true,   true,   true),
+    //PROG_TBL_ENTRY_DEF(per_pixel_shading),
+    //PROG_TBL_ENTRY_DEF(normal_mapping),
+    //PROG_TBL_ENTRY_DEF(gloss_mapping),
+    //PROG_TBL_ENTRY_DEF(glow_mapping),
+    //PROG_TBL_ENTRY_DEF(high_dynamic_range_shading),
+    //PROG_TBL_ENTRY_DEF(cartoon_shading),
     PROG_TBL_ENTRY_DEF(Blin_Phong_shading),
     PROG_TBL_ENTRY_DEF(simple_material),
     PROG_TBL_ENTRY_DEF(simple_vertex_color),
