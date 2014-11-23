@@ -15,7 +15,7 @@ class NativeCore
     , private noncopyable {
 public:
     explicit NativeCore();
-    ~NativeCore();
+    virtual ~NativeCore();
 
     bool init(struct android_app* app);
     void fini();
