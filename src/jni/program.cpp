@@ -140,43 +140,8 @@ bool Program::link(std::shared_ptr<Shader> vtxShader, std::shared_ptr<Shader> fr
 }
 
 bool Program::storeLocation() {
-
-#define STORE_CHECK_ATTRIB_LOC(ATTRIB) do {                             \
-        GLint attribLoc = glGetAttribLocation(mProgramId, ATTRIB);      \
-        if (attribLoc == -1) {                                          \
-            break;                                                      \
-        }                                                               \
-        mLocations[ATTRIB] = attribLoc;                                 \
-    } while(0)
-
-#define STORE_CHECK_UNIFORM_LOC(UNIFORM) do {                           \
-        GLint uniformLoc = glGetUniformLocation(mProgramId, UNIFORM);   \
-        if (uniformLoc == -1) {                                         \
-            break;                                                      \
-        }                                                               \
-        mLocations[UNIFORM] = uniformLoc;                               \
-    } while(0)
-
-    STORE_CHECK_ATTRIB_LOC("dzyVertexPosition");
-    STORE_CHECK_ATTRIB_LOC("dzyVertexColor");
-    STORE_CHECK_ATTRIB_LOC("dzyVertexNormal");
-    STORE_CHECK_UNIFORM_LOC("dzyMVPMatrix");
-    STORE_CHECK_UNIFORM_LOC("dzyMVMatrix");
-    STORE_CHECK_UNIFORM_LOC("dzyNormalMatrix");
-    STORE_CHECK_UNIFORM_LOC("dzyMaterial.diffuse");
-    STORE_CHECK_UNIFORM_LOC("dzyMaterial.specular");
-    STORE_CHECK_UNIFORM_LOC("dzyMaterial.ambient");
-    STORE_CHECK_UNIFORM_LOC("dzyMaterial.emission");
-    STORE_CHECK_UNIFORM_LOC("dzyMaterial.shininess");
-    STORE_CHECK_UNIFORM_LOC("dzyLight.color");
-    STORE_CHECK_UNIFORM_LOC("dzyLight.ambient");
-    STORE_CHECK_UNIFORM_LOC("dzyLight.position");
-    STORE_CHECK_UNIFORM_LOC("dzyLight.attenuationConstant");
-    STORE_CHECK_UNIFORM_LOC("dzyLight.attenuationLinear");
-    STORE_CHECK_UNIFORM_LOC("dzyLight.attenuationQuadratic");
-    STORE_CHECK_UNIFORM_LOC("dzyLight.strength");
-
-    return true;
+    ALOGE("subclass should implement storeLocation()");
+    return false;
 }
 
 GLint Program::getLocation(const char* name) {
@@ -247,6 +212,13 @@ Program000::Program000() {
     setRequirement(false, false, false, false);
 }
 
+bool Program000::storeLocation() {
+    STORE_CHECK_ATTRIB_LOC("dzyVertexPosition");
+    STORE_CHECK_UNIFORM_LOC("dzyMVPMatrix");
+    STORE_CHECK_UNIFORM_LOC("dzyConstantColor");
+    return true;
+}
+
 bool Program000::uploadData(
     shared_ptr<Camera> camera,
     shared_ptr<Light> light,
@@ -308,6 +280,13 @@ static const char FRAGMENT_simple_vertex_color[] =
 
 Program010::Program010() {
     setRequirement(true, false, false, false);
+}
+
+bool Program010::storeLocation() {
+    STORE_CHECK_ATTRIB_LOC("dzyVertexPosition");
+    STORE_CHECK_ATTRIB_LOC("dzyVertexColor");
+    STORE_CHECK_UNIFORM_LOC("dzyMVPMatrix");
+    return true;
 }
 
 bool Program010::uploadData(
@@ -377,6 +356,14 @@ static const char FRAGMENT_simple_material[] =
 
 Program020::Program020() {
     setRequirement(false, false, true, false);
+}
+
+bool Program020::storeLocation() {
+    STORE_CHECK_ATTRIB_LOC("dzyVertexPosition");
+    STORE_CHECK_UNIFORM_LOC("dzyMVPMatrix");
+    STORE_CHECK_UNIFORM_LOC("dzyMaterial.diffuse");
+    STORE_CHECK_UNIFORM_LOC("dzyMaterial.ambient");
+    return true;
 }
 
 bool Program020::uploadData(
@@ -511,6 +498,29 @@ void main() {\n\
 
 Program100::Program100() {
     setRequirement(false, true, true, true);
+}
+
+bool Program100::storeLocation() {
+    STORE_CHECK_ATTRIB_LOC("dzyVertexPosition");
+    STORE_CHECK_ATTRIB_LOC("dzyVertexColor");
+    STORE_CHECK_ATTRIB_LOC("dzyVertexNormal");
+    STORE_CHECK_UNIFORM_LOC("dzyMVPMatrix");
+    STORE_CHECK_UNIFORM_LOC("dzyMVMatrix");
+    STORE_CHECK_UNIFORM_LOC("dzyNormalMatrix");
+    STORE_CHECK_UNIFORM_LOC("dzyMaterial.diffuse");
+    STORE_CHECK_UNIFORM_LOC("dzyMaterial.specular");
+    STORE_CHECK_UNIFORM_LOC("dzyMaterial.ambient");
+    STORE_CHECK_UNIFORM_LOC("dzyMaterial.emission");
+    STORE_CHECK_UNIFORM_LOC("dzyMaterial.shininess");
+    STORE_CHECK_UNIFORM_LOC("dzyLight.color");
+    STORE_CHECK_UNIFORM_LOC("dzyLight.ambient");
+    STORE_CHECK_UNIFORM_LOC("dzyLight.position");
+    STORE_CHECK_UNIFORM_LOC("dzyLight.attenuationConstant");
+    STORE_CHECK_UNIFORM_LOC("dzyLight.attenuationLinear");
+    STORE_CHECK_UNIFORM_LOC("dzyLight.attenuationQuadratic");
+    STORE_CHECK_UNIFORM_LOC("dzyLight.strength");
+
+    return true;
 }
 
 bool Program100::uploadData(

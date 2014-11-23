@@ -35,6 +35,22 @@ private:
     GLenum      mShaderType;
 };
 
+#define STORE_CHECK_ATTRIB_LOC(ATTRIB) do {                             \
+        GLint attribLoc = glGetAttribLocation(mProgramId, ATTRIB);      \
+        if (attribLoc == -1) {                                          \
+            break;                                                      \
+        }                                                               \
+        mLocations[ATTRIB] = attribLoc;                                 \
+    } while(0)
+
+#define STORE_CHECK_UNIFORM_LOC(UNIFORM) do {                           \
+        GLint uniformLoc = glGetUniformLocation(mProgramId, UNIFORM);   \
+        if (uniformLoc == -1) {                                         \
+            break;                                                      \
+        }                                                               \
+        mLocations[UNIFORM] = uniformLoc;                               \
+    } while(0)
+
 class Scene;
 class Camera;
 class Light;
@@ -57,7 +73,8 @@ public:
     // bind program
     void use();
     bool link(std::shared_ptr<Shader> vtxShader, std::shared_ptr<Shader> fragShader);
-    bool storeLocation();
+    /// store attribute and uniform location after binding
+    virtual bool storeLocation();
     GLint getLocation(const char* name);
     void setRequirement(
         bool requireVertexColor,
@@ -110,6 +127,7 @@ protected:
 class Program000 : public Program {
 public:
     Program000();
+    virtual bool storeLocation();
     virtual bool uploadData(
         std::shared_ptr<Camera> camera,
         std::shared_ptr<Light> light,
@@ -123,6 +141,7 @@ public:
 class Program010 : public Program {
 public:
     Program010();
+    virtual bool storeLocation();
     virtual bool uploadData(
         std::shared_ptr<Camera> camera,
         std::shared_ptr<Light> light,
@@ -136,6 +155,7 @@ public:
 class Program020 : public Program {
 public:
     Program020();
+    virtual bool storeLocation();
     virtual bool uploadData(
         std::shared_ptr<Camera> camera,
         std::shared_ptr<Light> light,
@@ -149,6 +169,7 @@ public:
 class Program100 : public Program {
 public:
     Program100();
+    virtual bool storeLocation();
     virtual bool uploadData(
         std::shared_ptr<Camera> camera,
         std::shared_ptr<Light> light,
