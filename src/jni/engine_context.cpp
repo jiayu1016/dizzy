@@ -116,8 +116,8 @@ bool EngineContext::initDisplay() {
     mRender->setEngineContext(shared_from_this());
 
     // ProgramManager::preCompile must be called after setting up egl context
-    ProgramManager::get()->preCompile(shared_from_this());
-    nativeCore->initView();
+    if (ProgramManager::get()->preCompile(shared_from_this()))
+        nativeCore->initView();
 }
 
 const char* EngineContext::eglStatusStr() const {
@@ -149,6 +149,7 @@ void EngineContext::releaseDisplay() {
         return;
     }
     nativeCore->releaseView();
+    ProgramManager::release();
     if (mDisplay != EGL_NO_DISPLAY) {
         eglMakeCurrent(mDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         if (mEglContext != EGL_NO_CONTEXT) {

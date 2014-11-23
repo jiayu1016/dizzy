@@ -125,18 +125,15 @@ bool Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry
         nd = nd->getParent();
     }
     world = nd->mTransformation * world;
-    glm::mat4 mvp = world;
+    glm::mat4 view = glm::mat4(1.0f);
+    glm::mat4 proj = glm::mat4(1.0f);
 
     shared_ptr<Material> material(geometry->getMaterial());
-    //if (!material) {
-    //    material = Material::getDefault();
-    //}
-    ShaderGenerator shaderGenerator;
     shared_ptr<Program> currentProgram(
         geometry->getProgram(material, scene->getNumLights() > 0, geometry->getMesh()));
     if (!currentProgram) {
-        ALOGE("No built-in program generated for material: %s, mesh: %s",
-            material ? material->getName().c_str() : "NULL", geometry->getMesh()->getName().c_str());
+        //ALOGE("No built-in program generated for material: %s, mesh: %s",
+        //    material ? material->getName().c_str() : "NULL", geometry->getMesh()->getName().c_str());
         return false;
     }
     currentProgram->use();
@@ -147,15 +144,13 @@ bool Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry
         float surfaceWidth = getEngineContext()->getSurfaceWidth();
         float surfaceHeight = getEngineContext()->getSurfaceHeight();
         activeCamera->setAspect(surfaceWidth/surfaceHeight);
-        glm::mat4 view = activeCamera->getViewMatrix(scene->mCameraModelTransform);
-        glm::mat4 proj = activeCamera->getProjMatrix();
-        glm::mat4 mv = view * world;
-        mvp = proj * mv;
-
+        view = activeCamera->getViewMatrix(scene->mCameraModelTransform);
+        proj = activeCamera->getProjMatrix();
+/*
         if (geometry->getMesh()->hasVertexNormals()) {
             GLint mvLoc = currentProgram->getLocation("dzyMVMatrix");
             if (mvLoc != -1) {
-                glUniformMatrix4fv(mvLoc, 1, GL_FALSE, glm::value_ptr(mv));
+                glUniformMatrix4fv(mvLoc, 1, GL_FALSE, glm::value_ptr(view*world));
             }
             GLint normalMatrixLoc = currentProgram->getLocation("dzyNormalMatrix");
             if (normalMatrixLoc != -1) {
@@ -187,8 +182,9 @@ bool Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry
                 glUniform1f(currentProgram->getLocation("dzyLight.strength"), 1.0f);
             }
         }
+*/
     }
-
+/*
     if (scene->getNumMaterials() > 0) {
         shared_ptr<Material> material(geometry->getMaterial());
         if (material) {
@@ -209,64 +205,24 @@ bool Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry
             glUniform1f(currentProgram->getLocation("dzyMaterial.shininess"), shininess);
         }
     }
+    */
+
+    shared_ptr<Light> light(scene->getLight(0));
+    currentProgram->uploadData(activeCamera, light, material, world, view, proj);
     return true;
 }
 
 void Render::drawMesh(shared_ptr<Scene> scene, shared_ptr<Mesh> mesh,
     shared_ptr<Program> program, GLuint vbo, GLuint ibo) {
-    // bind the BOs
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    program->updateMeshData(mesh, vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-
-    if (mesh->hasVertexPositions()) {
-        GLint posLoc = program->getLocation("dzyVertexPosition");
-        glEnableVertexAttribArray(posLoc);
-        ALOGD("num vertices: %d, num components: %d, stride: %d, offset: %d",
-            mesh->getNumVertices(),
-            mesh->getPositionNumComponent(),
-            mesh->getPositionBufStride(),
-            mesh->getPositionOffset());
-        mesh->dumpBuf((float *)mesh->getPositionBuf(), mesh->getPositionBufSize());
-        glVertexAttribPointer(
-            posLoc,
-            mesh->getPositionNumComponent(),// size
-            GL_FLOAT,                       // type
-            GL_FALSE,                       // normalized
-            mesh->getPositionBufStride(),   // stride, 0 means tightly packed
-            (void*)mesh->getPositionOffset()// offset
-        );
-    }
-    if (mesh->hasVertexColors()) {
-        GLint colorLoc = program->getLocation("dzyVertexColor");
-        glEnableVertexAttribArray(colorLoc);
-        glVertexAttribPointer(
-            colorLoc,
-            mesh->getColorNumComponent(0),
-            GL_FLOAT,
-            GL_FALSE,
-            mesh->getColorBufStride(0),
-            (void*)mesh->getColorOffset(0)
-        );
-    }
-    if (mesh->hasVertexNormals()) {
-        GLint normalLoc = program->getLocation("dzyVertexNormal");
-        glEnableVertexAttribArray(normalLoc);
-        glVertexAttribPointer(
-            normalLoc,
-            mesh->getNormalNumComponent(),  // size
-            GL_FLOAT,                       // type
-            GL_FALSE,                       // normalized
-            mesh->getNormalBufStride(),     // stride, 0 means tightly packed
-            (void *)mesh->getNormalOffset() // offset
-        );
-    }
-
     // support only GL_UNSIGNED_INT right now
     glDrawElements(GL_TRIANGLES,            // mode
         mesh->getNumIndices(),              // indices count
         GL_UNSIGNED_INT,                    // type
         (void *)0);                         // offset
 
+#if 0
     // restore
     if (mesh->hasVertexPositions())
         glDisableVertexAttribArray(program->getLocation("dzyVertexPosition"));
@@ -281,6 +237,7 @@ void Render::drawMesh(shared_ptr<Scene> scene, shared_ptr<Mesh> mesh,
     // unbind the BOs
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+#endif
 }
 
 shared_ptr<EngineContext> Render::getEngineContext() {

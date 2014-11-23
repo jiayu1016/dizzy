@@ -25,6 +25,13 @@ public:
         if (!mInstance) mInstance = new T;
         return mInstance;
     }
+
+    static void release() {
+        if (mInstance) {
+            delete mInstance;
+            mInstance = nullptr;
+        }
+    }
 protected:
     Singleton() {};
     static T *mInstance;

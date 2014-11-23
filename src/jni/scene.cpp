@@ -33,6 +33,21 @@ shared_ptr<Camera> Scene::getActiveCamera() {
     return NULL;
 }
 
+shared_ptr<Camera> Scene::getCamera(int idx) {
+    if (idx < 0) return nullptr;
+    if (idx < mCameras.size())
+        return mCameras[idx];
+    return nullptr;
+}
+
+shared_ptr<Light> Scene::getLight(int idx) {
+    if (idx < 0) return nullptr;
+    if (idx < mLights.size())
+        return mLights[idx];
+    return nullptr;
+
+}
+
 bool Scene::atLeastOneMeshHasVertexPosition() {
     for (size_t i=0; i<getNumMeshes(); i++) {
         if (mMeshes[i]->hasVertexPositions()) return true;

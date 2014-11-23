@@ -27,7 +27,7 @@ public:
     bool compileFromMemory(std::vector<uint8_t>& data);
     bool compileFromMemory(const GLchar *source, const int32_t size);
     bool compileFromFile(const char *strFileName);
-    bool compileFromAsset(AAssetManager *assetManager, const std::string &assetFile); 
+    bool compileFromAsset(AAssetManager *assetManager, const std::string &assetFile);
 
 private:
     bool        mInitialized;
@@ -36,6 +36,10 @@ private:
 };
 
 class Scene;
+class Camera;
+class Light;
+class Material;
+class Mesh;
 class Program {
 public:
     enum Requirement {
@@ -62,14 +66,84 @@ public:
         bool requireLight);
     bool hasRequirement(Requirement requirement);
 
+    /// upload data to gpu
+    ///
+    ///     data including material, light, transform and anything else except mesh
+    ///
+    ///     @param camera current using camera
+    ///     @param light
+    ///     @param material current using material
+    ///     @param world world transfomation matrix to upload
+    ///     @param view view transformation matrix to upload
+    ///     @param proj projection transformation matrix to upload
+    virtual bool uploadData(
+        std::shared_ptr<Camera> camera,
+        std::shared_ptr<Light> light,
+        std::shared_ptr<Material> material,
+        glm::mat4& world,
+        glm::mat4& view,
+        glm::mat4& proj);
+
+    /// update mesh data
+    ///
+    ///     mesh data including all datas that are put in vbo,
+    ///     vbo should  be kept  until glDrawXXX gets called.
+    ///
+    ///     @mesh the mesh beging drawn
+    ///     @vbo vertex buffer object that hold the vertex data structures of arrays
+    virtual bool updateMeshData(std::shared_ptr<Mesh> mesh, GLuint vbo);
+
     friend class Shader;
 
-private:
+protected:
     bool                                        mLinked;
     GLuint                                      mProgramId;
     std::vector<std::shared_ptr<Shader> >       mShaders;
     std::map<std::string, GLint>                mLocations;
     int                                         mRequirement;
+    static int count;
+};
+
+///////////////////////////////////////////
+//            built-in programs
+///////////////////////////////////////////
+class Program000 : public Program {
+public:
+    Program000();
+    virtual bool uploadData(
+        std::shared_ptr<Camera> camera,
+        std::shared_ptr<Light> light,
+        std::shared_ptr<Material> material,
+        glm::mat4& world,
+        glm::mat4& view,
+        glm::mat4& proj);
+    virtual bool updateMeshData(std::shared_ptr<Mesh> mesh, GLuint vbo);
+};
+
+class Program010 : public Program {
+public:
+    Program010();
+    virtual bool uploadData(
+        std::shared_ptr<Camera> camera,
+        std::shared_ptr<Light> light,
+        std::shared_ptr<Material> material,
+        glm::mat4& world,
+        glm::mat4& view,
+        glm::mat4& proj);
+    virtual bool updateMeshData(std::shared_ptr<Mesh> mesh, GLuint vbo);
+};
+
+class Program020 : public Program {
+public:
+    Program020();
+    virtual bool uploadData(
+        std::shared_ptr<Camera> camera,
+        std::shared_ptr<Light> light,
+        std::shared_ptr<Material> material,
+        glm::mat4& world,
+        glm::mat4& view,
+        glm::mat4& proj);
+    virtual bool updateMeshData(std::shared_ptr<Mesh> mesh, GLuint vbo);
 };
 
 class EngineContext;
@@ -78,6 +152,17 @@ class Mesh;
 class Light;
 class ProgramManager : public Singleton<ProgramManager> {
 public:
+    struct ProgramTable {
+        const char *technique;
+        bool        hasGeometry;
+        const char *vertexSrc;
+        int         vertexLen;
+        const char *fragmentSrc;
+        int         fragmentLen;
+        const char *gometrySrc;
+        int         geometryLen;
+    };
+
     bool preCompile(std::shared_ptr<EngineContext> engineContext);
     std::shared_ptr<Program> getCompatibleProgram(
         std::shared_ptr<Material> material,
@@ -88,9 +173,12 @@ public:
 
 private:
     ProgramManager() {};
+
+    std::shared_ptr<Program> createProgram(const std::string& name);
     bool isCompatible(bool b1, bool b2);
 
     std::vector<std::shared_ptr<Program> > mPrograms;
+    static ProgramTable builtInProgramTable[];
 };
 
 } // namespace dzy

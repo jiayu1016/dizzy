@@ -85,10 +85,13 @@ bool Shader::compileFromAsset(
     return compileFromMemory(buffer.get(), sz);
 }
 
+int Program::count = 0;
 Program::Program()
     : mLinked(false)
     , mProgramId(0)
     , mRequirement(0) {
+    count++;
+    ALOGD("Program::Program(), count: %d", count);
     mProgramId = glCreateProgram();
     if (!mProgramId) {
         ALOGE("glCreateProgram error");
@@ -97,6 +100,8 @@ Program::Program()
 }
 
 Program::~Program() {
+    --count;
+    ALOGD("Program::~Program(), count: %d", count);
     if (mProgramId) glDeleteProgram(mProgramId);
 }
 
@@ -152,7 +157,6 @@ bool Program::storeLocation() {
         mLocations[UNIFORM] = uniformLoc;                               \
     } while(0)
 
-
     STORE_CHECK_ATTRIB_LOC("dzyVertexPosition");
     STORE_CHECK_ATTRIB_LOC("dzyVertexColor");
     STORE_CHECK_ATTRIB_LOC("dzyVertexNormal");
@@ -174,109 +178,6 @@ bool Program::storeLocation() {
 
     return true;
 }
-
-static const char VERTEX_simple_vertex_color[] =
-"#version 300 es\n"
-"uniform mat4 dzyMVPMatrix;\n"
-"in vec3 dzyVertexPosition;\n"
-"in vec3 dzyVertexColor;\n"
-"out vec3 vVertexColor;\n"
-"void main() {\n"
-"    gl_Position = dzyMVPMatrix * vec4(dzyVertexPosition, 1.0);\n"
-"    vVertexColor = dzyVertexColor;\n"
-"}\n";
-
-static const char FRAGMENT_simple_vertex_color[] =
-"#version 300 es\n"
-"precision mediump float;\n"
-"in vec3 vVertexColor;\n"
-"out vec4 fragColor;\n"
-"void main() {\n"
-"    fragColor = vec4(vVertexColor, 1.0);\n"
-"}\n";
-
-static const char VERTEX_simple_constant_color[] =
-"#version 300 es\n"
-"uniform mat4 dzyMVPMatrix;\n"
-"in vec3 dzyVertexPosition;\n"
-"void main() {\n"
-"    gl_Position = dzyMVPMatrix * vec4(dzyVertexPosition, 1.0);\n"
-"}\n";
-
-static const char FRAGMENT_simple_constant_color[] =
-"#version 300 es\n"
-"precision mediump float;\n"
-"uniform vec3 dzyConstantColor;\n"
-"out vec4 fragColor;\n"
-"void main() {\n"
-"    fragColor = vec4(dzyConstantColor, 1.0);\n"
-"}\n";
-
-/// built-in shaders, mvp & vertex position are mandatory
-static struct ShaderTable {
-    const char *technique;
-    bool        hasGeometry;
-    bool        requireVertexColor;
-    bool        requireVertexNormal;
-    bool        requireMaterial;
-    bool        requireLight;
-    const char *vertexSrc;
-    int         vertexLen;
-    const char *fragmentSrc;
-    int         fragmentLen;
-    const char *gometrySrc;
-    int         geometryLen;
-} builtInShaderTable[] = {
-#define SHADER_DEF(NAME, VC, VN, MT, LT) {  \
-        #NAME,                              \
-        false,                              \
-        VC,                                 \
-        VN,                                 \
-        MT,                                 \
-        LT,                                 \
-        VERTEX_ ##NAME,                     \
-        sizeof(VERTEX_ ##NAME),             \
-        FRAGMENT_ ##NAME,                   \
-        sizeof(FRAGMENT_ ##NAME),           \
-        NULL,                               \
-        0                                   \
-    }
-
-#define SHADER_DEF2(NAME, VC, VN, MT, LT) { \
-        #NAME,                              \
-        true,                               \
-        VC,                                 \
-        VN,                                 \
-        MT,                                 \
-        LT,                                 \
-        VERTEX_ ##NAME,                     \
-        sizeof(VERTEX_ ##NAME),             \
-        FRAGMENT_ ##NAME,                   \
-        sizeof(FRAGMENT_ ##NAME),           \
-        GEOMETRY_ ##NAME,                   \
-        sizeof(GEOMETRY_ ##NAME)            \
-    }
-
-#define SHADER_DEF_END() \
-    {NULL, false, false, false, false, false, NULL, 0, NULL, 0, NULL, 0}
-
-    //SHADER_DEF("per_pixel_shading",                   false,  true,   true,   true),
-    //SHADER_DEF("normal_mapping",                      false,  true,   true,   true),
-    //SHADER_DEF("gloss_mapping",                       false,  true,   true,   true),
-    //SHADER_DEF("glow_mapping",                        false,  true,   true,   true),
-    //SHADER_DEF("high_dynamic_range_shading",          false,  true,   true,   true),
-    //SHADER_DEF("cartoon_shading",                     false,  true,   true,   true),
-    //SHADER_DEF("simple_material_texture_light",       false,  false,  true,   true),
-    //SHADER_DEF("simple_vertex_color_light",           true,   false,  false,  true),
-    //SHADER_DEF("simple_material_texture",             false,  false,  true,   false),
-    SHADER_DEF(simple_vertex_color,         true, false, false, false),
-    SHADER_DEF(simple_constant_color,       false, false, false, false),
-    SHADER_DEF_END()
-
-#undef SHADER_DEF
-#undef SHADER_DEF2
-#undef SHADER_DEF_END
-};
 
 GLint Program::getLocation(const char* name) {
     if (!isValid()) {
@@ -309,28 +210,333 @@ bool Program::hasRequirement(Requirement requirement) {
     return (mRequirement & (1 << requirement)) != 0;
 }
 
+bool Program::uploadData(
+    shared_ptr<Camera> camera,
+    shared_ptr<Light> light,
+    shared_ptr<Material> material,
+    glm::mat4& world,
+    glm::mat4& view,
+    glm::mat4& proj) {
+    ALOGE("subclass should implement uploadData");
+    return false;
+}
+
+bool Program::updateMeshData(shared_ptr<Mesh> mesh, GLuint vbo) {
+    ALOGE("subclass should implement updateMeshData");
+    return false;
+}
+
+static const char VERTEX_simple_constant_color[] =
+"#version 300 es\n"
+"uniform mat4 dzyMVPMatrix;\n"
+"in vec3 dzyVertexPosition;\n"
+"void main() {\n"
+"    gl_Position = dzyMVPMatrix * vec4(dzyVertexPosition, 1.0);\n"
+"}\n";
+
+static const char FRAGMENT_simple_constant_color[] =
+"#version 300 es\n"
+"precision mediump float;\n"
+"uniform vec3 dzyConstantColor;\n"
+"out vec4 fragColor;\n"
+"void main() {\n"
+"    fragColor = vec4(dzyConstantColor, 1.0);\n"
+"}\n";
+
+Program000::Program000() {
+    setRequirement(false, false, false, false);
+}
+
+bool Program000::uploadData(
+    shared_ptr<Camera> camera,
+    shared_ptr<Light> light,
+    shared_ptr<Material> material,
+    glm::mat4& world,
+    glm::mat4& view,
+    glm::mat4& proj) {
+    glm::mat4 mvp = proj * view * world;
+    glUniformMatrix4fv(getLocation("dzyMVPMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
+    // TODO: find a way to determine constant color
+    glUniform3f(getLocation("dzyConstantColor"), 0.f, 0.f, 0.f);
+    return true;
+}
+
+bool Program000::updateMeshData(shared_ptr<Mesh> mesh, GLuint vbo) {
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    if (mesh->hasVertexPositions()) {
+        GLint posLoc = getLocation("dzyVertexPosition");
+        glEnableVertexAttribArray(posLoc);
+        //ALOGD("num vertices: %d, num components: %d, stride: %d, offset: %d",
+        //    mesh->getNumVertices(),
+        //    mesh->getPositionNumComponent(),
+        //    mesh->getPositionBufStride(),
+        //    mesh->getPositionOffset());
+        //mesh->dumpBuf((float *)mesh->getPositionBuf(), mesh->getPositionBufSize());
+        glVertexAttribPointer(
+            posLoc,
+            mesh->getPositionNumComponent(),// size
+            GL_FLOAT,                       // type
+            GL_FALSE,                       // normalized
+            mesh->getPositionBufStride(),   // stride, 0 means tightly packed
+            (void*)mesh->getPositionOffset()// offset
+        );
+    }
+
+    return true;
+}
+
+static const char VERTEX_simple_vertex_color[] =
+"#version 300 es\n"
+"uniform mat4 dzyMVPMatrix;\n"
+"in vec3 dzyVertexPosition;\n"
+"in vec3 dzyVertexColor;\n"
+"out vec3 vVertexColor;\n"
+"void main() {\n"
+"    gl_Position = dzyMVPMatrix * vec4(dzyVertexPosition, 1.0);\n"
+"    vVertexColor = dzyVertexColor;\n"
+"}\n";
+
+static const char FRAGMENT_simple_vertex_color[] =
+"#version 300 es\n"
+"precision mediump float;\n"
+"in vec3 vVertexColor;\n"
+"out vec4 fragColor;\n"
+"void main() {\n"
+"    fragColor = vec4(vVertexColor, 1.0);\n"
+"}\n";
+
+Program010::Program010() {
+    setRequirement(true, false, false, false);
+}
+
+bool Program010::uploadData(
+    shared_ptr<Camera> camera,
+    shared_ptr<Light> light,
+    shared_ptr<Material> material,
+    glm::mat4& world,
+    glm::mat4& view,
+    glm::mat4& proj) {
+    glm::mat4 mvp = proj * view * world;
+    glUniformMatrix4fv(getLocation("dzyMVPMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
+    return true;
+}
+
+bool Program010::updateMeshData(shared_ptr<Mesh> mesh, GLuint vbo) {
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    if (mesh->hasVertexPositions()) {
+        GLint posLoc = getLocation("dzyVertexPosition");
+        glEnableVertexAttribArray(posLoc);
+        glVertexAttribPointer(
+            posLoc,
+            mesh->getPositionNumComponent(),// size
+            GL_FLOAT,                       // type
+            GL_FALSE,                       // normalized
+            mesh->getPositionBufStride(),   // stride, 0 means tightly packed
+            (void*)mesh->getPositionOffset()// offset
+        );
+    }
+    if (mesh->hasVertexColors()) {
+        GLint colorLoc = getLocation("dzyVertexColor");
+        glEnableVertexAttribArray(colorLoc);
+        glVertexAttribPointer(
+            colorLoc,
+            mesh->getColorNumComponent(0),
+            GL_FLOAT,
+            GL_FALSE,
+            mesh->getColorBufStride(0),
+            (void*)mesh->getColorOffset(0)
+        );
+    }
+
+    return true;
+}
+
+static const char VERTEX_simple_material[] =
+"#version 300 es\n"
+"uniform mat4 dzyMVPMatrix;\n"
+"in vec3 dzyVertexPosition;\n"
+"void main() {\n"
+"    gl_Position = dzyMVPMatrix * vec4(dzyVertexPosition, 1.0);\n"
+"}\n";
+
+static const char FRAGMENT_simple_material[] =
+"#version 300 es\n"
+"precision mediump float;\n"
+"struct Material {\n"
+"    vec3 diffuse;\n"
+"    vec3 ambient;\n"
+"};\n"
+"uniform Material dzyMaterial;\n"
+"out vec4 fragColor;\n"
+"void main() {\n"
+"    vec3 color = dzyMaterial.diffuse + dzyMaterial.ambient;\n"
+"    fragColor = vec4(color, 1.0);\n"
+"}\n";
+
+Program020::Program020() {
+    setRequirement(false, false, true, false);
+}
+
+bool Program020::uploadData(
+    shared_ptr<Camera> camera,
+    shared_ptr<Light> light,
+    shared_ptr<Material> material,
+    glm::mat4& world,
+    glm::mat4& view,
+    glm::mat4& proj) {
+    glm::mat4 mvp = proj * view * world;
+    glUniformMatrix4fv(getLocation("dzyMVPMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
+    glm::vec3 diffuse = material->getDiffuse();
+    glm::vec3 ambient = material->getAmbient();
+    glUniform3fv(getLocation("dzyMaterial.diffuse"), 1, glm::value_ptr(diffuse));
+    glUniform3fv(getLocation("dzyMaterial.ambient"), 1, glm::value_ptr(ambient));
+    return true;
+}
+
+bool Program020::updateMeshData(shared_ptr<Mesh> mesh, GLuint vbo) {
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    if (mesh->hasVertexPositions()) {
+        GLint posLoc = getLocation("dzyVertexPosition");
+        glEnableVertexAttribArray(posLoc);
+        glVertexAttribPointer(
+            posLoc,
+            mesh->getPositionNumComponent(),// size
+            GL_FLOAT,                       // type
+            GL_FALSE,                       // normalized
+            mesh->getPositionBufStride(),   // stride, 0 means tightly packed
+            (void*)mesh->getPositionOffset()// offset
+        );
+    }
+/*
+    if (mesh->hasVertexColors()) {
+        GLint colorLoc = getLocation("dzyVertexColor");
+        glEnableVertexAttribArray(colorLoc);
+        glVertexAttribPointer(
+            colorLoc,
+            mesh->getColorNumComponent(0),
+            GL_FLOAT,
+            GL_FALSE,
+            mesh->getColorBufStride(0),
+            (void*)mesh->getColorOffset(0)
+        );
+    }
+
+    if (mesh->hasVertexNormals()) {
+        GLint normalLoc = getLocation("dzyVertexNormal");
+        glEnableVertexAttribArray(normalLoc);
+        glVertexAttribPointer(
+            normalLoc,
+            mesh->getNormalNumComponent(),  // size
+            GL_FLOAT,                       // type
+            GL_FALSE,                       // normalized
+            mesh->getNormalBufStride(),     // stride, 0 means tightly packed
+            (void *)mesh->getNormalOffset() // offset
+        );
+    }
+*/
+    return true;
+}
+
+static const char VERTEX_simple_vertex_color_light[] =
+"#version 300 es\n"
+"uniform mat4 dzyMVPMatrix;\n"
+"uniform mat4 dzyMVMatrix;\n"
+"uniform mat3 dzyNormalMatrix;\n"
+"in vec3 dzyVertexPosition;\n"
+"in vec3 dzyVertexColor;\n"
+"in vec3 dzyVertexNormal;\n"
+"out vec3 vVertexPositionEyeSpace;\n"
+"out vec3 vVertexNormalEyeSpace;\n"
+"void main() {\n"
+"    gl_Position = dzyMVPMatrix * vec4(dzyVertexPosition, 1.0);\n"
+"    vVertexPositionEyeSpace = vec3(dzyMVMatrix * vec4(dzyVertexPosition, 1.0));\n"
+"    vVertexNormalEyeSpace = dzyNormalMatrix * dzyVertexNormal;\n"
+"}\n";
+
+static const char FRAGMENT_simple_vertex_color_light[] =
+"#version 300 es\n"
+"precision mediump float;\n"
+"in vec3 vVertexPositionEyeSpace;\n"
+"in vec3 vVertexNormalEyeSpace;\n"
+"struct PointLight {\n"
+"    vec3 color;\n"
+"    vec3 ambient;\n"
+"    vec3 position;\n"
+"    float attenuationConstant;\n"
+"    float attenuationLinear;\n"
+"    float attenuationQuadratic;\n"
+"    float strength;\n"
+"};\n"
+"uniform PointLight dzyLight;\n"
+"out vec4 fragColor;\n"
+"void main() {\n"
+"    fragColor = vec4(vVertexColor, 1.0);\n"
+"}\n";
+
+/// built-in shaders, mvp & vertex position are mandatory
+ProgramManager::ProgramTable ProgramManager::builtInProgramTable[] = {
+#define PROG_TBL_ENTRY_DEF(NAME) {                  \
+        #NAME,                                      \
+        false,                                      \
+        VERTEX_ ##NAME,                             \
+        sizeof(VERTEX_ ##NAME),                     \
+        FRAGMENT_ ##NAME,                           \
+        sizeof(FRAGMENT_ ##NAME),                   \
+        NULL,                                       \
+        0                                           \
+    }
+
+#define PROG_TBL_ENTRY_DEF2(NAME) {                 \
+        #NAME,                                      \
+        true,                                       \
+        VERTEX_ ##NAME,                             \
+        sizeof(VERTEX_ ##NAME),                     \
+        FRAGMENT_ ##NAME,                           \
+        sizeof(FRAGMENT_ ##NAME),                   \
+        GEOMETRY_ ##NAME,                           \
+        sizeof(GEOMETRY_ ##NAME)                    \
+    }
+
+#define PROG_TBL_ENTRY_DEF_END() {NULL, false, NULL, 0, NULL, 0, NULL, 0}
+
+    //PROG_TBL_ENTRY_DEF("per_pixel_shading",                   false,  true,   true,   true),
+    //PROG_TBL_ENTRY_DEF("normal_mapping",                      false,  true,   true,   true),
+    //PROG_TBL_ENTRY_DEF("gloss_mapping",                       false,  true,   true,   true),
+    //PROG_TBL_ENTRY_DEF("glow_mapping",                        false,  true,   true,   true),
+    //PROG_TBL_ENTRY_DEF("high_dynamic_range_shading",          false,  true,   true,   true),
+    //PROG_TBL_ENTRY_DEF("cartoon_shading",                     false,  true,   true,   true),
+    //PROG_TBL_ENTRY_DEF("simple_material_light",       false,  false,  true,   true),
+    PROG_TBL_ENTRY_DEF(simple_material),
+    PROG_TBL_ENTRY_DEF(simple_vertex_color),
+    PROG_TBL_ENTRY_DEF(simple_constant_color),
+    PROG_TBL_ENTRY_DEF_END()
+
+#undef PROG_TBL_ENTRY_DEF
+#undef PROG_TBL_ENTRY_DEF2
+#undef PROG_TBL_ENTRY_DEF_END
+};
+
 bool ProgramManager::preCompile(shared_ptr<EngineContext> engineContext) {
-    for (int i=0; builtInShaderTable[i].technique; i++) {
+    for (int i=0; builtInProgramTable[i].technique; i++) {
         shared_ptr<Shader> vtxShader(new Shader(Shader::Vertex));
-        if (!vtxShader->compileFromMemory(builtInShaderTable[i].vertexSrc, builtInShaderTable[i].vertexLen)) {
+        if (!vtxShader->compileFromMemory(builtInProgramTable[i].vertexSrc, builtInProgramTable[i].vertexLen)) {
             ALOGE("error compile vertex shader");
             return false;
         }
         shared_ptr<Shader> fragShader(new Shader(Shader::Fragment));
-        if (!fragShader->compileFromMemory(builtInShaderTable[i].fragmentSrc, builtInShaderTable[i].fragmentLen)) {
+        if (!fragShader->compileFromMemory(builtInProgramTable[i].fragmentSrc, builtInProgramTable[i].fragmentLen)) {
             ALOGE("error compile fragment shader");
             return false;
         }
-        shared_ptr<Program> program(new Program);
+        shared_ptr<Program> program(createProgram(builtInProgramTable[i].technique));
         if (!program->link(vtxShader, fragShader)) {
             ALOGE("error link program");
             return false;
         }
-        program->setRequirement(
-            builtInShaderTable[i].requireVertexColor,
-            builtInShaderTable[i].requireVertexNormal,
-            builtInShaderTable[i].requireMaterial,
-            builtInShaderTable[i].requireLight);
+
         program->use();
         program->storeLocation();
 
@@ -360,6 +566,17 @@ shared_ptr<Program> ProgramManager::getCompatibleProgram(
         //    program->hasRequirement(Program::REQUIRE_LIGHT));
         if (compatible) return program;
     }
+    return nullptr;
+}
+
+shared_ptr<Program> ProgramManager::createProgram(const string& name) {
+    if (name == "simple_material")
+        return shared_ptr<Program>(new Program020);
+    if (name == "simple_vertex_color")
+        return shared_ptr<Program>(new Program010);
+    if (name == "simple_constant_color")
+        return shared_ptr<Program>(new Program000);
+
     return nullptr;
 }
 

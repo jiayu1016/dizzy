@@ -496,9 +496,9 @@ CubeMesh::CubeMesh(const string& name)
         20, 22, 23
     };
 
-    Mesh::appendVertexPositions(verts, 3, sizeof(float));
-    Mesh::appendVertexColors(colors, 3, sizeof(float), 0);
-    Mesh::buildIndexBuffer(indices, 12);
+    appendVertexPositions(verts, 3, sizeof(float));
+    //appendVertexColors(colors, 3, sizeof(float), 0);
+    buildIndexBuffer(indices, 12);
 }
 
 } //namespace

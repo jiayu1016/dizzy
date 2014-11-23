@@ -41,6 +41,8 @@ public:
     inline unsigned int getNumMaterials() { return mMaterials.size(); }
     inline unsigned int getNumMeshes() { return mMeshes.size(); }
     std::shared_ptr<Camera> getActiveCamera();
+    std::shared_ptr<Camera> getCamera(int idx);
+    std::shared_ptr<Light> getLight(int idx);
 
     bool atLeastOneMeshHasVertexPosition();
     bool atLeastOneMeshHasVertexColor();
