@@ -127,8 +127,8 @@ bool Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry
     shared_ptr<Program> currentProgram(
         geometry->getProgram(material, scene->getNumLights() > 0, geometry->getMesh()));
     if (!currentProgram) {
-        //ALOGE("No built-in program generated for material: %s, mesh: %s",
-        //    material ? material->getName().c_str() : "NULL", geometry->getMesh()->getName().c_str());
+        ALOGV("No built-in program generated for material: %s, mesh: %s",
+            material ? material->getName().c_str() : "NULL", geometry->getMesh()->getName().c_str());
         return false;
     }
     currentProgram->use();
