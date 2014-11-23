@@ -111,11 +111,6 @@ bool Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry
         return false;
     }
 
-    if (scene->getNumLights() == 0 && geometry->isAutoProgram()) {
-        ALOGE("built-in auto programs require light");
-        return false;
-    }
-
     shared_ptr<Node> rootNode(scene->getRootNode());
     assert(rootNode);
     glm::mat4 world = glm::mat4(1.0f);
