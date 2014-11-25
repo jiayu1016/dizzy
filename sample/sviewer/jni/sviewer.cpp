@@ -1,7 +1,7 @@
 #include <memory>
 #include <string>
 #include "log.h"
-#include "native_core.h"
+#include "engine_core.h"
 #include "engine_context.h"
 #include "render.h"
 #include "scene_graph.h"
@@ -11,7 +11,7 @@
 using namespace dzy;
 using namespace std;
 
-class SViewer : public NativeCore {
+class SViewer : public EngineCore {
 public:
     virtual bool initView();
     virtual bool releaseView();
@@ -75,6 +75,6 @@ shared_ptr<Scene> SViewer::getScene() {
     return SceneManager::get()->getCurrentScene();
 }
 
-NativeCore * engine_main() {
+EngineCore * engine_main() {
     return new SViewer;
 }

@@ -7,7 +7,7 @@
 #include <EGL/eglext.h>
 #include <GLES3/gl3.h>
 #include "log.h"
-#include "native_core.h"
+#include "engine_core.h"
 #include "scene.h"
 #include "render.h"
 #include "program.h"
@@ -31,16 +31,16 @@ EngineContext::~EngineContext() {
     ALOGV("EngineContext::~EngineContext()");
 }
 
-void EngineContext::init(shared_ptr<NativeCore> nativeCore) {
-    mAssetManager = nativeCore->mApp->activity->assetManager;
-    mInternalDataPath = nativeCore->mApp->activity->internalDataPath;
-    mNativeCore = nativeCore;
+void EngineContext::init(shared_ptr<EngineCore> engineCore) {
+    mAssetManager = engineCore->mApp->activity->assetManager;
+    mInternalDataPath = engineCore->mApp->activity->internalDataPath;
+    mEngineCore = engineCore;
 }
 
 bool EngineContext::initDisplay() {
-    shared_ptr<NativeCore> nativeCore(getNativeCore());
-    if (!nativeCore) {
-        ALOGE("NativeCore released before EngineContext");
+    shared_ptr<EngineCore> engineCore(getNativeCore());
+    if (!engineCore) {
+        ALOGE("EngineCore released before EngineContext");
         return false;
     }
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -77,9 +77,9 @@ bool EngineContext::initDisplay() {
 
     EGLint format;
     eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
-    ANativeWindow_setBuffersGeometry(nativeCore->mApp->window, 0, 0, format);
+    ANativeWindow_setBuffersGeometry(engineCore->mApp->window, 0, 0, format);
 
-    EGLSurface surface = eglCreateWindowSurface(display, config, nativeCore->mApp->window, NULL);
+    EGLSurface surface = eglCreateWindowSurface(display, config, engineCore->mApp->window, NULL);
     if (surface == EGL_NO_SURFACE) {
         ALOGW("Unable to create surface: %s", eglStatusStr());
         return false;
@@ -118,7 +118,7 @@ bool EngineContext::initDisplay() {
 
     // ProgramManager::preCompile must be called after setting up egl context
     if (ProgramManager::get()->preCompile(shared_from_this()))
-        nativeCore->initView();
+        engineCore->initView();
 }
 
 const char* EngineContext::eglStatusStr() const {
@@ -144,12 +144,12 @@ const char* EngineContext::eglStatusStr() const {
 }
 
 void EngineContext::releaseDisplay() {
-    shared_ptr<NativeCore> nativeCore(getNativeCore());
-    if (!nativeCore) {
-        ALOGE("NativeCore released before EngineContext");
+    shared_ptr<EngineCore> engineCore(getNativeCore());
+    if (!engineCore) {
+        ALOGE("EngineCore released before EngineContext");
         return;
     }
-    nativeCore->releaseView();
+    engineCore->releaseView();
     ProgramManager::release();
     mRender->release();
     if (mDisplay != EGL_NO_DISPLAY) {
@@ -168,12 +168,12 @@ void EngineContext::releaseDisplay() {
 }
 
 bool EngineContext::updateDisplay() {
-    shared_ptr<NativeCore> nativeCore(getNativeCore());
-    if (!nativeCore) {
-        ALOGE("NativeCore released before EngineContext");
+    shared_ptr<EngineCore> engineCore(getNativeCore());
+    if (!engineCore) {
+        ALOGE("EngineCore released before EngineContext");
         return false;
     }
-    shared_ptr<Scene> currentScene(nativeCore->getScene());
+    shared_ptr<Scene> currentScene(engineCore->getScene());
     mRender->drawScene(currentScene);
     return true;
 }
@@ -182,8 +182,8 @@ AAssetManager* EngineContext::getAssetManager() {
     return mAssetManager;
 }
 
-shared_ptr<NativeCore> EngineContext::getNativeCore() {
-    return mNativeCore.lock();
+shared_ptr<EngineCore> EngineContext::getNativeCore() {
+    return mEngineCore.lock();
 }
 
 shared_ptr<Render> EngineContext::getDefaultRender() {

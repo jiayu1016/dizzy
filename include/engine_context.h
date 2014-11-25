@@ -13,7 +13,7 @@ struct android_app;
 
 namespace dzy {
 
-class NativeCore;
+class EngineCore;
 class Scene;
 class Render;
 class EngineContext
@@ -23,7 +23,7 @@ public:
     explicit EngineContext();
     ~EngineContext();
     // init non-trivial class members that cannot be put in ctor
-    void                        init(std::shared_ptr<NativeCore> nativeCore);
+    void                        init(std::shared_ptr<EngineCore> engineCore);
 
     // OS specific
     static const std::string    getAppName();
@@ -33,7 +33,7 @@ public:
     bool                        listAssetFiles(const std::string &dir);
 
     AAssetManager*              getAssetManager();
-    std::shared_ptr<NativeCore> getNativeCore();
+    std::shared_ptr<EngineCore> getNativeCore();
     std::shared_ptr<Render>     getDefaultRender();
 
     // gfx system
@@ -56,7 +56,7 @@ private:
     const char*     eglStatusStr() const;
 
     AAssetManager*              mAssetManager;
-    std::weak_ptr<NativeCore>   mNativeCore;
+    std::weak_ptr<EngineCore>   mEngineCore;
     std::shared_ptr<Render>     mRender;
 
     bool                        mRequestQuit;

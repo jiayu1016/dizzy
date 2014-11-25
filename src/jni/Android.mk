@@ -5,7 +5,7 @@ LOCAL_MODULE    := dzy
 LOCAL_SRC_FILES :=          \
     nameobj.cpp             \
     engine_context.cpp      \
-    native_core.cpp         \
+    engine_core.cpp         \
     scene.cpp               \
     mesh.cpp                \
     material.cpp            \

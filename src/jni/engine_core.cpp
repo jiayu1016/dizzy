@@ -3,47 +3,47 @@
 #include "engine_context.h"
 #include "scene.h"
 #include "render.h"
-#include "native_core.h"
+#include "engine_core.h"
 
 using namespace std;
 
 namespace dzy {
 
-NativeCore::NativeCore() {
-    ALOGV("NativeCore::NativeCore()");
+EngineCore::EngineCore() {
+    ALOGV("EngineCore::EngineCore()");
 }
 
-NativeCore::~NativeCore() {
-    ALOGV("NativeCore::~NativeCore()");
+EngineCore::~EngineCore() {
+    ALOGV("EngineCore::~EngineCore()");
 }
 
-bool NativeCore::init(struct android_app* app) {
+bool EngineCore::init(struct android_app* app) {
     mApp = app;
     mApp->userData = this;
-    mApp->onAppCmd = NativeCore::handleAppCmd;
-    mApp->onInputEvent = NativeCore::handleInputEvent;
+    mApp->onAppCmd = EngineCore::handleAppCmd;
+    mApp->onInputEvent = EngineCore::handleInputEvent;
     mEngineContext.reset(new EngineContext);
     mEngineContext->init(shared_from_this());
     bool ret = initActivity();
-    if (!ret) ALOGE("Init NativeCore class failed\n");
+    if (!ret) ALOGE("Init EngineCore class failed\n");
     return ret;
 }
 
-void NativeCore::fini() {
+void EngineCore::fini() {
     releaseActivity();
 }
 
-int32_t NativeCore::handleInputEvent(struct android_app* app, AInputEvent* event) {
-    NativeCore *nativeCore = (NativeCore *)(app->userData);
-    return nativeCore->inputEvent(event);
+int32_t EngineCore::handleInputEvent(struct android_app* app, AInputEvent* event) {
+    EngineCore *engineCore = (EngineCore *)(app->userData);
+    return engineCore->inputEvent(event);
 }
 
-void NativeCore::handleAppCmd(struct android_app* app, int32_t cmd) {
-    NativeCore *nativeCore = (NativeCore *)(app->userData);
-    nativeCore->appCmd(cmd);
+void EngineCore::handleAppCmd(struct android_app* app, int32_t cmd) {
+    EngineCore *engineCore = (EngineCore *)(app->userData);
+    engineCore->appCmd(cmd);
 }
 
-int32_t NativeCore::inputMotionEvent(int action) {
+int32_t EngineCore::inputMotionEvent(int action) {
     int32_t ret = 1;
     switch(action) {
         case AMOTION_EVENT_ACTION_DOWN:
@@ -56,7 +56,7 @@ int32_t NativeCore::inputMotionEvent(int action) {
     return ret;
 }
 
-int32_t NativeCore::inputEvent(AInputEvent* event) {
+int32_t EngineCore::inputEvent(AInputEvent* event) {
     int32_t ret = 0;
     switch(AInputEvent_getType(event)) {
         case AINPUT_EVENT_TYPE_KEY:
@@ -72,7 +72,7 @@ int32_t NativeCore::inputEvent(AInputEvent* event) {
     return ret;
 }
 
-void NativeCore::appCmd(int32_t cmd) {
+void EngineCore::appCmd(int32_t cmd) {
     switch (cmd) {
         case APP_CMD_START:
             break;
@@ -110,7 +110,7 @@ void NativeCore::appCmd(int32_t cmd) {
     }
 }
 
-int32_t NativeCore::inputKeyEvent(int action, int code) {
+int32_t EngineCore::inputKeyEvent(int action, int code) {
     int32_t ret = 0;
     if (action == AKEY_EVENT_ACTION_DOWN) {
         switch(code) {
@@ -126,19 +126,19 @@ int32_t NativeCore::inputKeyEvent(int action, int code) {
     return ret;
 }
 
-bool NativeCore::initActivity() {
+bool EngineCore::initActivity() {
     return true;
 }
 
-bool NativeCore::releaseActivity() {
+bool EngineCore::releaseActivity() {
     return true;
 }
 
-shared_ptr<EngineContext> NativeCore::getEngineContext() {
+shared_ptr<EngineContext> EngineCore::getEngineContext() {
     return mEngineContext;
 }
 
-void NativeCore::mainLoop() {
+void EngineCore::mainLoop() {
     int ident;
     int events;
     struct android_poll_source* source;
@@ -176,12 +176,12 @@ void NativeCore::mainLoop() {
 
 } // namespace
 
-extern dzy::NativeCore * engine_main();
+extern dzy::EngineCore * engine_main();
 
 void android_main(struct android_app* app) {
-    shared_ptr<dzy::NativeCore> nativeCore(engine_main());
-    if (!nativeCore->init(app))
+    shared_ptr<dzy::EngineCore> engineCore(engine_main());
+    if (!engineCore->init(app))
         return;
-    nativeCore->mainLoop();
-    nativeCore->fini();
+    engineCore->mainLoop();
+    engineCore->fini();
 }

@@ -1,5 +1,5 @@
-#ifndef NATIVE_CORE_H
-#define NATIVE_CORE_H
+#ifndef ENGINE_CORE_H
+#define ENGINE_CORE_H
 
 #include <memory>
 #include <android_native_app_glue.h>
@@ -10,12 +10,12 @@ namespace dzy {
 class EngineContext;
 class Scene;
 class Render;
-class NativeCore 
-    : public std::enable_shared_from_this<NativeCore>
+class EngineCore 
+    : public std::enable_shared_from_this<EngineCore>
     , private noncopyable {
 public:
-    explicit NativeCore();
-    virtual ~NativeCore();
+    explicit EngineCore();
+    virtual ~EngineCore();
 
     bool init(struct android_app* app);
     void fini();
