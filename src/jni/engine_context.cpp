@@ -114,11 +114,13 @@ bool EngineContext::initDisplay() {
     mWidth      = w;
     mHeight     = h;
     mRender->setEngineContext(shared_from_this());
-    mRender->init();
+    if (!mRender->init()) return false;
 
     // ProgramManager::preCompile must be called after setting up egl context
-    if (ProgramManager::get()->preCompile(shared_from_this()))
-        engineCore->initView();
+    if (!ProgramManager::get()->preCompile(shared_from_this()))
+        return false;
+
+    return engineCore->initView();
 }
 
 const char* EngineContext::eglStatusStr() const {

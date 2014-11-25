@@ -34,6 +34,7 @@ ShaderStruct::ShaderStruct(const string& name)
 
 ShaderStruct& ShaderStruct::operator<<(const ShaderVariable& shaderVariable) {
     mMembers.push_back(shaderVariable);
+    return *this;
 }
 
 const vector<ShaderVariable>& ShaderStruct::getMembers() const {
