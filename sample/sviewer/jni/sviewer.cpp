@@ -15,16 +15,11 @@ class SViewer : public NativeCore {
 public:
     virtual bool initView();
     virtual bool releaseView();
-    virtual bool drawScene();
-
-private:
-    shared_ptr<Render>  mRender;
+    virtual shared_ptr<Scene> getScene();
 };
 
 bool SViewer::initView() {
     shared_ptr<EngineContext> engineContext(getEngineContext());
-    if (!engineContext) return false;
-
     engineContext->listAssetFiles("");
 
     shared_ptr<Scene> scene(SceneManager::loadColladaAsset(engineContext, "4meshes.dae"));
@@ -35,9 +30,6 @@ bool SViewer::initView() {
 
     SceneManager::get()->addScene(scene);
     SceneManager::get()->setCurrentScene(scene);
-
-    mRender = engineContext->getDefaultRender();
-    if (!mRender) return false;
 
     shared_ptr<Node> rootNode(scene->getRootNode());
     if (!rootNode) return false;
@@ -71,19 +63,16 @@ bool SViewer::initView() {
     rootNode->attachChild(myNode);
 
     rootNode->dumpHierarchy();
-    return mRender->init();
+    return true;
 }
 
 bool SViewer::releaseView() {
     SceneManager::release();
-    return mRender->release();
+    return true;
 }
 
-bool SViewer::drawScene() {
-    shared_ptr<Scene> scene(SceneManager::get()->getCurrentScene());
-    if (!scene) return false;
-
-    return mRender->drawScene(scene);
+shared_ptr<Scene> SViewer::getScene() {
+    return SceneManager::get()->getCurrentScene();
 }
 
 NativeCore * dzyCreateNativeActivity() {

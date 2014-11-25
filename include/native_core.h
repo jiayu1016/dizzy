@@ -47,11 +47,11 @@ public:
     /// release view
     virtual bool releaseView() = 0;
 
-    /// drawScene
+    /// get a scene to draw by render
     ///
     ///     this function is called every frame.
-    ///     @return true if success, false otherwise
-    virtual bool drawScene() = 0;
+    ///     @return the current scene to be drawn
+    virtual std::shared_ptr<Scene> getScene() = 0;
 
     std::shared_ptr<EngineContext> getEngineContext();
 

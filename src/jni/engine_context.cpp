@@ -114,6 +114,7 @@ bool EngineContext::initDisplay() {
     mWidth      = w;
     mHeight     = h;
     mRender->setEngineContext(shared_from_this());
+    mRender->init();
 
     // ProgramManager::preCompile must be called after setting up egl context
     if (ProgramManager::get()->preCompile(shared_from_this()))
@@ -150,6 +151,7 @@ void EngineContext::releaseDisplay() {
     }
     nativeCore->releaseView();
     ProgramManager::release();
+    mRender->release();
     if (mDisplay != EGL_NO_DISPLAY) {
         eglMakeCurrent(mDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         if (mEglContext != EGL_NO_CONTEXT) {
@@ -171,7 +173,8 @@ bool EngineContext::updateDisplay() {
         ALOGE("NativeCore released before EngineContext");
         return false;
     }
-    nativeCore->drawScene();
+    shared_ptr<Scene> currentScene(nativeCore->getScene());
+    mRender->drawScene(currentScene);
     return true;
 }
 
