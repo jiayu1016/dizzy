@@ -75,6 +75,6 @@ shared_ptr<Scene> SViewer::getScene() {
     return SceneManager::get()->getCurrentScene();
 }
 
-NativeCore * dzyCreateNativeActivity() {
+NativeCore * engine_main() {
     return new SViewer;
 }

@@ -176,10 +176,10 @@ void NativeCore::mainLoop() {
 
 } // namespace
 
-extern dzy::NativeCore * dzyCreateNativeActivity();
+extern dzy::NativeCore * engine_main();
 
 void android_main(struct android_app* app) {
-    shared_ptr<dzy::NativeCore> nativeCore(dzyCreateNativeActivity());
+    shared_ptr<dzy::NativeCore> nativeCore(engine_main());
     if (!nativeCore->init(app))
         return;
     nativeCore->mainLoop();
