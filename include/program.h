@@ -66,7 +66,7 @@ public:
     };
 
     Program();
-    ~Program();
+    virtual ~Program();
 
     GLuint getId() const { return mProgramId; }
     bool isValid() const { return mLinked; }
