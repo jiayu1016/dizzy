@@ -79,15 +79,16 @@ public:
     void setCamera(std::shared_ptr<Camera> camera);
     std::shared_ptr<Camera> getCamera();
 
-
-    /// one time initialization of the node
-    virtual bool initGpuData() = 0;
+    bool isInitialized();
 
     /// Recursively draw the node and it's children
     virtual void draw(Render &render, std::shared_ptr<Scene> scene) = 0;
 
     friend class AIAdapter;
     friend class Render;
+
+protected:
+    void setInitialized();
 
 protected:
     glm::mat4                               mTransformation;
@@ -98,6 +99,7 @@ protected:
     std::shared_ptr<Light>                  mLight;
     std::shared_ptr<Camera>                 mCamera;
     static int                              mMonoCount;
+    bool                                    mInitialized;
 };
 
 class Node : public NodeObj, public std::enable_shared_from_this<Node> {
@@ -136,11 +138,13 @@ public:
     ///     @param visit the functor gets called whenever a node is visited
     void depthFirstTraversal(VisitFunc visit);
 
-    virtual bool initGpuData();
     virtual void draw(Render &render, std::shared_ptr<Scene> scene);
 
     /// dump the scene graph hierarchy starting from the current node.
     void dumpHierarchy();
+
+protected:
+    bool initGpuData();
 
 protected:
     std::vector<std::shared_ptr<NodeObj> >  mChildren;
@@ -152,10 +156,12 @@ public:
     Geometry(const std::string& name, std::shared_ptr<Mesh> mesh);
     ~Geometry();
 
-    virtual bool initGpuData();
     virtual void draw(Render &render, std::shared_ptr<Scene> scene);
 
     std::shared_ptr<Mesh> getMesh();
+
+protected:
+    bool initGpuData();
 
 protected:
     // one on one mapping between Geometry and Mesh

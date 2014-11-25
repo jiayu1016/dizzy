@@ -71,9 +71,6 @@ bool SViewer::initView() {
     rootNode->attachChild(myNode);
 
     rootNode->dumpHierarchy();
-
-    rootNode->initGpuData();
-
     return mRender->init();
 }
 

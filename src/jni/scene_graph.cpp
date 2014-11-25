@@ -21,7 +21,8 @@ int NodeObj::mMonoCount = 0;
 
 NodeObj::NodeObj(const string& name)
     : NameObj(name)
-    , mUseAutoProgram(true) {
+    , mUseAutoProgram(true)
+    , mInitialized(false) {
     mMonoCount++;
 }
 
@@ -103,6 +104,14 @@ void NodeObj::setCamera(shared_ptr<Camera> camera) {
 
 shared_ptr<Camera> NodeObj::getCamera() {
     return mCamera;
+}
+
+bool NodeObj::isInitialized() {
+    return mInitialized;
+}
+
+void NodeObj::setInitialized() {
+    mInitialized = true;
 }
 
 Node::Node(const string& name)
@@ -191,13 +200,12 @@ void Node::depthFirstTraversal(VisitFunc visit) {
 }
 
 bool Node::initGpuData() {
-    std::for_each(mChildren.begin(), mChildren.end(), [] (shared_ptr<NodeObj> c) {
-        c->initGpuData();
-    });
+    setInitialized();
     return true;
 }
 
 void Node::draw(Render &render, shared_ptr<Scene> scene) {
+    if (!isInitialized()) initGpuData();
     render.drawNode(scene, shared_from_this());
     std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<NodeObj> c) {
         c->draw(render, scene);
@@ -258,10 +266,12 @@ bool Geometry::initGpuData() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
+    setInitialized();
     return true;
 }
 
 void Geometry::draw(Render &render, shared_ptr<Scene> scene) {
+    if (!isInitialized()) initGpuData();
     if (render.drawGeometry(scene, shared_from_this()))
         // program attached to Geometry node only when drawGeometry returns true
         render.drawMesh(scene, mMesh, getProgram(), mVertexBO, mIndexBO);
