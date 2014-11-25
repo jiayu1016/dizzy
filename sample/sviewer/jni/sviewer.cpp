@@ -15,6 +15,7 @@ class SViewer : public EngineCore {
 public:
     virtual bool initView();
     virtual bool releaseView();
+    virtual bool update(long interval);
     virtual shared_ptr<Scene> getScene();
 private:
     shared_ptr<Scene> mScene;
@@ -66,6 +67,10 @@ bool SViewer::initView() {
 }
 
 bool SViewer::releaseView() {
+    return true;
+}
+
+bool SViewer::update(long interval) {
     return true;
 }
 

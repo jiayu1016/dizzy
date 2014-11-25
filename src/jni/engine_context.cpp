@@ -175,6 +175,7 @@ bool EngineContext::updateDisplay() {
         ALOGE("EngineCore released before EngineContext");
         return false;
     }
+    engineCore->updateFrame();
     shared_ptr<Scene> currentScene(engineCore->getScene());
     mRender->drawScene(currentScene);
     return true;

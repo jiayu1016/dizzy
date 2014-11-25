@@ -105,7 +105,7 @@ shared_ptr<Scene> Scene::loadFile(shared_ptr<EngineContext> engineContext,
 }
 
 shared_ptr<Scene> Scene::loadColladaAsset(shared_ptr<EngineContext> engineContext,
-    const string &assetFile) {    
+    const string &assetFile) {
     AAssetManager *assetManager = engineContext->getAssetManager();
     assert(assetManager != NULL);
 

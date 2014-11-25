@@ -3,13 +3,15 @@
 #include "engine_context.h"
 #include "scene.h"
 #include "render.h"
+#include "utils.h"
 #include "engine_core.h"
 
 using namespace std;
 
 namespace dzy {
 
-EngineCore::EngineCore() {
+EngineCore::EngineCore()
+    : mFirstFrameUpdated(false) {
     ALOGV("EngineCore::EngineCore()");
 }
 
@@ -72,6 +74,16 @@ int32_t EngineCore::inputEvent(AInputEvent* event) {
     return ret;
 }
 
+bool EngineCore::updateFrame() {
+    if (!mFirstFrameUpdated) {
+        mLastUpdated = std::chrono::high_resolution_clock::now();
+        mFirstFrameUpdated = true;
+    }
+    long interval = MeasureDuration::getInterval(mLastUpdated);
+    mLastUpdated = std::chrono::high_resolution_clock::now();
+    return update(interval);
+}
+
 void EngineCore::appCmd(int32_t cmd) {
     switch (cmd) {
         case APP_CMD_START:
@@ -131,6 +143,10 @@ bool EngineCore::initActivity() {
 }
 
 bool EngineCore::releaseActivity() {
+    return true;
+}
+
+bool EngineCore::update(long interval) {
     return true;
 }
 

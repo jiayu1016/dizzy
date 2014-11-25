@@ -64,6 +64,13 @@ public:
         return ms.count();
     }
 
+    static long getInterval(const Clock::time_point& timePoint) {
+        Clock::time_point end = Clock::now();
+        MilliSeconds ms = std::chrono::duration_cast<MilliSeconds>(
+            end - timePoint);
+        return ms.count();
+    }
+
 private:
     Clock::time_point mStart;
 };
