@@ -51,7 +51,13 @@ public:
 
     std::shared_ptr<Node> getRootNode() { return mRootNode;}
 
-    friend class SceneManager;
+    static std::shared_ptr<Scene> loadFile(
+        std::shared_ptr<EngineContext> engineContext,
+        const std::string &file);
+    static std::shared_ptr<Scene> loadColladaAsset(
+        std::shared_ptr<EngineContext> engineContext,
+        const std::string &asset);
+
     friend class Render;
     friend class Program;
     friend class AIAdapter;
@@ -68,27 +74,6 @@ private:
     // transient status for easy traversal
     glm::mat4           mCameraModelTransform;
     glm::mat4           mLightModelTransform;
-};
-
-class SceneManager : public Singleton<SceneManager> {
-public:
-    void addScene(std::shared_ptr<Scene> scene);
-    std::shared_ptr<Scene> getCurrentScene();
-    void setCurrentScene(std::shared_ptr<Scene> scene);
-    static std::shared_ptr<Scene> loadFile(
-        std::shared_ptr<EngineContext> engineContext,
-        const std::string &file);
-    static std::shared_ptr<Scene> loadColladaAsset(
-        std::shared_ptr<EngineContext> engineContext,
-        const std::string &asset);
-
-    friend class Singleton<SceneManager>;
-private:    
-    SceneManager();
-    ~SceneManager();
-
-    std::vector<std::shared_ptr<Scene> >    mScenes;
-    std::shared_ptr<Scene>                  mCurrentScene;
 };
 
 } // namespace dzy

@@ -67,19 +67,19 @@ void NodeObj::setProgram(shared_ptr<Program> program) {
 }
 
 shared_ptr<Program> NodeObj::getProgram() {
-    return mProgram;
+    return mProgram.lock();
 }
 
 shared_ptr<Program> NodeObj::getProgram(
     shared_ptr<Material> material, bool hasLight, shared_ptr<Mesh> mesh) {
-    if (!mProgram) {
+    if (!getProgram()) {
         if (mUseAutoProgram) {
             mProgram = ProgramManager::get()->getCompatibleProgram(material, hasLight, mesh);
         } else {
             ALOGE("No shader program found");
         }
     }
-    return mProgram;
+    return mProgram.lock();
 }
 
 void NodeObj::setMaterial(shared_ptr<Material> material) {

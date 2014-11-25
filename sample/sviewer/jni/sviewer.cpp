@@ -16,22 +16,21 @@ public:
     virtual bool initView();
     virtual bool releaseView();
     virtual shared_ptr<Scene> getScene();
+private:
+    shared_ptr<Scene> mScene;
 };
 
 bool SViewer::initView() {
     shared_ptr<EngineContext> engineContext(getEngineContext());
     engineContext->listAssetFiles("");
 
-    shared_ptr<Scene> scene(SceneManager::loadColladaAsset(engineContext, "4meshes.dae"));
-    if (!scene) {
+    mScene = Scene::loadColladaAsset(engineContext, "4meshes.dae");
+    if (!mScene) {
         ALOGE("failed to load collada scene");
         return false;
     }
 
-    SceneManager::get()->addScene(scene);
-    SceneManager::get()->setCurrentScene(scene);
-
-    shared_ptr<Node> rootNode(scene->getRootNode());
+    shared_ptr<Node> rootNode(mScene->getRootNode());
     if (!rootNode) return false;
 
     shared_ptr<Node> myNode(new Node("mynode"));
@@ -67,12 +66,11 @@ bool SViewer::initView() {
 }
 
 bool SViewer::releaseView() {
-    SceneManager::release();
     return true;
 }
 
 shared_ptr<Scene> SViewer::getScene() {
-    return SceneManager::get()->getCurrentScene();
+    return mScene;
 }
 
 EngineCore * engine_main() {

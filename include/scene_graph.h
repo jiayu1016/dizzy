@@ -94,7 +94,9 @@ protected:
     glm::mat4                               mTransformation;
     std::weak_ptr<Node>                     mParent;
     bool                                    mUseAutoProgram;
-    std::shared_ptr<Program>                mProgram;
+    // make sure program released on-time, to avoid delete program
+    // after egl context has been released.
+    std::weak_ptr<Program>                  mProgram;
     std::shared_ptr<Material>               mMaterial;
     std::shared_ptr<Light>                  mLight;
     std::shared_ptr<Camera>                 mCamera;

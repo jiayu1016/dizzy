@@ -73,33 +73,7 @@ bool Scene::atLeastOneMeshHasNormal() {
     return false;
 }
 
-SceneManager::SceneManager() {
-    ALOGV("SceneManager::SceneManager()");
-}
-
-SceneManager::~SceneManager() {
-    ALOGV("SceneManager::~SceneManager()");
-}
-
-void SceneManager::addScene(shared_ptr<Scene> scene) {
-    mScenes.push_back(scene);
-}
-
-shared_ptr<Scene> SceneManager::getCurrentScene() {
-    return mCurrentScene;
-}
-
-void SceneManager::setCurrentScene(shared_ptr<Scene> scene) {
-    auto it = find(mScenes.begin(), mScenes.end(), scene);
-    if (it != mScenes.end())
-        mCurrentScene = *it;
-    else {
-        mScenes.push_back(scene);
-        mCurrentScene = scene;
-    }
-}
-
-shared_ptr<Scene> SceneManager::loadFile(shared_ptr<EngineContext> engineContext,
+shared_ptr<Scene> Scene::loadFile(shared_ptr<EngineContext> engineContext,
     const string &file) {
     ifstream ifs(file.c_str(), ifstream::binary);
     if (!ifs) {
@@ -130,7 +104,7 @@ shared_ptr<Scene> SceneManager::loadFile(shared_ptr<EngineContext> engineContext
     return s;
 }
 
-shared_ptr<Scene> SceneManager::loadColladaAsset(shared_ptr<EngineContext> engineContext,
+shared_ptr<Scene> Scene::loadColladaAsset(shared_ptr<EngineContext> engineContext,
     const string &assetFile) {    
     AAssetManager *assetManager = engineContext->getAssetManager();
     assert(assetManager != NULL);
