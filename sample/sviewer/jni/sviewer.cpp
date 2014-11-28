@@ -32,10 +32,7 @@ bool SViewer::initView() {
     shared_ptr<EngineContext> engineContext(getEngineContext());
 
     mScene = Scene::loadColladaAsset(engineContext, mSceneFileName);
-    if (!mScene) {
-        ALOGE("failed to load collada scene");
-        return false;
-    }
+    if (!mScene) return false;
 
     shared_ptr<Node> rootNode(mScene->getRootNode());
     if (!rootNode) return false;

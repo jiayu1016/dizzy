@@ -113,8 +113,8 @@ void EngineCore::appCmd(int32_t cmd) {
             break;
 
         case APP_CMD_INIT_WINDOW:
-            getEngineContext()->initDisplay();
-            getEngineContext()->setRenderState(true);
+            if (getEngineContext()->initDisplay())
+                getEngineContext()->setRenderState(true);
             break;
         case APP_CMD_TERM_WINDOW:
             getEngineContext()->setRenderState(false);
