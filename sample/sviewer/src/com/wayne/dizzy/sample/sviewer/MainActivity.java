@@ -38,9 +38,9 @@ public class MainActivity extends Activity {
         setContentView(R.layout.main);
         ListView listView = (ListView)findViewById(R.id.listView);
 
-        AssetManager assetmanager = getAssets();
+        AssetManager assetManager = getAssets();
         try {
-            String[] assetsInTopDir = assetmanager.list("");
+            String[] assetsInTopDir = assetManager.list("");
             ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                     android.R.layout.simple_list_item_1, assetsInTopDir);
             listView.setAdapter(adapter);

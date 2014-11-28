@@ -43,10 +43,10 @@ public:
     ///     do one time setup for something that need egl/gl context
     ///
     ///     @return true if success, false otherwise
-    virtual bool start() = 0;
+    virtual bool start();
 
     /// release view
-    virtual void stop() = 0;
+    virtual void stop();
 
     /// update the scene data
     ///

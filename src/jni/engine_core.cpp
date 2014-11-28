@@ -155,6 +155,13 @@ bool EngineCore::create() {
 void EngineCore::destory() {
 }
 
+bool EngineCore::start() {
+    return true;
+}
+
+void EngineCore::stop() {
+}
+
 bool EngineCore::update(long interval) {
     return true;
 }
