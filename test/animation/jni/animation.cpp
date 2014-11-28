@@ -14,8 +14,8 @@ using namespace std;
 
 class AnimationApp : public EngineCore {
 public:
-    virtual bool initView();
-    virtual bool releaseView();
+    virtual bool start();
+    virtual void stop();
     virtual bool update(long interval);
     virtual shared_ptr<Scene> getScene();
 private:
@@ -24,7 +24,7 @@ private:
     float mTranslate;
 };
 
-bool AnimationApp::initView() {
+bool AnimationApp::start() {
     shared_ptr<EngineContext> engineContext(getEngineContext());
     engineContext->listAssetFiles("");
 
@@ -50,7 +50,7 @@ bool AnimationApp::initView() {
     return true;
 }
 
-bool AnimationApp::releaseView() {
+void AnimationApp::stop() {
     return true;
 }
 

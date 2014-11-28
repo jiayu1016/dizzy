@@ -120,7 +120,7 @@ bool EngineContext::initDisplay() {
     if (!ProgramManager::get()->preCompile(shared_from_this()))
         return false;
 
-    return engineCore->initView();
+    return engineCore->start();
 }
 
 const char* EngineContext::eglStatusStr() const {
@@ -151,7 +151,7 @@ void EngineContext::releaseDisplay() {
         ALOGE("EngineCore released before EngineContext");
         return;
     }
-    engineCore->releaseView();
+    engineCore->stop();
     ProgramManager::release();
     mRender->release();
     if (mDisplay != EGL_NO_DISPLAY) {

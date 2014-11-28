@@ -13,9 +13,9 @@ using namespace std;
 
 class SViewer : public EngineCore {
 public:
-    virtual bool initActivity();
-    virtual bool initView();
-    virtual bool releaseView();
+    virtual bool create();
+    virtual bool start();
+    virtual void stop();
     virtual bool update(long interval);
     virtual shared_ptr<Scene> getScene();
 private:
@@ -23,12 +23,12 @@ private:
     string mSceneFileName;
 };
 
-bool SViewer::initActivity() {
+bool SViewer::create() {
     mSceneFileName = getIntentString("modelName");
     return true;
 }
 
-bool SViewer::initView() {
+bool SViewer::start() {
     shared_ptr<EngineContext> engineContext(getEngineContext());
 
     mScene = Scene::loadColladaAsset(engineContext, mSceneFileName);
@@ -69,8 +69,7 @@ bool SViewer::initView() {
     return true;
 }
 
-bool SViewer::releaseView() {
-    return true;
+void SViewer::stop() {
 }
 
 bool SViewer::update(long interval) {

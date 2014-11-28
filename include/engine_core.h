@@ -33,9 +33,9 @@ public:
     ///     do one time setup for something doesn't need egl/gl context.
     ///
     ///     @return true if success, false otherwise
-    virtual bool initActivity();
+    virtual bool create();
     /// release native activity
-    virtual bool releaseActivity();
+    virtual void destory();
 
     /// initialize view
     ///
@@ -43,10 +43,10 @@ public:
     ///     do one time setup for something that need egl/gl context
     ///
     ///     @return true if success, false otherwise
-    virtual bool initView() = 0;
+    virtual bool start() = 0;
 
     /// release view
-    virtual bool releaseView() = 0;
+    virtual void stop() = 0;
 
     /// update the scene data
     ///

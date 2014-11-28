@@ -35,13 +35,13 @@ bool EngineCore::init(struct android_app* app) {
         return false;
     }
     mJNIEnv = env;
-    bool ret = initActivity();
+    bool ret = create();
     if (!ret) ALOGE("Init Activity failed\n");
     return ret;
 }
 
 void EngineCore::fini() {
-    releaseActivity();
+    destory();
     mApp->activity->vm->DetachCurrentThread();
 }
 
@@ -148,12 +148,11 @@ int32_t EngineCore::inputKeyEvent(int action, int code) {
     return ret;
 }
 
-bool EngineCore::initActivity() {
+bool EngineCore::create() {
     return true;
 }
 
-bool EngineCore::releaseActivity() {
-    return true;
+void EngineCore::destory() {
 }
 
 bool EngineCore::update(long interval) {
