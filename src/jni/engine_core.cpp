@@ -11,7 +11,8 @@ using namespace std;
 namespace dzy {
 
 EngineCore::EngineCore()
-    : mFirstFrameUpdated(false) {
+    : mFirstFrameUpdated(false)
+    , mJNIEnv(nullptr) {
     ALOGV("EngineCore::EngineCore()");
 }
 
@@ -26,13 +27,22 @@ bool EngineCore::init(struct android_app* app) {
     mApp->onInputEvent = EngineCore::handleInputEvent;
     mEngineContext.reset(new EngineContext);
     mEngineContext->init(shared_from_this());
+
+    JNIEnv *env;
+    mApp->activity->vm->AttachCurrentThread(&env, 0);
+    if (!env) {
+        ALOGE("failed to attach native activity thread");
+        return false;
+    }
+    mJNIEnv = env;
     bool ret = initActivity();
-    if (!ret) ALOGE("Init EngineCore class failed\n");
+    if (!ret) ALOGE("Init Activity failed\n");
     return ret;
 }
 
 void EngineCore::fini() {
     releaseActivity();
+    mApp->activity->vm->DetachCurrentThread();
 }
 
 int32_t EngineCore::handleInputEvent(struct android_app* app, AInputEvent* event) {
@@ -148,6 +158,28 @@ bool EngineCore::releaseActivity() {
 
 bool EngineCore::update(long interval) {
     return true;
+}
+
+string EngineCore::getIntentString(const string& name) {
+    jobject nativeActivityObj = mApp->activity->clazz;
+    jclass nativeActivityClass = mJNIEnv->GetObjectClass(nativeActivityObj);
+    jmethodID getIntentMethodID = mJNIEnv->GetMethodID(
+        nativeActivityClass, "getIntent", "()Landroid/content/Intent;");
+    jobject intentObj = mJNIEnv->CallObjectMethod(
+        nativeActivityObj, getIntentMethodID);
+    jclass intentClass = mJNIEnv->GetObjectClass(intentObj);
+
+    jmethodID getStringExtraMethodID = mJNIEnv->GetMethodID(intentClass,
+        "getStringExtra", "(Ljava/lang/String;)Ljava/lang/String;");
+    jstring jsString = (jstring)mJNIEnv->CallObjectMethod(intentObj,
+        getStringExtraMethodID, mJNIEnv->NewStringUTF(name.c_str()));
+    if (!jsString) return "";
+
+    const char *rawString = mJNIEnv->GetStringUTFChars(jsString, 0);
+    string ret(rawString);
+    mJNIEnv->ReleaseStringUTFChars(jsString, rawString);
+
+    return ret;
 }
 
 shared_ptr<EngineContext> EngineCore::getEngineContext() {

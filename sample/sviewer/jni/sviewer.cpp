@@ -13,19 +13,25 @@ using namespace std;
 
 class SViewer : public EngineCore {
 public:
+    virtual bool initActivity();
     virtual bool initView();
     virtual bool releaseView();
     virtual bool update(long interval);
     virtual shared_ptr<Scene> getScene();
 private:
     shared_ptr<Scene> mScene;
+    string mSceneFileName;
 };
+
+bool SViewer::initActivity() {
+    mSceneFileName = getIntentString("modelName");
+    return true;
+}
 
 bool SViewer::initView() {
     shared_ptr<EngineContext> engineContext(getEngineContext());
-    engineContext->listAssetFiles("");
 
-    mScene = Scene::loadColladaAsset(engineContext, "4meshes.dae");
+    mScene = Scene::loadColladaAsset(engineContext, mSceneFileName);
     if (!mScene) {
         ALOGE("failed to load collada scene");
         return false;

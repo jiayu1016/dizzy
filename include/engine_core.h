@@ -63,6 +63,7 @@ public:
     ///     @return the current scene to be drawn
     virtual std::shared_ptr<Scene> getScene() = 0;
 
+    std::string getIntentString(const std::string& name);
     std::shared_ptr<EngineContext> getEngineContext();
 
     friend class EngineContext;
@@ -79,6 +80,7 @@ private:
 private:
     std::shared_ptr<EngineContext>                  mEngineContext;
     struct android_app*                             mApp;
+    JNIEnv*                                         mJNIEnv;
     std::chrono::high_resolution_clock::time_point  mLastUpdated;
     bool                                            mFirstFrameUpdated;
 };
