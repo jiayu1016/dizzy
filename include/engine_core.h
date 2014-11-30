@@ -4,6 +4,7 @@
 #include <memory>
 #include <chrono>
 #include <android_native_app_glue.h>
+#include <gestureDetector.h>
 #include "utils.h"
 
 namespace dzy {
@@ -15,17 +16,20 @@ class EngineCore
     : public std::enable_shared_from_this<EngineCore>
     , private noncopyable {
 public:
+    enum GestureState {
+        GESTURE_DRAG_START,
+        GESTURE_DRAG_MOVE,
+        GESTURE_DRAG_END,
+        GESTURE_PINCH_START,
+        GESTURE_PINCH_MOVE,
+    };
+
     EngineCore();
     virtual ~EngineCore();
 
     bool init(struct android_app* app);
     void fini();
     void mainLoop();
-
-    // event processing
-    virtual void appCmd(int32_t cmd);
-    virtual int32_t inputKeyEvent(int action, int code);
-    virtual int32_t inputMotionEvent(int action);
 
     /// initialize nativie activity
     ///
@@ -63,18 +67,52 @@ public:
     ///     @return the current scene to be drawn
     virtual std::shared_ptr<Scene> getScene() = 0;
 
+    /// callback to handle motion event
+    virtual bool handleMotion(int action);
+
+    /// callback to handle key input event
+    ///
+    ///     @return true stop furthur processing the event, false otherwise
+    virtual bool handleKey(int code);
+
+    /// callback to handle double tap gesture
+    ///
+    ///     @return true stop furthur processing the event, false otherwise
+    virtual bool handleDoubleTap();
+
+    /// callback to handle drag gesture
+    ///
+    ///     @param x x position of the current drag point
+    ///     @param y y position of the current drag point
+    ///     @return true stop furthur processing the event, false otherwise
+    virtual bool handleDrag(GestureState state, float x, float y);
+
+    /// callback to handle pinch gesture
+    ///
+    ///     @param x1 x position of start point
+    ///     @param y1 y position of start point
+    ///     @param x2 x position of end point
+    ///     @param y2 y position of end point
+    ///     @return true stop furthur processing the event, false otherwise
+    virtual bool handlePinch(GestureState state, float x1, float y1, float x2, float y2);
+
     std::string getIntentString(const std::string& name);
     std::shared_ptr<EngineContext> getEngineContext();
 
     friend class EngineContext;
 private:
-    /*
-     * return 0, the framework will continue to handle the event
-     * return 1, the framework will stop to handle the event
-     */
-    static void handleAppCmd(struct android_app* app, int32_t cmd);
-    static int32_t handleInputEvent(struct android_app* app, AInputEvent* event);
-    int32_t inputEvent(AInputEvent* event);
+    // event processing
+    void appCmd(int32_t cmd);
+    bool inputKeyEvent(int action, int code);
+    bool inputMotionEvent(int action);
+    bool inputEvent(AInputEvent* event);
+
+    static void onAppCmd(struct android_app* app, int32_t cmd);
+
+    /// @return 0, the framework will continue handling the event
+    /// @return 1, the framework will stop handling the event
+    static int32_t onInputEvent(struct android_app* app, AInputEvent* event);
+
     bool updateFrame();
 
 private:
@@ -83,6 +121,9 @@ private:
     JNIEnv*                                         mJNIEnv;
     std::chrono::high_resolution_clock::time_point  mLastUpdated;
     bool                                            mFirstFrameUpdated;
+    ndk_helper::DoubletapDetector                   mDoubleTapDetector;
+    ndk_helper::PinchDetector                       mPinchDetector;
+    ndk_helper::DragDetector                        mDragDetector;
 };
 
 } // namespace dzy

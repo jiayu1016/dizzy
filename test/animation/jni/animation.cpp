@@ -15,19 +15,21 @@ using namespace std;
 class AnimationApp : public EngineCore {
 public:
     virtual bool start();
-    virtual void stop();
     virtual bool update(long interval);
     virtual shared_ptr<Scene> getScene();
+    virtual bool handlePinch(GestureState state, float x1, float y1, float x2, float y2);
 private:
-    shared_ptr<Scene> mScene;
-    float mAngle;
-    float mTranslate;
+    shared_ptr<Scene>   mScene;
+    float               mAngle;
+    float               mTranslate;
+    float               mScale;
+    float               mLen;
 };
 
 bool AnimationApp::start() {
-    shared_ptr<EngineContext> engineContext(getEngineContext());
-    engineContext->listAssetFiles("");
+    mScale = 1.f;
 
+    shared_ptr<EngineContext> engineContext(getEngineContext());
     mScene = Scene::loadColladaAsset(engineContext, "4meshes.dae");
     if (!mScene) {
         ALOGE("failed to load collada scene");
@@ -47,10 +49,6 @@ bool AnimationApp::start() {
         coneNode->attachChild(sphereNode);
 
     rootNode->dumpHierarchy();
-    return true;
-}
-
-void AnimationApp::stop() {
     return true;
 }
 
@@ -84,6 +82,26 @@ bool AnimationApp::update(long interval) {
 
 shared_ptr<Scene> AnimationApp::getScene() {
     return mScene;
+}
+
+bool AnimationApp::handlePinch(GestureState state, float x1, float y1, float x2, float y2) {
+    if (!mScene) return true;
+    shared_ptr<Node> rootNode(mScene->getRootNode());
+    if (!rootNode) return true;
+    if (state == EngineCore::GESTURE_PINCH_START) {
+        float dx = x2 - x1;
+        float dy = y2 - y1;
+        mLen = sqrt(dx * dx + dy * dy);
+    } else {
+        float dx = x2 - x1;
+        float dy = y2 - y1;
+        float len = sqrt(dx * dx + dy * dy);
+        mScale += (len - mLen) * 0.01f;
+        mLen = len;
+        rootNode->resetTransform();
+        rootNode->scale(mScale, mScale, mScale);
+    }
+    return true;
 }
 
 EngineCore * engine_main() {

@@ -18,8 +18,8 @@ public:
     virtual bool update(long interval);
     virtual shared_ptr<Scene> getScene();
 private:
-    shared_ptr<Scene> mScene;
-    string mSceneFileName;
+    shared_ptr<Scene>   mScene;
+    string              mSceneFileName;
 };
 
 bool SViewer::create() {

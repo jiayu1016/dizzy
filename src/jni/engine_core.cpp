@@ -23,10 +23,13 @@ EngineCore::~EngineCore() {
 bool EngineCore::init(struct android_app* app) {
     mApp = app;
     mApp->userData = this;
-    mApp->onAppCmd = EngineCore::handleAppCmd;
-    mApp->onInputEvent = EngineCore::handleInputEvent;
+    mApp->onAppCmd = EngineCore::onAppCmd;
+    mApp->onInputEvent = EngineCore::onInputEvent;
     mEngineContext.reset(new EngineContext);
     mEngineContext->init(shared_from_this());
+    mDoubleTapDetector.SetConfiguration(mApp->config);
+    mDragDetector.SetConfiguration(mApp->config);
+    mPinchDetector.SetConfiguration(mApp->config);
 
     JNIEnv *env;
     mApp->activity->vm->AttachCurrentThread(&env, 0);
@@ -45,43 +48,98 @@ void EngineCore::fini() {
     mApp->activity->vm->DetachCurrentThread();
 }
 
-int32_t EngineCore::handleInputEvent(struct android_app* app, AInputEvent* event) {
+int32_t EngineCore::onInputEvent(struct android_app* app, AInputEvent* event) {
     EngineCore *engineCore = (EngineCore *)(app->userData);
-    return engineCore->inputEvent(event);
+    bool handled = engineCore->inputEvent(event);
+    if (!handled) return 0;
+    else return 1;
 }
 
-void EngineCore::handleAppCmd(struct android_app* app, int32_t cmd) {
+void EngineCore::onAppCmd(struct android_app* app, int32_t cmd) {
     EngineCore *engineCore = (EngineCore *)(app->userData);
     engineCore->appCmd(cmd);
 }
 
-int32_t EngineCore::inputMotionEvent(int action) {
-    int32_t ret = 1;
-    switch(action) {
-        case AMOTION_EVENT_ACTION_DOWN:
-            break;
-        case AMOTION_EVENT_ACTION_MOVE:
-            break;
-        case AMOTION_EVENT_ACTION_UP:
-            break;
+bool EngineCore::inputMotionEvent(int action) {
+    bool ret = handleMotion(action);
+    if (!ret) {
+        switch(action) {
+            case AMOTION_EVENT_ACTION_DOWN:
+                ret = true;
+                break;
+            case AMOTION_EVENT_ACTION_MOVE:
+                ret = true;
+                break;
+            case AMOTION_EVENT_ACTION_UP:
+                ret = true;
+                break;
+        }
     }
     return ret;
 }
 
-int32_t EngineCore::inputEvent(AInputEvent* event) {
-    int32_t ret = 0;
+bool EngineCore::inputEvent(AInputEvent* event) {
+    bool handled = false;
+    bool doubleTapHandled = false;
+    bool dragHandled = false;
+    bool pinchHandled = false;
+
     switch(AInputEvent_getType(event)) {
         case AINPUT_EVENT_TYPE_KEY:
-            ret = inputKeyEvent(AKeyEvent_getAction(event), AKeyEvent_getKeyCode(event));
+            handled = inputKeyEvent(AKeyEvent_getAction(event), AKeyEvent_getKeyCode(event));
             break;
-        case AINPUT_EVENT_TYPE_MOTION:
-            ret = inputMotionEvent(AMotionEvent_getAction(event));
+        case AINPUT_EVENT_TYPE_MOTION: {
+            ndk_helper::GESTURE_STATE doubleTapState = mDoubleTapDetector.Detect(event);
+            ndk_helper::GESTURE_STATE dragState = mDragDetector.Detect(event);
+            ndk_helper::GESTURE_STATE pinchState = mPinchDetector.Detect(event);
+            if (doubleTapState == ndk_helper::GESTURE_STATE_ACTION) {
+                doubleTapHandled = handleDoubleTap();
+            } else {
+                if (dragState & ndk_helper::GESTURE_STATE_START) {
+                    ndk_helper::Vec2 v;
+                    mDragDetector.GetPointer(v);
+                    float x, y;
+                    v.Value(x, y);
+                    dragHandled = handleDrag(GESTURE_DRAG_START, x, y);
+                } else if (dragState & ndk_helper::GESTURE_STATE_MOVE) {
+                    ndk_helper::Vec2 v;
+                    mDragDetector.GetPointer(v);
+                    float x, y;
+                    v.Value(x, y);
+                    dragHandled = handleDrag(GESTURE_DRAG_MOVE, x, y);
+                } else if (dragState & ndk_helper::GESTURE_STATE_END) {
+                    dragHandled = handleDrag(GESTURE_DRAG_END, 0, 0);
+                }
+
+                if (pinchState & ndk_helper::GESTURE_STATE_START) {
+                    ndk_helper::Vec2 v1;
+                    ndk_helper::Vec2 v2;
+                    mPinchDetector.GetPointers(v1, v2);
+                    float x1, y1, x2, y2;
+                    v1.Value(x1, y1);
+                    v2.Value(x2, y2);
+                    pinchHandled = handlePinch(GESTURE_PINCH_START, x1, y1, x2, y2);
+                } else if (pinchState & ndk_helper::GESTURE_STATE_MOVE) {
+                    ndk_helper::Vec2 v1;
+                    ndk_helper::Vec2 v2;
+                    mPinchDetector.GetPointers(v1, v2);
+                    float x1, y1, x2, y2;
+                    v1.Value(x1, y1);
+                    v2.Value(x2, y2);
+                    pinchHandled = handlePinch(GESTURE_PINCH_MOVE, x1, y1, x2, y2);
+                }
+            }
+
+            if (!doubleTapHandled && !dragHandled && !pinchHandled)
+                handled = inputMotionEvent(AMotionEvent_getAction(event));
             break;
+        }
         default:
             ALOGW("Unknown input event");
             break;
     }
-    return ret;
+
+    return doubleTapHandled || dragHandled || pinchHandled || handled;
 }
 
 bool EngineCore::updateFrame() {
@@ -132,20 +190,33 @@ void EngineCore::appCmd(int32_t cmd) {
     }
 }
 
-int32_t EngineCore::inputKeyEvent(int action, int code) {
-    int32_t ret = 0;
+bool EngineCore::inputKeyEvent(int action, int code) {
+    bool handled = false;
     if (action == AKEY_EVENT_ACTION_DOWN) {
-        switch(code) {
-            case AKEYCODE_BACK:
-                ALOGD("AKEYCODE_BACK");
-                getEngineContext()->requestQuit();
-                break;
-            default:
-                ALOGD("Not supported key code: %d", code);
-                break;
+        // only handle key in action down
+        handled = handleKey(code);
+        if (!handled) {
+            switch(code) {
+                case AKEYCODE_BACK:
+                    ALOGV("AKEYCODE_BACK");
+                    getEngineContext()->requestQuit();
+                    // need framework to further process this key event
+                    handled = false;
+                    break;
+                default:
+                    ALOGD("Not supported key code: %d", code);
+                    break;
+            }
+        }
+        // AKEYCODE_BACK needs special attention
+        else if (code == AKEYCODE_BACK) {
+            ALOGV("AKEYCODE_BACK");
+            // need framework to further process this key event
+            handled = false;
+            getEngineContext()->requestQuit();
         }
     }
-    return ret;
+    return handled;
 }
 
 bool EngineCore::create() {
@@ -164,6 +235,26 @@ void EngineCore::stop() {
 
 bool EngineCore::update(long interval) {
     return true;
+}
+
+bool EngineCore::handleMotion(int action) {
+    return false;
+}
+
+bool EngineCore::handleKey(int code) {
+    return false;
+}
+
+bool EngineCore::handleDoubleTap() {
+    return false;
+}
+
+bool EngineCore::handleDrag(GestureState state, float x, float y) {
+    return false;
+}
+
+bool EngineCore::handlePinch(GestureState state, float x1, float y1, float x2, float y2) {
+    return false;
 }
 
 string EngineCore::getIntentString(const string& name) {
