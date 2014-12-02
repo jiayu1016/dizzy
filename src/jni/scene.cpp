@@ -23,7 +23,8 @@ using namespace std;
 namespace dzy {
 
 Scene::Scene()
-    : mRootNode(new Node("root")) {
+    : mRootNode(new Node("root"))
+    , mActiveCamera(-1) {
 }
 
 Scene::~Scene() {
@@ -32,9 +33,16 @@ Scene::~Scene() {
 
 shared_ptr<Camera> Scene::getActiveCamera() {
     // TODO: support muliple cameras in a scene
-    if (getNumCameras() > 0)
-        return mCameras[0];
-    return NULL;
+    if (mActiveCamera == -1) {
+        if (getNumCameras() > 0) mActiveCamera = 0;
+    }
+    if (mActiveCamera == -1) {
+        shared_ptr<Camera> camera(new Camera);
+        camera->translate(DEFAULT_CAMERA_POS);
+        mCameras.push_back(camera);
+        mActiveCamera = 0;
+    }
+    return mCameras[mActiveCamera];
 }
 
 shared_ptr<Camera> Scene::getCamera(int idx) {
@@ -49,7 +57,6 @@ shared_ptr<Light> Scene::getLight(int idx) {
     if (idx < mLights.size())
         return mLights[idx];
     return nullptr;
-
 }
 
 bool Scene::atLeastOneMeshHasVertexPosition() {
@@ -151,12 +158,9 @@ shared_ptr<Scene> Scene::loadColladaAsset(shared_ptr<EngineContext> engineContex
     shared_ptr<Scene> s(new Scene);
     long long importTime = importDuration.getMilliSeconds();
 
-    ALOGD("%s: %u meshes found",     assetFile.c_str(), scene->mNumMeshes);
-    ALOGD("%s: %u materials found",  assetFile.c_str(), scene->mNumMaterials);
-    ALOGD("%s: %u animations found", assetFile.c_str(), scene->mNumAnimations);
-    ALOGD("%s: %u textures found",   assetFile.c_str(), scene->mNumTextures);
-    ALOGD("%s: %u lights found",     assetFile.c_str(), scene->mNumLights);
-    ALOGD("%s: %u cameras found",    assetFile.c_str(), scene->mNumCameras);
+    ALOGV("%s: %u meshes, %u materials, %u animations, %u textures, %u lights, %u cameras",
+        assetFile.c_str(), scene->mNumMeshes, scene->mNumMaterials, scene->mNumAnimations,
+        scene->mNumTextures, scene->mNumLights, scene->mNumCameras);
 
     MeasureDuration cvtDuration;
     for (int i=0; i<scene->mNumCameras; i++) {
@@ -185,6 +189,7 @@ shared_ptr<Scene> Scene::loadColladaAsset(shared_ptr<EngineContext> engineContex
     }
 
     AIAdapter::buildSceneGraph(s, scene->mRootNode);
+    AIAdapter::postProcess(s);
 
     long long cvtTime = cvtDuration.getMicroSeconds();
 

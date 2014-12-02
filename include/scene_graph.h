@@ -8,7 +8,13 @@
 #include <GLES3/gl3.h>
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "nameobj.h"
+#include "transform.h"
 
 namespace dzy {
 
@@ -21,15 +27,36 @@ class Material;
 class Camera;
 class Light;
 /// Base class for "element" in the scene graph
-class NodeObj : public NameObj {
+class NodeObj : public NameObj, public std::enable_shared_from_this<NodeObj> {
 public:
+    enum Flags {
+        F_UPDATE_TRANSFORM = 0x1,
+    };
     NodeObj(const std::string& name);
     virtual ~NodeObj();
 
-    void resetTransform();
-    void translate(float x, float y, float z);
-    void scale(float x, float y, float z);
-    void rotate(float radian, float axisX, float axisY, float axisZ);
+    glm::quat getWorldRotation();
+    glm::vec3 getWorldTranslation();
+    glm::vec3 getWorldScale();
+    Transform getWorldTransform();
+    glm::quat getLocalRotation();
+    void setLocalRotation(const glm::quat& quaternion);
+    void setLocalRotation(float w, float x, float y, float z);
+    glm::vec3 getLocalScale();
+    void setLocalScale(float scale);
+    void setLocalScale(float x, float y, float z);
+    void setLocalScale(const glm::vec3& scale);
+    glm::vec3 getLocalTranslation();
+    void setLocalTranslation(const glm::vec3& translation);
+    void setLocalTranslation(float x, float y, float z);
+    void setLocalTransform(const Transform& transform);
+    Transform getLocalTransform();
+    NodeObj& translate(float x, float y, float z);
+    NodeObj& translate(const glm::vec3& offset);
+    NodeObj& scale(float s);
+    NodeObj& scale(float x, float y, float z);
+    NodeObj& rotate(const glm::quat& rotation);
+    NodeObj& rotate(float axisX, float axisY, float axisZ);
 
     /// get parent of this node
     ///
@@ -86,12 +113,17 @@ public:
 
     friend class AIAdapter;
     friend class Render;
-
+    friend class Node;
 protected:
     void setInitialized();
+    void doUpdateTransform();
+    void updateWorldTransform();
+    virtual void setUpdateFlag();
 
 protected:
-    glm::mat4                               mTransformation;
+    Transform                               mLocalTransform;
+    Transform                               mWorldTransform;
+    int                                     mUpdateFlags;
     std::weak_ptr<Node>                     mParent;
     bool                                    mUseAutoProgram;
     // make sure program released on-time, to avoid delete program
@@ -100,11 +132,10 @@ protected:
     std::shared_ptr<Material>               mMaterial;
     std::shared_ptr<Light>                  mLight;
     std::shared_ptr<Camera>                 mCamera;
-    static int                              mMonoCount;
     bool                                    mInitialized;
 };
 
-class Node : public NodeObj, public std::enable_shared_from_this<Node> {
+class Node : public NodeObj {
 public:
     typedef std::function<void(std::shared_ptr<Scene>, std::shared_ptr<NodeObj>)> VisitSceneFunc;
     typedef std::function<void(std::shared_ptr<NodeObj>)> VisitFunc;
@@ -147,12 +178,13 @@ public:
 
 protected:
     bool initGpuData();
+    virtual void setUpdateFlag();
 
 protected:
     std::vector<std::shared_ptr<NodeObj> >  mChildren;
 };
 
-class Geometry : public NodeObj, public std::enable_shared_from_this<Geometry> {
+class Geometry : public NodeObj {
 public:
     Geometry(std::shared_ptr<Mesh> mesh);
     Geometry(const std::string& name, std::shared_ptr<Mesh> mesh);

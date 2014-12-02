@@ -28,55 +28,61 @@ private:
 
 bool AnimationApp::start() {
     mScale = 1.f;
-
-    shared_ptr<EngineContext> engineContext(getEngineContext());
-    mScene = Scene::loadColladaAsset(engineContext, "4meshes.dae");
-    if (!mScene) {
-        ALOGE("failed to load collada scene");
-        return false;
-    }
+    mScene.reset(new Scene);
 
     shared_ptr<Node> rootNode(mScene->getRootNode());
-    if (!rootNode) return false;
 
-    shared_ptr<Node> coneNode = dynamic_pointer_cast<Node>(rootNode->getChild("Cone"));
-    shared_ptr<NodeObj> torusNode = rootNode->getChild("Torus");
-    if (coneNode && torusNode)
-        coneNode->attachChild(torusNode);
+    shared_ptr<CubeMesh> cube3Mesh(new CubeMesh("cube3Mesh"));
+    shared_ptr<Geometry> cube3Geom(new Geometry("cube3Geom", cube3Mesh));
+    cube3Geom->scale(0.2);
+    cube3Geom->translate(0, 0.5, 0);
 
-    shared_ptr<Node> sphereNode = dynamic_pointer_cast<Node>(rootNode->getChild("Sphere"));
-    if (coneNode && sphereNode)
-        coneNode->attachChild(sphereNode);
+    shared_ptr<CubeMesh> cube2Mesh(new CubeMesh("cube2Mesh"));
+    shared_ptr<Geometry> cube2Geom(new Geometry("cube2Geom", cube2Mesh));
+    cube2Geom->scale(0.5);
+    shared_ptr<Node> cube2Node(new Node("cube2Node"));
+    cube2Node->attachChild(cube2Geom);
+    cube2Node->attachChild(cube3Geom);
+    cube2Node->translate(0, 2, 0);
+
+    shared_ptr<CubeMesh> cube1Mesh(new CubeMesh("cube1Mesh"));
+    shared_ptr<Geometry> cube1Geom(new Geometry("cube1Geom", cube1Mesh));
+    shared_ptr<Node> cube1Node(new Node("cube1Node"));
+    cube1Node->attachChild(cube2Node);
+
+    shared_ptr<PyramidMesh> pyramidMesh(new PyramidMesh("pyramid_mesh"));
+    shared_ptr<Geometry> pyramidNode(new Geometry("pyramid", pyramidMesh));
+    pyramidNode->translate(3, 0, 0);
+    pyramidNode->scale(2);
+
+    rootNode->attachChild(cube1Geom);
+    rootNode->attachChild(cube1Node);
+    rootNode->attachChild(pyramidNode);
 
     rootNode->dumpHierarchy();
+
     return true;
 }
 
 bool AnimationApp::update(long interval) {
     shared_ptr<Node> rootNode(mScene->getRootNode());
-    if (!rootNode) return false;
 
-    shared_ptr<NodeObj> torusNode(rootNode->getChild("Torus"));
-    if (torusNode)
-        torusNode->rotate(interval / 1000.0f * 3.1415927, 0.f, 1.f, 0.f);
+    shared_ptr<Geometry> earth = dynamic_pointer_cast<Geometry>(rootNode->getChild("cube2Geom"));
+    if (earth)
+        earth->rotate(interval / 1000.f, 0, 0);
 
-    shared_ptr<NodeObj> coneNode = rootNode->getChild("Cone");
-    if (coneNode) {
-        coneNode->resetTransform();
-        mTranslate += interval / 1000.f;
-        if (mTranslate > 7.f)
-            mTranslate = 0.f;
-        coneNode->translate(mTranslate, 0.f, 0.f);
-    }
+    shared_ptr<Geometry> moon = dynamic_pointer_cast<Geometry>(rootNode->getChild("cube3Geom"));
+    if (moon)
+        moon->rotate(0, interval / 1000.f, 0);
 
-    shared_ptr<NodeObj> sphereNode = rootNode->getChild("Sphere");
-    if (sphereNode) {
-        sphereNode->resetTransform();
-        mAngle += interval / 1000.0f * 3.1415927;
-        const float radius = 3.f;
-        sphereNode->translate(radius * cos(mAngle), radius * sin(mAngle), 0.f);
-        sphereNode->rotate(interval / 1000.0f * 3.1415927, 0.f, 0.f, 1.f);
-    }
+    shared_ptr<Node> earthSystem = dynamic_pointer_cast<Node>(rootNode->getChild("cube2Node"));
+    if (earthSystem)
+        earthSystem->rotate(0, 0, interval / 200.f);
+
+    shared_ptr<Node> solarSystem = dynamic_pointer_cast<Node>(rootNode->getChild("cube1Node"));
+    if (solarSystem)
+        solarSystem->rotate(0, 0, interval / 1000.f);
+
     return true;
 }
 
@@ -87,7 +93,6 @@ shared_ptr<Scene> AnimationApp::getScene() {
 bool AnimationApp::handlePinch(GestureState state, float x1, float y1, float x2, float y2) {
     if (!mScene) return true;
     shared_ptr<Node> rootNode(mScene->getRootNode());
-    if (!rootNode) return true;
     if (state == EngineCore::GESTURE_PINCH_START) {
         float dx = x2 - x1;
         float dy = y2 - y1;
@@ -96,9 +101,8 @@ bool AnimationApp::handlePinch(GestureState state, float x1, float y1, float x2,
         float dx = x2 - x1;
         float dy = y2 - y1;
         float len = sqrt(dx * dx + dy * dy);
-        mScale += (len - mLen) * 0.01f;
+        mScale += (len - mLen) * 0.00001f;
         mLen = len;
-        rootNode->resetTransform();
         rootNode->scale(mScale, mScale, mScale);
     }
     return true;

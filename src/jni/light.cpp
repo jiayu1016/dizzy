@@ -69,12 +69,43 @@ float Light::getAngleOuterCone() {
     return mAngleOuterCone;
 }
 
-glm::mat4 Light::getTransform() {
-    return mTransform;
+Light& Light::translate(float x, float y, float z) {
+    return translate(glm::vec3(x, y, z));
 }
 
-void Light::setTransform(const glm::mat4& trans) {
-    mTransform = trans;
+Light& Light::translate(const glm::vec3& offset) {
+    glm::vec3 translate = mLocalTransform.getTranslation();
+    mLocalTransform.setTranslation(translate + offset);
+    return *this;
+}
+
+Light& Light::scale(float s) {
+    return scale(s, s, s);
+}
+
+Light& Light::scale(float x, float y, float z) {
+    return scale(glm::vec3(x, y, z));
+}
+
+Light& Light::scale(const glm::vec3& s) {
+    glm::vec3 scale = mLocalTransform.getScale();
+    mLocalTransform.setScale(s * scale);
+    return *this;
+}
+
+Light& Light::rotate(const glm::quat& rotation) {
+    glm::quat rot = mLocalTransform.getRotation();
+    mLocalTransform.setRotation(rotation * rot);
+    return *this;
+}
+
+Light& Light::rotate(float axisX, float axisY, float axisZ) {
+    glm::quat quaternion(glm::vec3(axisX, axisY, axisZ));
+    return rotate(quaternion);
+}
+
+glm::mat4 Light::getTransform() {
+    return mLocalTransform.toMat4();
 }
 
 void Light::dumpParameter() {

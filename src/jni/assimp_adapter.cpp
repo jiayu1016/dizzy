@@ -208,7 +208,12 @@ shared_ptr<Mesh> AIAdapter::typeCast(aiMesh *mesh) {
 
 shared_ptr<Node> AIAdapter::typeCast(aiNode *node) {
     shared_ptr<Node> n(new Node(typeCast(node->mName)));
-    n->mTransformation = typeCast(node->mTransformation);
+    aiVector3D scale, translation;
+    aiQuaternion rotation;
+    node->mTransformation.Decompose(scale, rotation, translation);
+    n->setLocalScale(typeCast(scale));
+    n->setLocalRotation(rotation.w, rotation.x, rotation.y, rotation.z);
+    n->setLocalTranslation(typeCast(translation));
     return n;
 }
 
@@ -244,6 +249,28 @@ void AIAdapter::buildSceneGraph(shared_ptr<Scene> scene, aiNode *aroot) {
     scene->mRootNode->attachChild(root);
 }
 
+void AIAdapter::postProcess(shared_ptr<Scene> scene) {
+    shared_ptr<Node> rootNode(scene->mRootNode);
+    // compute camera local transform
+    for (int i=0; i<scene->getNumCameras(); i++) {
+        shared_ptr<Camera> camera(scene->getCamera(i));
+        shared_ptr<NodeObj> cameraNode(rootNode->getChild(camera->getName()));
+        Transform transform = cameraNode->getWorldTransform();
+        camera->translate(transform.getTranslation());
+        camera->rotate(transform.getRotation());
+        camera->scale(transform.getScale());
+    }
+    // compute light local transform
+    for (int i=0; i<scene->getNumLights(); i++) {
+        shared_ptr<Light> light(scene->getLight(i));
+        shared_ptr<NodeObj> lightNode(rootNode->getChild(light->getName()));
+        Transform transform = lightNode->getWorldTransform();
+        light->translate(transform.getTranslation());
+        light->rotate(transform.getRotation());
+        light->scale(transform.getScale());
+    }
+}
+
 void AIAdapter::linkNode(shared_ptr<Scene> scene,
     shared_ptr<Node> node, aiNode *anode) {
     for (unsigned int i = 0; i < anode->mNumChildren; i++) {
@@ -259,6 +286,7 @@ void AIAdapter::linkNode(shared_ptr<Scene> scene,
         unsigned int meshIdx = anode->mMeshes[i];
         shared_ptr<Mesh> mesh(scene->mMeshes[meshIdx]);
         shared_ptr<Geometry> c(new Geometry(mesh));
+        c->setUpdateFlag();
         c->setMaterial(scene->mMaterials[mesh->mMaterialIndex]);
         node->attachChild(c);
     }

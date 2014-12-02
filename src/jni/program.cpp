@@ -226,7 +226,8 @@ bool Program000::uploadData(
     glm::mat4 mvp = proj * view * world;
     glUniformMatrix4fv(getLocation("dzyMVPMatrix"), 1, GL_FALSE, glm::value_ptr(mvp));
     // TODO: find a way to determine constant color
-    glUniform3f(getLocation("dzyConstantColor"), 0.f, 0.f, 0.f);
+    GLint colorLoc = getLocation("dzyConstantColor");
+    glUniform3f(colorLoc, 0.f, 0.f, 0.f);
     return true;
 }
 
@@ -236,12 +237,6 @@ bool Program000::updateMeshData(shared_ptr<Mesh> mesh, GLuint vbo) {
     if (mesh->hasVertexPositions()) {
         GLint posLoc = getLocation("dzyVertexPosition");
         glEnableVertexAttribArray(posLoc);
-        //ALOGD("num vertices: %d, num components: %d, stride: %d, offset: %d",
-        //    mesh->getNumVertices(),
-        //    mesh->getPositionNumComponent(),
-        //    mesh->getPositionBufStride(),
-        //    mesh->getPositionOffset());
-        //mesh->dumpBuf((float *)mesh->getPositionBuf(), mesh->getPositionBufSize());
         glVertexAttribPointer(
             posLoc,
             mesh->getPositionNumComponent(),// size

@@ -1,4 +1,3 @@
-#include <sstream>
 #include "log.h"
 #include "mesh.h"
 
@@ -27,10 +26,9 @@ void * MeshData::getBuf(int offset) {
     return static_cast<void *>(&mBuffer[offset]);
 }
 
-int Mesh::mMonoCount = 0;
-
-Mesh::Mesh(PrimitiveType type, unsigned int numVertices)
-    : mPrimitiveType            (type)
+Mesh::Mesh(PrimitiveType type, unsigned int numVertices, const string &name)
+    : NameObj                   (name)
+    , mPrimitiveType            (type)
     , mNumVertices              (numVertices)
     , mNumFaces                 (0)
     , mMaterialIndex            (0)
@@ -52,9 +50,6 @@ Mesh::Mesh(PrimitiveType type, unsigned int numVertices)
     , mBitangentNumComponents   (0)
     , mBitangentBytesComponent  (0)
     , mHasBitangent             (false) {
-    ostringstream os;
-    os << "Mesh-" << mMonoCount++;
-    setName(os.str());
     memset(&mColorOffset[0], 0, MAX_COLOR_SETS * sizeof(unsigned int));
     memset(&mColorNumComponents[0], 0, MAX_COLOR_SETS * sizeof(unsigned int));
     memset(&mColorBytesComponent[0], 0, MAX_COLOR_SETS * sizeof(unsigned int));
@@ -395,8 +390,7 @@ void Mesh::dumpIndexBuf(int groupSize) {
 }
 
 CubeMesh::CubeMesh(const string& name)
-    : Mesh(PRIMITIVE_TYPE_TRIANGLE, 24) {
-    setName(name);
+    : Mesh(PRIMITIVE_TYPE_TRIANGLE, 24, name) {
     float verts[] = {
         // front
         -0.5f, +0.5f, +0.5f,
@@ -491,6 +485,31 @@ CubeMesh::CubeMesh(const string& name)
     appendVertexPositions(verts, 3, sizeof(float));
     //appendVertexColors(colors, 3, sizeof(float), 0);
     buildIndexBuffer(indices, 12);
+}
+
+PyramidMesh::PyramidMesh(const string& name)
+    : Mesh(PRIMITIVE_TYPE_TRIANGLE, 4, name) {
+    float verts[] = {
+        +0.0f, +0.5f, +0.0f,
+        -0.5f, -0.5f, +0.5f,
+        +0.5f, -0.5f, +0.5f,
+        +0.0f, -0.5f, -0.5f
+    };
+    float colors[] = {
+        1.f, 0.f, 0.f,
+        0.f, 1.f, 0.f,
+        0.f, 0.f, 1.f,
+        0.f, 0.5f, 0.5f,
+    };
+    unsigned int indices[] = {
+        0, 1, 2,
+        0, 2, 3,
+        1, 3, 2,
+        0, 3, 1
+    };
+    appendVertexPositions(verts, 3, sizeof(float));
+    appendVertexColors(colors, 3, sizeof(float), 0);
+    buildIndexBuffer(indices, 4);
 }
 
 } //namespace

@@ -81,6 +81,12 @@ public:
     ///     @param scene the scene that hosts the scene graph being built
     ///     @param root the root node of assimp Node
     static void buildSceneGraph(std::shared_ptr<Scene> scene, aiNode *aroot);
+
+    /// post process scene graph
+    ///
+    ///     must be called AFTER the scene graph has been built
+    ///     @param scene the scene to be post processed
+    static void postProcess(std::shared_ptr<Scene> scene);
 private:
     static void linkNode(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node, aiNode *anode);
 };

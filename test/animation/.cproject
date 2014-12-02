@@ -21,7 +21,7 @@
 					<folderInfo id="com.android.toolchain.gcc.1768754212.159675501" name="/" resourcePath="">
 						<toolChain id="com.android.toolchain.gcc.814198017" name="com.android.toolchain.gcc" superClass="com.android.toolchain.gcc">
 							<targetPlatform binaryParser="org.eclipse.cdt.core.ELF" id="com.android.targetPlatform.15033048" isAbstract="false" superClass="com.android.targetPlatform"/>
-							<builder id="com.android.builder.1587529741" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Android Builder" superClass="com.android.builder">
+							<builder arguments="NDK_DEBUG=1" command="ndk-build" id="com.android.builder.1587529741" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Android Builder" superClass="com.android.builder">
 								<outputEntries>
 									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="obj"/>
 									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name="libs"/>
@@ -48,5 +48,8 @@
 		<scannerConfigBuildInfo instanceId="com.android.toolchain.gcc.1768754212;com.android.toolchain.gcc.1768754212.159675501;com.android.gcc.compiler.1174831380;com.android.gcc.inputType.104563200">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.android.AndroidPerProjectProfile"/>
 		</scannerConfigBuildInfo>
+	</storageModule>
+	<storageModule moduleId="refreshScope" versionNumber="1">
+		<resource resourceType="PROJECT" workspacePath="/animation"/>
 	</storageModule>
 </cproject>

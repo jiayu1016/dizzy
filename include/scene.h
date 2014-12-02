@@ -64,6 +64,7 @@ public:
 private:
     unsigned int            mFlags;
     CameraContainer         mCameras;
+    int                     mActiveCamera;
     LightContainer          mLights;
     TextureContainer        mTextures;
     AnimationContainer      mAnimations;
@@ -72,8 +73,8 @@ private:
     std::shared_ptr<Node>   mRootNode;
 
     // transient status for easy traversal
-    glm::mat4           mCameraModelTransform;
-    glm::mat4           mLightModelTransform;
+    glm::mat4               mCameraModelTransform;
+    glm::mat4               mLightModelTransform;
 };
 
 } // namespace dzy

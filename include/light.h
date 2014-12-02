@@ -5,6 +5,7 @@
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include "nameobj.h"
+#include "transform.h"
 
 namespace dzy {
 
@@ -35,8 +36,14 @@ public:
     glm::vec3 getColorAmbient();
     float getAngleInnerCone();
     float getAngleOuterCone();
+    Light& translate(float x, float y, float z);
+    Light& translate(const glm::vec3& offset);
+    Light& scale(float s);
+    Light& scale(float x, float y, float z);
+    Light& scale(const glm::vec3& s);
+    Light& rotate(const glm::quat& rotation);
+    Light& rotate(float axisX, float axisY, float axisZ);
     glm::mat4 getTransform();
-    void setTransform(const glm::mat4& trans);
 
     void dumpParameter();
 
@@ -54,7 +61,7 @@ private:
     glm::vec3           mColorAmbient;
     float               mAngleInnerCone;
     float               mAngleOuterCone;
-    glm::mat4           mTransform;
+    Transform           mLocalTransform;
 };
 
 }

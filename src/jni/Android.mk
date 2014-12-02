@@ -15,6 +15,7 @@ LOCAL_SRC_FILES :=          \
     render.cpp              \
     assimp_adapter.cpp      \
     program.cpp             \
+    transform.cpp           \
     shader_generator.cpp
 LOCAL_C_INCLUDES:= $(LOCAL_PATH)/../../include
 LOCAL_CPPFLAGS  := -std=c++11

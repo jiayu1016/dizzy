@@ -46,7 +46,7 @@ public:
         PRIMITIVE_TYPE_NUM
     };
 
-    Mesh(PrimitiveType type, unsigned int numVertices);
+    Mesh(PrimitiveType type, unsigned int numVertices, const std::string &name = "");
 
     bool            hasVertexPositions() const;
     bool            hasVertexColors(unsigned int channel) const;
@@ -182,13 +182,16 @@ protected:
 
     // A mesh use only ONE material, otherwise it is splitted to multiple meshes
     unsigned int                    mMaterialIndex;
-    static int                      mMonoCount;
 };
 
 class CubeMesh : public Mesh {
 public:
-    /// ctor, build a CubeMesh
-    CubeMesh(const std::string& name);
+    CubeMesh(const std::string& name = "");
+};
+
+class PyramidMesh : public Mesh {
+public:
+    PyramidMesh(const std::string& name = "");
 };
 
 }

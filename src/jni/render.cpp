@@ -60,42 +60,6 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
     }
 
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-    scene->mCameraModelTransform = glm::mat4(1.0f);
-
-    shared_ptr<Camera> activeCamera(scene->getActiveCamera());
-    if (activeCamera) {
-        shared_ptr<NodeObj> node(rootNode->getChild(activeCamera->getName()));
-        if (node) {
-            glm::mat4 transform = glm::mat4(1.0f);
-            while(node != rootNode) {
-                transform = node->mTransformation * transform;
-                node = node->getParent();
-            }
-            transform = node->mTransformation * transform;
-            scene->mCameraModelTransform = transform;
-        }
-
-        scene->mLightModelTransform = glm::mat4(1.0f);
-
-        // Support lighting only when we have a camera
-        // Use only one light right now
-        if (scene->getNumLights() > 0) {
-            shared_ptr<Light> light(scene->mLights[0]);
-            if (light) {
-                shared_ptr<NodeObj> node(rootNode->getChild(light->getName()));
-                if (node) {
-                    glm::mat4 trans = glm::mat4(1.0f);
-                    while(node != rootNode) {
-                        trans = node->mTransformation * trans;
-                        node = node->getParent();
-                    }
-                    trans = node->mTransformation * trans;
-                    scene->mLightModelTransform = trans;
-                }
-            }
-        }
-    }
-
     rootNode->draw(*this, scene);
     eglSwapBuffers(engineContext->getEGLDisplay(), engineContext->getEGLSurface());
 
@@ -113,13 +77,7 @@ bool Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry
 
     shared_ptr<Node> rootNode(scene->getRootNode());
     assert(rootNode);
-    glm::mat4 world = glm::mat4(1.0f);
-    shared_ptr<NodeObj> nd(geometry);
-    while(nd != rootNode) {
-        world = nd->mTransformation * world;
-        nd = nd->getParent();
-    }
-    world = nd->mTransformation * world;
+    glm::mat4 world = geometry->getWorldTransform().toMat4();
     glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 proj = glm::mat4(1.0f);
 
@@ -140,16 +98,16 @@ bool Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry
         ALOGE("No camera available in scene");
         return false;
     }
-    //override the aspect read from model
+    //override the aspect ratio
     float surfaceWidth = getEngineContext()->getSurfaceWidth();
     float surfaceHeight = getEngineContext()->getSurfaceHeight();
     camera->setAspect(surfaceWidth/surfaceHeight);
-    view = camera->getViewMatrix(scene->mCameraModelTransform);
+
+    view = camera->getViewMatrix();
     proj = camera->getProjMatrix();
 
     shared_ptr<Light> light(geometry->getLight());
     if (!light) light = scene->getLight(0);
-    if (light) light->setTransform(scene->mLightModelTransform);
     currentProgram->uploadData(camera, light, material, world, view, proj);
     return true;
 }

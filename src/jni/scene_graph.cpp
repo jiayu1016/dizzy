@@ -17,36 +17,167 @@ using namespace std;
 
 namespace dzy {
 
-int NodeObj::mMonoCount = 0;
-
 NodeObj::NodeObj(const string& name)
     : NameObj(name)
     , mUseAutoProgram(true)
-    , mInitialized(false) {
-    mMonoCount++;
+    , mInitialized(false)
+    , mUpdateFlags(0) {
 }
 
 NodeObj::~NodeObj() {
     ALOGV("NodeObj::~NodeObj(), %s", getName().c_str());
 }
 
-void NodeObj::resetTransform() {
-    mTransformation = glm::mat4(1.0f);
+glm::quat NodeObj::getWorldRotation() {
+    doUpdateTransform();
+    return mWorldTransform.getRotation();
 }
 
-void NodeObj::translate(float x, float y, float z) {
-    glm::vec3 v(x, y, z);
-    mTransformation = glm::translate(mTransformation, v);
+glm::vec3 NodeObj::getWorldTranslation() {
+    doUpdateTransform();
+    return mWorldTransform.getTranslation();
 }
 
-void NodeObj::scale(float x, float y, float z) {
-    glm::vec3 v(x, y, z);
-    mTransformation = glm::scale(mTransformation, v);
+glm::vec3 NodeObj::getWorldScale() {
+    doUpdateTransform();
+    return mWorldTransform.getScale();
 }
 
-void NodeObj::rotate(float radian, float axisX, float axisY, float axisZ) {
-    glm::vec3 axis(axisX, axisY, axisZ);
-    mTransformation = glm::rotate(mTransformation, radian, axis);
+Transform NodeObj::getWorldTransform() {
+    doUpdateTransform();
+    return mWorldTransform;
+}
+
+glm::quat NodeObj::getLocalRotation() {
+    return mLocalTransform.getRotation();
+}
+
+void NodeObj::setLocalRotation(const glm::quat& quaternion) {
+    mLocalTransform.setRotation(quaternion);
+    setUpdateFlag();
+}
+
+void NodeObj::setLocalRotation(float w, float x, float y, float z) {
+    glm::quat q(w, x, y, z);
+    setLocalRotation(q);
+}
+
+glm::vec3 NodeObj::getLocalScale() {
+    return mLocalTransform.getScale();
+}
+
+void NodeObj::setLocalScale(float scale) {
+    mLocalTransform.setScale(scale);
+    setUpdateFlag();
+}
+
+void NodeObj::setLocalScale(float x, float y, float z) {
+    mLocalTransform.setScale(x, y, z);
+    setUpdateFlag();
+}
+
+void NodeObj::setLocalScale(const glm::vec3& scale) {
+    mLocalTransform.setScale(scale);
+    setUpdateFlag();
+}
+
+glm::vec3 NodeObj::getLocalTranslation() {
+    return mLocalTransform.getTranslation();
+}
+
+void NodeObj::setLocalTranslation(const glm::vec3& translation) {
+    mLocalTransform.setTranslation(translation);
+    setUpdateFlag();
+}
+
+void NodeObj::setLocalTranslation(float x, float y, float z) {
+    mLocalTransform.setTranslation(x, y, z);
+    setUpdateFlag();
+}
+
+void NodeObj::setLocalTransform(const Transform& transform) {
+    mLocalTransform = transform;
+    setUpdateFlag();
+}
+
+Transform NodeObj::getLocalTransform() {
+    return mLocalTransform;
+}
+
+NodeObj& NodeObj::translate(float x, float y, float z) {
+    return translate(glm::vec3(x, y, z));
+}
+
+NodeObj& NodeObj::translate(const glm::vec3& offset) {
+    glm::vec3 translate = mLocalTransform.getTranslation();
+    mLocalTransform.setTranslation(translate + offset);
+    setUpdateFlag();
+    return *this;
+}
+
+NodeObj& NodeObj::scale(float s) {
+    return scale(s, s, s);
+}
+
+NodeObj& NodeObj::scale(float x, float y, float z) {
+    glm::vec3 scale = mLocalTransform.getScale();
+    mLocalTransform.setScale(glm::vec3(x, y, z) * scale);
+    setUpdateFlag();
+    return *this;
+}
+
+NodeObj& NodeObj::rotate(const glm::quat& rotation) {
+    glm::quat rot = mLocalTransform.getRotation();
+    mLocalTransform.setRotation(rotation * rot);
+    setUpdateFlag();
+    return *this;
+}
+
+NodeObj& NodeObj::rotate(float axisX, float axisY, float axisZ) {
+    glm::quat quaternion(glm::vec3(axisX, axisY, axisZ));
+    return rotate(quaternion);
+}
+
+void NodeObj::doUpdateTransform() {
+    if ((mUpdateFlags & F_UPDATE_TRANSFORM) == 0) {
+        return;
+    }
+
+    shared_ptr<NodeObj> parent(getParent());
+    shared_ptr<NodeObj> nodeObj = shared_from_this();
+    vector<shared_ptr<NodeObj> > path;
+    while (parent && (parent->mUpdateFlags & F_UPDATE_TRANSFORM) != 0) {
+        path.push_back(nodeObj);
+        nodeObj = parent;
+        parent = nodeObj->getParent();
+    }
+    path.push_back(nodeObj);
+    if (!parent) {
+        nodeObj->mWorldTransform = nodeObj->mLocalTransform;
+        nodeObj->mUpdateFlags &= ~F_UPDATE_TRANSFORM;
+    }
+
+    for (int i = path.size() - 1; i >= 0; i--) {
+        nodeObj = path[i];
+        nodeObj->updateWorldTransform();
+    }
+}
+
+void NodeObj::updateWorldTransform() {
+    shared_ptr<Node> parent(getParent());
+    if (!parent) {
+        mWorldTransform = mLocalTransform;
+        mUpdateFlags &= ~F_UPDATE_TRANSFORM;
+    } else {
+        assert ((parent->mUpdateFlags & F_UPDATE_TRANSFORM) == 0);
+        mWorldTransform = mLocalTransform;
+        mWorldTransform.combine(parent->mWorldTransform);
+        mUpdateFlags &= ~F_UPDATE_TRANSFORM;
+    }
+}
+
+void NodeObj::setUpdateFlag() {
+    mUpdateFlags |= F_UPDATE_TRANSFORM;
 }
 
 shared_ptr<Node> NodeObj::getParent() {
@@ -136,7 +267,7 @@ void Node::attachChild(shared_ptr<NodeObj> childNode) {
     if (!exist) {
         mChildren.push_back(childNode);
         shared_ptr<Node> oldParent(childNode->getParent());
-        childNode->setParent(shared_from_this());
+        childNode->setParent(dynamic_pointer_cast<Node>(shared_from_this()));
         if (oldParent) {
             // remove childNode from oldParent
             oldParent->mChildren.erase(remove(
@@ -206,7 +337,7 @@ bool Node::initGpuData() {
 
 void Node::draw(Render &render, shared_ptr<Scene> scene) {
     if (!isInitialized()) initGpuData();
-    render.drawNode(scene, shared_from_this());
+    render.drawNode(scene, dynamic_pointer_cast<Node>(shared_from_this()));
     std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<NodeObj> c) {
         c->draw(render, scene);
     });
@@ -232,6 +363,14 @@ void Node::dumpHierarchy() {
             }
         }
     }
+}
+
+void Node::setUpdateFlag() {
+    NodeObj::setUpdateFlag();
+    for_each(mChildren.begin(), mChildren.end(), [](shared_ptr<NodeObj> &nodeObj) {
+        if ((nodeObj->mUpdateFlags & F_UPDATE_TRANSFORM) == 0)
+            nodeObj->setUpdateFlag();
+    });
 }
 
 Geometry::Geometry(shared_ptr<Mesh> mesh)
@@ -272,7 +411,7 @@ bool Geometry::initGpuData() {
 
 void Geometry::draw(Render &render, shared_ptr<Scene> scene) {
     if (!isInitialized()) initGpuData();
-    if (render.drawGeometry(scene, shared_from_this()))
+    if (render.drawGeometry(scene, dynamic_pointer_cast<Geometry>(shared_from_this())))
         // program attached to Geometry node only when drawGeometry returns true
         render.drawMesh(scene, mMesh, getProgram(), mVertexBO, mIndexBO);
 }
