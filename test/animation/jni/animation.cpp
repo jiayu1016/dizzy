@@ -101,8 +101,11 @@ bool AnimationApp::handlePinch(GestureState state, float x1, float y1, float x2,
         float dx = x2 - x1;
         float dy = y2 - y1;
         float len = sqrt(dx * dx + dy * dy);
-        mScale += (len - mLen) * 0.00001f;
+        mScale += (len - mLen) * 0.001f;
+        if (mScale < 0.1f) mScale = 0.1f;
+        if (mScale > 10.f) mScale = 10.f;
         mLen = len;
+        rootNode->setLocalScale(1.f);
         rootNode->scale(mScale, mScale, mScale);
     }
     return true;
