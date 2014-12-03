@@ -37,8 +37,10 @@ shared_ptr<Camera> Scene::getActiveCamera() {
         if (getNumCameras() > 0) mActiveCamera = 0;
     }
     if (mActiveCamera == -1) {
-        shared_ptr<Camera> camera(new Camera);
-        camera->translate(DEFAULT_CAMERA_POS);
+        shared_ptr<Camera> camera(new Camera("default_camera"));
+        camera->setPostion(DEFAULT_CAMERA_POS);
+        camera->setLookAt(DEFAULT_CAMERA_CENTER);
+        camera->setUp(DEFAULT_CAMERA_UP);
         mCameras.push_back(camera);
         mActiveCamera = 0;
     }

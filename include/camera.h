@@ -9,7 +9,9 @@
 
 namespace dzy {
 
-#define DEFAULT_CAMERA_POS          glm::vec3(7.f, 5.f, 6.f)
+#define DEFAULT_CAMERA_POS          glm::vec3(0.f, 0.f, 10.f)
+#define DEFAULT_CAMERA_CENTER       glm::vec3(0.f, 0.f, 0.f)
+#define DEFAULT_CAMERA_UP           glm::vec3(0.f, 1.f, 0.f)
 
 class AIAdapter;
 class Scene;
@@ -34,12 +36,25 @@ public:
     Camera&     scale(const glm::vec3& s);
     Camera&     rotate(const glm::quat& rotation);
     Camera&     rotate(float axisX, float axisY, float axisZ);
+    Camera&     pitch(float angle);
+    Camera&     yaw(float angle);
+    Camera&     roll(float angle);
     void        setAspect(float aspect);
+    float       getAspect();
+    void        setHorizontalFOV(float fov);
+    float       getHorizontalFOV();
+    void        setNearPlane(float near);
+    float       getNearPlane();
+    void        setFarPlane(float far);
+    float       getFarPlane();
+    void        setPostion(const glm::vec3& pos);
+    glm::vec3   getPosition();
+    void        setUp(const glm::vec3& up);
+    glm::vec3   getUp();
+    void        setLookAt(const glm::vec3& at);
+    glm::vec3   getLookAt();
     glm::mat4   getViewMatrix();
-    glm::mat4   getViewMatrix(const glm::mat4& transform);
     glm::mat4   getProjMatrix();
-    void        dump(glm::vec3 pos, glm::vec3 at, glm::vec3 up);
-    void        dumpParameter();
 
     friend class Render;
     friend class AIAdapter;

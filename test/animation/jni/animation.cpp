@@ -8,6 +8,7 @@
 #include "scene_graph.h"
 #include "mesh.h"
 #include "scene.h"
+#include "camera.h"
 
 using namespace dzy;
 using namespace std;
@@ -18,12 +19,13 @@ public:
     virtual bool update(long interval);
     virtual shared_ptr<Scene> getScene();
     virtual bool handlePinch(GestureState state, float x1, float y1, float x2, float y2);
+    virtual bool handleDrag(GestureState state, float x, float y);
 private:
     shared_ptr<Scene>   mScene;
-    float               mAngle;
-    float               mTranslate;
     float               mScale;
     float               mLen;
+    float               mDragStartX;
+    float               mDragStartY;
 };
 
 bool AnimationApp::start() {
@@ -107,6 +109,22 @@ bool AnimationApp::handlePinch(GestureState state, float x1, float y1, float x2,
         mLen = len;
         rootNode->setLocalScale(1.f);
         rootNode->scale(mScale, mScale, mScale);
+    }
+    return true;
+}
+
+bool AnimationApp::handleDrag(GestureState state, float x, float y) {
+    shared_ptr<Camera> camera(mScene->getActiveCamera());
+    if (state == EngineCore::GESTURE_DRAG_START) {
+        mDragStartX = x;
+        mDragStartY = y;
+    } else if (state == EngineCore::GESTURE_DRAG_MOVE) {
+        float dx = x - mDragStartX;
+        float dy = y - mDragStartY;
+        mDragStartX = x;
+        mDragStartY = y;
+        camera->yaw(-dx / 2000.f * (float)M_PI);
+        camera->pitch(-dy / 2000.f * (float)M_PI);
     }
     return true;
 }
