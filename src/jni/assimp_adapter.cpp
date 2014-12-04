@@ -259,6 +259,16 @@ void AIAdapter::postProcess(shared_ptr<Scene> scene) {
         camera->translate(transform.getTranslation());
         camera->rotate(transform.getRotation());
         camera->scale(transform.getScale());
+        // FIXME: blender exported camera transform is buggy, different
+        // with what we can see in blender, remove the following lines
+        // after figuring out the blender exporter issue.
+        camera->setPostion(DEFAULT_CAMERA_POS);
+        camera->setLookAt(DEFAULT_CAMERA_CENTER);
+        camera->setUp(DEFAULT_CAMERA_UP);
+        camera->resetTransform();
+
+        // TODO: remove camera node from scene graph
+        //cameraNode->detachFromParent();
     }
     // compute light local transform
     for (int i=0; i<scene->getNumLights(); i++) {
@@ -268,6 +278,9 @@ void AIAdapter::postProcess(shared_ptr<Scene> scene) {
         light->translate(transform.getTranslation());
         light->rotate(transform.getRotation());
         light->scale(transform.getScale());
+
+        // TODO: remove light node from scene graph
+        //lightNode->detachFromParent();
     }
 }
 

@@ -39,6 +39,8 @@ public:
     Camera&     pitch(float angle);
     Camera&     yaw(float angle);
     Camera&     roll(float angle);
+    void        resetTransform();
+
     void        setAspect(float aspect);
     float       getAspect();
     void        setHorizontalFOV(float fov);

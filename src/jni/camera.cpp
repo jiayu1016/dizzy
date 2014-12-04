@@ -86,6 +86,10 @@ Camera& Camera::roll(float angle) {
     return rotate(0, 0, angle);
 }
 
+void Camera::resetTransform() {
+    mLocalTransform.loadIdentity();
+}
+
 void Camera::setAspect(float aspect) {
     mAspect = aspect;
 }
