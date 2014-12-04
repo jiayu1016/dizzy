@@ -352,8 +352,9 @@ void Mesh::reserveDataStorage(int size) {
     mMeshData.reserve(size);
 }
 
-void Mesh::dumpBuf(float *buf, unsigned int bufSize, int groupSize) {
+void Mesh::dumpBuf(void *buff, unsigned int bufSize, int groupSize) {
     int num = bufSize/sizeof(float);
+    float *buf = (float *)buff;
     char format[1024];
 
     PRINT("************ start Mesh::dumpBuf **********");
@@ -370,9 +371,9 @@ void Mesh::dumpBuf(float *buf, unsigned int bufSize, int groupSize) {
 
 void Mesh::dumpIndexBuf(int groupSize) {
     unsigned int bufSize = getIndexBufSize();
-    unsigned short *buf = (unsigned short *)getIndexBuf();
+    unsigned int *buf = (unsigned int *)getIndexBuf();
     // Attention: supports only integer type indices
-    int num = bufSize/sizeof(unsigned short);
+    int num = bufSize/sizeof(unsigned int);
     char format[1024];
 
     if (num)

@@ -136,7 +136,7 @@ public:
 
     void            reserveDataStorage(int size);
 
-    void            dumpBuf(float *buf, unsigned int bufSize, int groupSize = 3);
+    void            dumpBuf(void *buff, unsigned int bufSize, int groupSize = 3);
     void            dumpIndexBuf (int groupSize = 3);
 
     friend class AIAdapter;
