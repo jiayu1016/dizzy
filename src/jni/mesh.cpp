@@ -352,24 +352,27 @@ void Mesh::reserveDataStorage(int size) {
     mMeshData.reserve(size);
 }
 
-void Mesh::dumpBuf(void *buff, unsigned int bufSize, int groupSize) {
+void Mesh::dumpBuf(Log::Flag f, void *buff, unsigned int bufSize, int groupSize) {
+    if (!Log::debugSwitchOn() || !Log::flagEnabled(f)) return;
     int num = bufSize/sizeof(float);
     float *buf = (float *)buff;
     char format[1024];
 
-    PRINT("************ start Mesh::dumpBuf **********");
+    DUMP(f, "************ start Mesh::dumpBuf **********");
     for (int i=0; i<num; i+=groupSize) {
         int n = sprintf(format, "%8p:", buf + i);
         int left = (i+groupSize <= num) ? groupSize : num - i;
         for (int k=0; k<left; k++) {
             n += sprintf(format + n, " %+08.6f", buf[i+k]);
         }
-        PRINT("%s", format);
+        DUMP(f, "%s", format);
     }
-    PRINT("************ end Mesh::dumpBuf ************");
+    DUMP(f, "************ end Mesh::dumpBuf ************");
 }
 
-void Mesh::dumpIndexBuf(int groupSize) {
+void Mesh::dumpIndexBuf(Log::Flag f, int groupSize) {
+    if (!Log::debugSwitchOn() || !Log::flagEnabled(f)) return;
+
     unsigned int bufSize = getIndexBufSize();
     unsigned int *buf = (unsigned int *)getIndexBuf();
     // Attention: supports only integer type indices
@@ -377,17 +380,17 @@ void Mesh::dumpIndexBuf(int groupSize) {
     char format[1024];
 
     if (num)
-        PRINT("************ start Mesh::dumpIndexBuf **********");
+        DUMP(f, "************ start Mesh::dumpIndexBuf **********");
     for (int i=0; i<num; i+=groupSize) {
         int n = sprintf(format, "%8p:", buf + i);
         int left = (i+groupSize <= num) ? groupSize : num - i;
         for (int k=0; k<left; k++) {
             n += sprintf(format + n, " %8u", buf[i+k]);
         }
-        PRINT("%s", format);
+        DUMP(f, "%s", format);
     }
     if (num)
-        PRINT("************ end Mesh::dumpIndexBuf ************");
+        DUMP(f, "************ end Mesh::dumpIndexBuf ************");
 }
 
 CubeMesh::CubeMesh(const string& name)

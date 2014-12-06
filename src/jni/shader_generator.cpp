@@ -100,11 +100,6 @@ shared_ptr<Program> ShaderGenerator::generateProgram(
     string vtxSource    = buildShader(info, Shader::Vertex);
     string fragSource   = buildShader(info, Shader::Fragment);
 
-    //PRINT("********** vertex shader   **********");
-    //PRINT("\n%s", vtxSource.c_str());
-    //PRINT("********** fragment shader **********");
-    //PRINT("\n%s", fragSource.c_str());
-
     shared_ptr<Shader> vtxShader(new Shader(Shader::Vertex));
     if (!vtxShader->compileFromMemory(vtxSource.c_str(), vtxSource.size())) {
         ALOGE("error compile vertex shader");

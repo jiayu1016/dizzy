@@ -25,7 +25,7 @@ NodeObj::NodeObj(const string& name)
 }
 
 NodeObj::~NodeObj() {
-    ALOGV("NodeObj::~NodeObj(), %s", getName().c_str());
+    TRACE(getName().c_str());
 }
 
 glm::quat NodeObj::getWorldRotation() {
@@ -250,7 +250,7 @@ Node::Node(const string& name)
 }
 
 Node::~Node() {
-    ALOGV("Node::~Node(), %s", getName().c_str());
+    TRACE(getName().c_str());
 }
 
 void Node::attachChild(shared_ptr<NodeObj> childNode) {
@@ -343,7 +343,9 @@ void Node::draw(Render &render, shared_ptr<Scene> scene) {
     });
 }
 
-void Node::dumpHierarchy() {
+void Node::dumpHierarchy(Log::Flag f) {
+    if (!Log::flagEnabled(f) || !Log::debugSwitchOn()) return;
+
     typedef pair<shared_ptr<NodeObj>, int> STACK_ELEM;
     stack<STACK_ELEM> stk;
     stk.push(make_pair(shared_from_this(), 0));
@@ -355,7 +357,7 @@ void Node::dumpHierarchy() {
         ostringstream os;
         for (int i=0; i<depth; i++) os << "    ";
         os << "%d:%s";
-        PRINT(os.str().c_str(), depth, nodeObj->getName().c_str());
+        DUMP(f, os.str().c_str(), depth, nodeObj->getName().c_str());
         shared_ptr<Node> node = dynamic_pointer_cast<Node>(nodeObj);
         if (node) {
             for (auto it = node->mChildren.rbegin(); it != node->mChildren.rend(); ++it) {
@@ -384,7 +386,7 @@ Geometry::Geometry(const string& name, shared_ptr<Mesh> mesh)
 }
 
 Geometry::~Geometry() {
-    ALOGV("Geometry::~Geometry(), %s", getName().c_str());
+    TRACE(getName().c_str());
 }
 
 bool Geometry::initGpuData() {

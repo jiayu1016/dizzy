@@ -28,7 +28,7 @@ Scene::Scene()
 }
 
 Scene::~Scene() {
-    ALOGV("Scene::~Scene()");
+    TRACE("");
 }
 
 shared_ptr<Camera> Scene::getActiveCamera() {
@@ -160,7 +160,7 @@ std::shared_ptr<Scene> Scene::loadColladaFromMemory(
     shared_ptr<Scene> s(new Scene);
     long long importTime = importDuration.getMilliSeconds();
 
-    ALOGV("%s: %u meshes, %u materials, %u animations, %u textures, %u lights, %u cameras",
+    DEBUG(Log::F_MODEL, "%s: %u meshes, %u materials, %u animations, %u textures, %u lights, %u cameras",
         fileName.c_str(), scene->mNumMeshes, scene->mNumMaterials, scene->mNumAnimations,
         scene->mNumTextures, scene->mNumLights, scene->mNumCameras);
 
@@ -195,7 +195,7 @@ std::shared_ptr<Scene> Scene::loadColladaFromMemory(
 
     long long cvtTime = cvtDuration.getMicroSeconds();
 
-    ALOGD("assimp load: %lld ms, conversion: %lld us", importTime, cvtTime);
+    DEBUG(Log::F_MODEL, "assimp load: %lld ms, conversion: %lld us", importTime, cvtTime);
     return s;
 }
 

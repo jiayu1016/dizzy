@@ -24,11 +24,11 @@ EngineContext::EngineContext()
     , mDisplay      (EGL_NO_DISPLAY)
     , mEglContext   (EGL_NO_CONTEXT)
     , mSurface      (EGL_NO_SURFACE) {
-    ALOGV("EngineContext::EngineContext()");
+    TRACE("");
 }
 
 EngineContext::~EngineContext() {
-    ALOGV("EngineContext::~EngineContext()");
+    TRACE("");
 }
 
 void EngineContext::init(shared_ptr<EngineCore> engineCore) {
@@ -99,10 +99,10 @@ bool EngineContext::initDisplay() {
         return false;
     }
 
-    ALOGD("%s", glGetString(GL_VENDOR));
-    ALOGD("%s", glGetString(GL_RENDERER));
-    ALOGD("%s", glGetString(GL_VERSION));
-    ALOGD("%s", glGetString(GL_EXTENSIONS));
+    DEBUG(Log::F_GLES, "%s", glGetString(GL_VENDOR));
+    DEBUG(Log::F_GLES, "%s", glGetString(GL_RENDERER));
+    DEBUG(Log::F_GLES, "%s", glGetString(GL_VERSION));
+    DEBUG(Log::F_GLES, "%s", glGetString(GL_EXTENSIONS));
 
     EGLint w, h;
     eglQuerySurface(display, surface, EGL_WIDTH, &w);

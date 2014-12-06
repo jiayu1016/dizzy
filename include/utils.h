@@ -77,22 +77,24 @@ private:
 
 class Utils {
 public:
-    static void dump(const char *msg, const glm::mat4& mat4) {
+    static void dump(Log::Flag f, const char *msg, const glm::mat4& mat4) {
+        if (!Log::debugSwitchOn() || !Log::flagEnabled(f))
+            return;
         float const * buf = glm::value_ptr(mat4);
-        PRINT("********** %s ************", msg);
+        DUMP(f, "********** %s ************", msg);
         for (int i=0; i<16; i+=4) {
-            PRINT("%+08.6f %+08.6f %+08.6f %+08.6f",
+            DUMP(f, "%+08.6f %+08.6f %+08.6f %+08.6f",
                 buf[i], buf[i+1], buf[i+2], buf[i+3]);
         }
     }
 
-    static void dump(const char *msg, const glm::vec3& vec3) {
-        PRINT("%s: %+08.6f %+08.6f %+08.6f",
+    static void dump(Log::Flag f, const char *msg, const glm::vec3& vec3) {
+        DUMP(f, "%s: %+08.6f %+08.6f %+08.6f",
             msg, vec3.x, vec3.y, vec3.z);
     }
 
-    static void dump(const char *msg, const glm::vec4& vec4) {
-        PRINT("%s: %+08.6f %+08.6f %+08.6f %+08.6f",
+    static void dump(Log::Flag f, const char *msg, const glm::vec4& vec4) {
+        DUMP(f, "%s: %+08.6f %+08.6f %+08.6f %+08.6f",
             msg, vec4.x, vec4.y, vec4.z, vec4.w);
     }
 

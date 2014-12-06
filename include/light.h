@@ -45,7 +45,7 @@ public:
     Light& rotate(float axisX, float axisY, float axisZ);
     glm::mat4 getTransform();
 
-    void dumpParameter();
+    void dump(Log::Flag f = Log::F_ALWAYS);
 
     friend class Render;
     friend class AIAdapter;

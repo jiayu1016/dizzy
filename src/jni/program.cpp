@@ -89,7 +89,7 @@ Program::Program()
     : mLinked(false)
     , mProgramId(0)
     , mRequirement(0) {
-    ALOGV("Program::Program()");
+    TRACE("");
     mProgramId = glCreateProgram();
     if (!mProgramId) {
         ALOGE("glCreateProgram error");
@@ -98,7 +98,7 @@ Program::Program()
 }
 
 Program::~Program() {
-    ALOGV("Program::~Program()");
+    TRACE("");
     if (mProgramId) glDeleteProgram(mProgramId);
 }
 
@@ -680,11 +680,11 @@ shared_ptr<Program> ProgramManager::getCompatibleProgram(
 }
 
 ProgramManager::ProgramManager() {
-    ALOGV("ProgramManager::ProgramManager()");
+    TRACE("");
 };
 
 ProgramManager::~ProgramManager() {
-    ALOGV("ProgramManager::~ProgramManager()");
+    TRACE("");
 };
 
 shared_ptr<Program> ProgramManager::createProgram(const string& name) {

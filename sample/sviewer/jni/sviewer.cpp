@@ -3,7 +3,6 @@
 #include "log.h"
 #include "engine_core.h"
 #include "engine_context.h"
-#include "render.h"
 #include "scene_graph.h"
 #include "mesh.h"
 #include "scene.h"
@@ -32,6 +31,10 @@ private:
 
 bool SViewer::create() {
     mScale = 1.f;
+    Log::setDebugSwitch(true);
+    //Log::setFlag(Log::F_TRACE);
+    //Log::setFlag(Log::F_GLES);
+    //Log::setFlag(Log::F_EVENT);
     mSceneFileName = getIntentString("modelName");
     mIsAsset = getIntentBool("isAsset");
     return true;

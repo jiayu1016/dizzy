@@ -13,11 +13,11 @@ namespace dzy {
 EngineCore::EngineCore()
     : mFirstFrameUpdated(false)
     , mJNIEnv(nullptr) {
-    ALOGV("EngineCore::EngineCore()");
+    TRACE("");
 }
 
 EngineCore::~EngineCore() {
-    ALOGV("EngineCore::~EngineCore()");
+    TRACE("");
 }
 
 bool EngineCore::init(struct android_app* app) {
@@ -65,12 +65,15 @@ bool EngineCore::inputMotionEvent(int action) {
     if (!ret) {
         switch(action) {
             case AMOTION_EVENT_ACTION_DOWN:
+                DEBUG(Log::F_MOTION_EVENT, "AMOTION_EVENT_ACTION_DOWN");
                 ret = true;
                 break;
             case AMOTION_EVENT_ACTION_MOVE:
+                DEBUG(Log::F_MOTION_EVENT, "AMOTION_EVENT_ACTION_MOVE");
                 ret = true;
                 break;
             case AMOTION_EVENT_ACTION_UP:
+                DEBUG(Log::F_MOTION_EVENT, "AMOTION_EVENT_ACTION_UP");
                 ret = true;
                 break;
         }
@@ -155,37 +158,47 @@ bool EngineCore::updateFrame() {
 void EngineCore::appCmd(int32_t cmd) {
     switch (cmd) {
         case APP_CMD_START:
+            DEBUG(Log::F_APP_CMD_EVENT, "APP_CMD_START");
             break;
         case APP_CMD_RESUME:
+            DEBUG(Log::F_APP_CMD_EVENT, "APP_CMD_RESUME");
             break;
         case APP_CMD_GAINED_FOCUS:
+            DEBUG(Log::F_APP_CMD_EVENT, "APP_CMD_GAINED_FOCUS");
             break;
-
         case APP_CMD_PAUSE:
+            DEBUG(Log::F_APP_CMD_EVENT, "APP_CMD_PAUSE");
             break;
         case APP_CMD_LOST_FOCUS:
+            DEBUG(Log::F_APP_CMD_EVENT, "APP_CMD_LOST_FOCUS");
             break;
         case APP_CMD_SAVE_STATE:
+            DEBUG(Log::F_APP_CMD_EVENT, "APP_CMD_SAVE_STATE");
             break;
         case APP_CMD_STOP:
+            DEBUG(Log::F_APP_CMD_EVENT, "APP_CMD_STOP");
             break;
-
         case APP_CMD_INIT_WINDOW:
+            DEBUG(Log::F_APP_CMD_EVENT, "APP_CMD_INIT_WINDOW");
             if (getEngineContext()->initDisplay())
                 getEngineContext()->setRenderState(true);
             break;
         case APP_CMD_TERM_WINDOW:
+            DEBUG(Log::F_APP_CMD_EVENT, "APP_CMD_TERM_WINDOW");
             getEngineContext()->setRenderState(false);
             getEngineContext()->releaseDisplay();
             break;
 
         case APP_CMD_WINDOW_RESIZED:
             // Not implemented in NativeActivity framework ?
+            DEBUG(Log::F_APP_CMD_EVENT, "APP_CMD_WINDOW_RESIZED");
             break;
 
         case APP_CMD_DESTROY:
+            DEBUG(Log::F_APP_CMD_EVENT, "APP_CMD_DESTROY");
             break;
         default:
+            DEBUG(Log::F_APP_CMD_EVENT, "unknown App cmd: %d", cmd);
             break;
     }
 }
@@ -198,7 +211,7 @@ bool EngineCore::inputKeyEvent(int action, int code) {
         if (!handled) {
             switch(code) {
                 case AKEYCODE_BACK:
-                    ALOGV("AKEYCODE_BACK");
+                    DEBUG(Log::F_KEY_EVENT, "AKEYCODE_BACK");
                     getEngineContext()->requestQuit();
                     // need framework to further process this key event
                     handled = false;
@@ -210,7 +223,7 @@ bool EngineCore::inputKeyEvent(int action, int code) {
         }
         // AKEYCODE_BACK needs special attention
         else if (code == AKEYCODE_BACK) {
-            ALOGV("AKEYCODE_BACK");
+            DEBUG(Log::F_KEY_EVENT, "AKEYCODE_BACK");
             // need framework to further process this key event
             handled = false;
             getEngineContext()->requestQuit();
@@ -321,7 +334,7 @@ void EngineCore::mainLoop() {
             }
 
             if (mApp->destroyRequested != 0) {
-                ALOGD("destroy request received");
+                DEBUG(Log::F_APP_CMD_EVENT, "destroy request received");
                 return;
             }
         }

@@ -4,6 +4,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE    := dzy
 LOCAL_SRC_FILES :=          \
     nameobj.cpp             \
+    log.cpp                 \
     engine_context.cpp      \
     engine_core.cpp         \
     scene.cpp               \

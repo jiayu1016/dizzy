@@ -174,7 +174,7 @@ public:
     virtual void draw(Render &render, std::shared_ptr<Scene> scene);
 
     /// dump the scene graph hierarchy starting from the current node.
-    void dumpHierarchy();
+    void dumpHierarchy(Log::Flag f = Log::F_ALWAYS);
 
 protected:
     bool initGpuData();

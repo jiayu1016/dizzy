@@ -136,8 +136,8 @@ public:
 
     void            reserveDataStorage(int size);
 
-    void            dumpBuf(void *buff, unsigned int bufSize, int groupSize = 3);
-    void            dumpIndexBuf (int groupSize = 3);
+    void            dumpBuf(Log::Flag f, void *buff, unsigned int bufSize, int groupSize = 3);
+    void            dumpIndexBuf (Log::Flag f, int groupSize = 3);
 
     friend class AIAdapter;
     friend class Render;

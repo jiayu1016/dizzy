@@ -108,8 +108,8 @@ glm::mat4 Light::getTransform() {
     return mLocalTransform.toMat4();
 }
 
-void Light::dumpParameter() {
-    ALOGD("light: %s\n"
+void Light::dump(Log::Flag f) {
+    DEBUG(f, "light: %s\n"
         "position: (%f, %f, %f), direction: (%f, %f, %f)\n"
         "diffuse: (%f, %f, %f), specular: (%f, %f, %f), ambient: (%f, %f, %f)\n"
         "mAngleInnerCone: %f , mAngleOuterCone: %f\n"
