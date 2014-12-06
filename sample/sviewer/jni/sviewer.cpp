@@ -23,6 +23,7 @@ public:
 private:
     shared_ptr<Scene>   mScene;
     string              mSceneFileName;
+    bool                mIsAsset;
     float               mScale;
     float               mLen;
     float               mDragStartX;
@@ -32,13 +33,17 @@ private:
 bool SViewer::create() {
     mScale = 1.f;
     mSceneFileName = getIntentString("modelName");
+    mIsAsset = getIntentBool("isAsset");
     return true;
 }
 
 bool SViewer::start() {
     shared_ptr<EngineContext> engineContext(getEngineContext());
 
-    mScene = Scene::loadColladaAsset(engineContext, mSceneFileName);
+    if (mIsAsset)
+        mScene = Scene::loadColladaFromAsset(engineContext, mSceneFileName);
+    else
+        mScene = Scene::loadColladaFromFile(mSceneFileName);
     if (!mScene) return false;
 
     shared_ptr<Node> rootNode(mScene->getRootNode());

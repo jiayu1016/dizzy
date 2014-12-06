@@ -51,12 +51,13 @@ public:
 
     std::shared_ptr<Node> getRootNode() { return mRootNode;}
 
-    static std::shared_ptr<Scene> loadFile(
-        std::shared_ptr<EngineContext> engineContext,
+    static std::shared_ptr<Scene> loadColladaFromFile(
         const std::string &file);
-    static std::shared_ptr<Scene> loadColladaAsset(
+    static std::shared_ptr<Scene> loadColladaFromAsset(
         std::shared_ptr<EngineContext> engineContext,
         const std::string &asset);
+    static std::shared_ptr<Scene> loadColladaFromMemory(
+        const char *buf, int length, const std::string& fileName = "");
 
     friend class Render;
     friend class Program;

@@ -97,6 +97,8 @@ public:
     virtual bool handlePinch(GestureState state, float x1, float y1, float x2, float y2);
 
     std::string getIntentString(const std::string& name);
+    bool getIntentBool(const std::string& name);
+
     std::shared_ptr<EngineContext> getEngineContext();
 
     friend class EngineContext;

@@ -279,6 +279,23 @@ string EngineCore::getIntentString(const string& name) {
     return ret;
 }
 
+bool EngineCore::getIntentBool(const string& name) {
+    jobject nativeActivityObj = mApp->activity->clazz;
+    jclass nativeActivityClass = mJNIEnv->GetObjectClass(nativeActivityObj);
+    jmethodID getIntentMethodID = mJNIEnv->GetMethodID(
+        nativeActivityClass, "getIntent", "()Landroid/content/Intent;");
+    jobject intentObj = mJNIEnv->CallObjectMethod(
+        nativeActivityObj, getIntentMethodID);
+    jclass intentClass = mJNIEnv->GetObjectClass(intentObj);
+
+    jmethodID getBooleanExtraMethodID = mJNIEnv->GetMethodID(intentClass,
+        "getBooleanExtra", "(Ljava/lang/String;Z)Z");
+    jboolean ret = mJNIEnv->CallBooleanMethod(intentObj,
+        getBooleanExtraMethodID, mJNIEnv->NewStringUTF(name.c_str()), JNI_FALSE);
+
+    return ret == JNI_TRUE;
+}
+
 shared_ptr<EngineContext> EngineCore::getEngineContext() {
     return mEngineContext;
 }

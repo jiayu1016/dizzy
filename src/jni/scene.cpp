@@ -82,8 +82,7 @@ bool Scene::atLeastOneMeshHasNormal() {
     return false;
 }
 
-shared_ptr<Scene> Scene::loadFile(shared_ptr<EngineContext> engineContext,
-    const string &file) {
+shared_ptr<Scene> Scene::loadColladaFromFile(const string &file) {
     ifstream ifs(file.c_str(), ifstream::binary);
     if (!ifs) {
         ALOGE("ifstream ctor failed for %s", file.c_str());
@@ -104,16 +103,12 @@ shared_ptr<Scene> Scene::loadFile(shared_ptr<EngineContext> engineContext,
 
     // process the buffer
     buffer.get()[length - 1] = 0;
-    ALOGD("%s: %s", file.c_str(), buffer.get());
 
-    shared_ptr<Scene> s(new Scene);
-
-    // TODO:
-
-    return s;
+    return loadColladaFromMemory(buffer.get(), length, file);
 }
 
-shared_ptr<Scene> Scene::loadColladaAsset(shared_ptr<EngineContext> engineContext,
+shared_ptr<Scene> Scene::loadColladaFromAsset(
+    shared_ptr<EngineContext> engineContext,
     const string &assetFile) {
     AAssetManager *assetManager = engineContext->getAssetManager();
     assert(assetManager != NULL);
@@ -135,25 +130,30 @@ shared_ptr<Scene> Scene::loadColladaAsset(shared_ptr<EngineContext> engineContex
         return nullptr;
     }
 
+    return loadColladaFromMemory(buffer.get(), length, assetFile);
+}
+
+std::shared_ptr<Scene> Scene::loadColladaFromMemory(
+    const char *buf, int length, const string& fileName) {
     MeasureDuration importDuration;
     Assimp::Importer importer;
     const aiScene *scene(importer.ReadFileFromMemory(
-        buffer.get(), length,
+        buf, length,
         aiProcess_Triangulate |
         aiProcess_JoinIdenticalVertices |
         aiProcess_SortByPType));
     if (!scene) {
-        ALOGE("assimp failed to load %s: %s", assetFile.c_str(),
+        ALOGE("assimp failed to load %s: %s", fileName.c_str(),
             importer.GetErrorString());
         return nullptr;
     }
 
     if (scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE) {
-        ALOGE("%s: incomplete scene data loaded", assetFile.c_str());
+        ALOGE("%s: incomplete scene data loaded", fileName.c_str());
         return nullptr;
     }
     if (scene->mRootNode == NULL) {
-        ALOGE("%s: root node null", assetFile.c_str());
+        ALOGE("%s: root node null", fileName.c_str());
         return nullptr;
     }
 
@@ -161,7 +161,7 @@ shared_ptr<Scene> Scene::loadColladaAsset(shared_ptr<EngineContext> engineContex
     long long importTime = importDuration.getMilliSeconds();
 
     ALOGV("%s: %u meshes, %u materials, %u animations, %u textures, %u lights, %u cameras",
-        assetFile.c_str(), scene->mNumMeshes, scene->mNumMaterials, scene->mNumAnimations,
+        fileName.c_str(), scene->mNumMeshes, scene->mNumMaterials, scene->mNumAnimations,
         scene->mNumTextures, scene->mNumLights, scene->mNumCameras);
 
     MeasureDuration cvtDuration;
@@ -196,7 +196,6 @@ shared_ptr<Scene> Scene::loadColladaAsset(shared_ptr<EngineContext> engineContex
     long long cvtTime = cvtDuration.getMicroSeconds();
 
     ALOGD("assimp load: %lld ms, conversion: %lld us", importTime, cvtTime);
-
     return s;
 }
 
