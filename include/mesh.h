@@ -3,15 +3,43 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 #include "nameobj.h"
+#include "transform.h"
 
 namespace dzy {
 
-/// how raw buffer data of a triangle face
+/// hold raw buffer data of a triangle face
 class TriangleFace {
 public:
     unsigned int mIndices[3];
 };
+
+class VertexWeight
+{
+public:
+    VertexWeight();
+    VertexWeight(unsigned int index, float weight);
+private:
+    unsigned int mVertexIndex;
+    // the weight sum of all bones that have influcence to a vertex
+    // is equal to 1, so this value ranges from 0 ~ 1
+    float mWeight;
+};
+
+/// Bones have a name to index a unique node in scene graph
+class Bone : public NameObj {
+public:
+    Bone();
+    Bone(const Bone& other);
+    ~Bone();
+
+    friend class AIAdapter;
+private:
+    std::vector<VertexWeight>   mWeights;
+    Transform                   mTransform;
+};
+
 
 /// hold raw buffer data of a Mesh
 class MeshData {
@@ -62,6 +90,7 @@ public:
     unsigned int    getNumTextureCoordChannels() const;
     unsigned int    getNumFaces() const;
     unsigned int    getNumIndices() const;
+    unsigned int    getNumBones() const;
 
     virtual unsigned int    getPositionNumComponent() const;
     virtual unsigned int    getPositionBufStride() const;
@@ -142,46 +171,48 @@ public:
     friend class AIAdapter;
     friend class Render;
 protected:
-    PrimitiveType                   mPrimitiveType;
+    PrimitiveType                       mPrimitiveType;
 
-    unsigned int                    mNumVertices;
-    unsigned int                    mNumFaces;
-    std::vector<TriangleFace>       mTriangleFaces;
+    unsigned int                        mNumVertices;
+    unsigned int                        mNumFaces;
+    std::vector<TriangleFace>           mTriangleFaces;
 
-    MeshData                        mMeshData;
+    std::vector<std::shared_ptr<Bone> > mBones;
 
-    unsigned int                    mPosOffset;
-    unsigned int                    mPosNumComponents;
-    unsigned int                    mPosBytesComponent;
-    bool                            mHasPos;
+    MeshData                            mMeshData;
 
-    unsigned int                    mColorOffset[MAX_COLOR_SETS];
-    unsigned int                    mColorNumComponents[MAX_COLOR_SETS];
-    unsigned int                    mColorBytesComponent[MAX_COLOR_SETS];
-    unsigned int                    mNumColorChannels;
+    unsigned int                        mPosOffset;
+    unsigned int                        mPosNumComponents;
+    unsigned int                        mPosBytesComponent;
+    bool                                mHasPos;
 
-    unsigned int                    mTextureCoordOffset[MAX_TEXTURECOORDS];
-    unsigned int                    mTextureCoordNumComponents[MAX_TEXTURECOORDS];
-    unsigned int                    mTextureCoordBytesComponent[MAX_TEXTURECOORDS];
-    unsigned int                    mNumTextureCoordChannels;
+    unsigned int                        mColorOffset[MAX_COLOR_SETS];
+    unsigned int                        mColorNumComponents[MAX_COLOR_SETS];
+    unsigned int                        mColorBytesComponent[MAX_COLOR_SETS];
+    unsigned int                        mNumColorChannels;
 
-    unsigned int                    mNormalOffset;
-    unsigned int                    mNormalNumComponents;
-    unsigned int                    mNormalBytesComponent;
-    bool                            mHasNormal;
+    unsigned int                        mTextureCoordOffset[MAX_TEXTURECOORDS];
+    unsigned int                        mTextureCoordNumComponents[MAX_TEXTURECOORDS];
+    unsigned int                        mTextureCoordBytesComponent[MAX_TEXTURECOORDS];
+    unsigned int                        mNumTextureCoordChannels;
 
-    unsigned int                    mTangentOffset;
-    unsigned int                    mTangentNumComponents;
-    unsigned int                    mTangentBytesComponent;
-    bool                            mHasTangent;
+    unsigned int                        mNormalOffset;
+    unsigned int                        mNormalNumComponents;
+    unsigned int                        mNormalBytesComponent;
+    bool                                mHasNormal;
 
-    unsigned int                    mBitangentOffset;
-    unsigned int                    mBitangentNumComponents;
-    unsigned int                    mBitangentBytesComponent;
-    bool                            mHasBitangent;
+    unsigned int                        mTangentOffset;
+    unsigned int                        mTangentNumComponents;
+    unsigned int                        mTangentBytesComponent;
+    bool                                mHasTangent;
+
+    unsigned int                        mBitangentOffset;
+    unsigned int                        mBitangentNumComponents;
+    unsigned int                        mBitangentBytesComponent;
+    bool                                mHasBitangent;
 
     // A mesh use only ONE material, otherwise it is splitted to multiple meshes
-    unsigned int                    mMaterialIndex;
+    unsigned int                        mMaterialIndex;
 };
 
 class CubeMesh : public Mesh {

@@ -30,7 +30,7 @@ public:
     ///
     ///     @param scene the scene that hosts the scene graph
     ///     @param the node current being drawn
-    void drawNode(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node);
+    bool drawNode(std::shared_ptr<Scene> scene, std::shared_ptr<Node> node);
 
     bool drawGeometry(std::shared_ptr<Scene> scene, std::shared_ptr<Geometry> geometry);
 

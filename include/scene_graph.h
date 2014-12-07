@@ -26,6 +26,7 @@ class Node;
 class Material;
 class Camera;
 class Light;
+class NodeAnim;
 /// Base class for "element" in the scene graph
 class NodeObj : public NameObj, public std::enable_shared_from_this<NodeObj> {
 public:
@@ -55,6 +56,7 @@ public:
     NodeObj& translate(const glm::vec3& offset);
     NodeObj& scale(float s);
     NodeObj& scale(float x, float y, float z);
+    NodeObj& scale(const glm::vec3& v);
     NodeObj& rotate(const glm::quat& rotation);
     NodeObj& rotate(float axisX, float axisY, float axisZ);
 
@@ -106,10 +108,15 @@ public:
     void setCamera(std::shared_ptr<Camera> camera);
     std::shared_ptr<Camera> getCamera();
 
+    void setAnimation(std::shared_ptr<NodeAnim> nodeAnim);
+    std::shared_ptr<NodeAnim> getAnimation();
+    void updateAnimation(double timeStamp);
+
     bool isInitialized();
 
     /// Recursively draw the node and it's children
-    virtual void draw(Render &render, std::shared_ptr<Scene> scene) = 0;
+    virtual void draw(Render &render,
+        std::shared_ptr<Scene> scene, double timeStamp) = 0;
 
     friend class AIAdapter;
     friend class Render;
@@ -132,6 +139,7 @@ protected:
     std::shared_ptr<Material>               mMaterial;
     std::shared_ptr<Light>                  mLight;
     std::shared_ptr<Camera>                 mCamera;
+    std::shared_ptr<NodeAnim>               mAnimation;
     bool                                    mInitialized;
 };
 
@@ -171,7 +179,8 @@ public:
     ///     @param visit the functor gets called whenever a node is visited
     void depthFirstTraversal(VisitFunc visit);
 
-    virtual void draw(Render &render, std::shared_ptr<Scene> scene);
+    virtual void draw(Render &render,
+        std::shared_ptr<Scene> scene, double timeStamp);
 
     /// dump the scene graph hierarchy starting from the current node.
     void dumpHierarchy(Log::Flag f = Log::F_ALWAYS);
@@ -190,7 +199,8 @@ public:
     Geometry(const std::string& name, std::shared_ptr<Mesh> mesh);
     ~Geometry();
 
-    virtual void draw(Render &render, std::shared_ptr<Scene> scene);
+    virtual void draw(Render &render,
+        std::shared_ptr<Scene> scene, double timeStamp);
 
     std::shared_ptr<Mesh> getMesh();
 

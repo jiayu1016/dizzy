@@ -6,6 +6,7 @@
 #include "material.h"
 #include "camera.h"
 #include "light.h"
+#include "animation.h"
 #include "assimp_adapter.h"
 
 using namespace std;
@@ -98,8 +99,87 @@ shared_ptr<Texture>AIAdapter::typeCast(aiTexture *texture) {
 }
 
 shared_ptr<Animation> AIAdapter::typeCast(aiAnimation *animation) {
-    shared_ptr<Animation> anim(new Animation);
+    shared_ptr<Animation> anim(new Animation(
+        animation->mDuration, animation->mTicksPerSecond));
+    anim->setName(typeCast(animation->mName));
+    for (int i=0; i<animation->mNumChannels; i++) {
+        aiNodeAnim* nodeAnim = animation->mChannels[i];
+        shared_ptr<NodeAnim> na(typeCast(nodeAnim));
+        na->mAnimation = anim;
+        anim->mNodeAnims.push_back(na);
+    }
+    for (int i=0; i<animation->mNumMeshChannels; i++) {
+        aiMeshAnim* meshAnim = animation->mMeshChannels[i];
+        shared_ptr<MeshAnim> ma(typeCast(meshAnim));
+        ma->mAnimation = anim;
+        anim->mMeshAnims.push_back(ma);
+    }
+    DUMP(Log::F_ANIMATION, "animation %s: duration %f, tps %f, na# %d, ma# %d",
+        anim->getName().c_str(),
+        anim->getDuration(), anim->getTicksPerSecond(),
+        anim->getNumNodeAnims(), anim->getNumMeshAnims());
     return anim;
+}
+
+shared_ptr<NodeAnim> AIAdapter::typeCast(aiNodeAnim *nodeAnim) {
+    const char* name = typeCast(nodeAnim->mNodeName).c_str();
+    shared_ptr<NodeAnim> na(new NodeAnim(name));
+    for (int i=0; i<nodeAnim->mNumPositionKeys; i++) {
+        aiVectorKey position = nodeAnim->mPositionKeys[i];
+        VectorState translationState(position.mTime, typeCast(position.mValue));
+        na->mTranslationState.push_back(translationState);
+        DUMP(Log::F_ANIMATION,
+            "%-10s NA: %d/%d "
+            "ts {time %f, value (%f, %f, %f)} ",
+            name, i+1, nodeAnim->mNumPositionKeys,
+            translationState.getTime(),
+            translationState.getValue().x, translationState.getValue().y, translationState.getValue().z
+        );
+    }
+    for (int i=0; i<nodeAnim->mNumRotationKeys; i++) {
+        aiQuatKey rotation = nodeAnim->mRotationKeys[i];
+        RotationState rotationState(rotation.mTime, typeCast(rotation.mValue));
+        na->mRotationState.push_back(rotationState);
+        DUMP(Log::F_ANIMATION,
+            "%-10s NA: %d/%d "
+            "rs {time %f, value (%f, %f, %f, %f)} ",
+            name, i+1, nodeAnim->mNumRotationKeys,
+            rotationState.getTime(),
+            rotationState.getValue().w, rotationState.getValue().x,
+            rotationState.getValue().y, rotationState.getValue().z
+        );
+    }
+    for (int i=0; i<nodeAnim->mNumScalingKeys; i++) {
+        aiVectorKey scale = nodeAnim->mScalingKeys[i];
+        VectorState scaleState(scale.mTime, typeCast(scale.mValue));
+        na->mScaleState.push_back(scaleState);
+        DUMP(Log::F_ANIMATION,
+            "%-10s NA: %d/%d "
+            "ss {time %f, value (%f, %f, %f)} ",
+            name, i+1, nodeAnim->mNumScalingKeys,
+            scaleState.getTime(),
+            scaleState.getValue().x, scaleState.getValue().y, scaleState.getValue().z
+        );
+    }
+    return na;
+}
+
+shared_ptr<MeshAnim> AIAdapter::typeCast(aiMeshAnim *meshAnim) {
+    shared_ptr<MeshAnim> ma(new MeshAnim);
+    const char* name = typeCast(meshAnim->mName).c_str();
+    ma->setName(name);
+    for (int i=0; i<meshAnim->mNumKeys; i++) {
+        aiMeshKey mk = meshAnim->mKeys[i];
+        MeshState ms(mk.mTime, mk.mValue);
+        ma->mMeshState.push_back(ms);
+        DUMP(Log::F_ANIMATION,
+            "%s ma: %d/%d "
+            "ts {time %f, value %u} ",
+            name, i+1, meshAnim->mNumKeys,
+            ms.getTime(), ms.getValue()
+        );
+    }
+    return ma;
 }
 
 shared_ptr<Material> AIAdapter::typeCast(aiMaterial *material) {
@@ -200,10 +280,28 @@ shared_ptr<Mesh> AIAdapter::typeCast(aiMesh *mesh) {
             me->mTriangleFaces[i].mIndices[2] = mesh->mFaces[i].mIndices[2];
         }
     }
+    if (mesh->HasBones()) {
+        for (int i=0; i<mesh->mNumBones; i++) {
+            aiBone* bone = mesh->mBones[i];
+            shared_ptr<Bone> b(typeCast(bone));
+            me->mBones.push_back(b);
+        }
+    }
 
     me->mMaterialIndex = mesh->mMaterialIndex;
 
     return me;
+}
+
+shared_ptr<Bone> AIAdapter::typeCast(aiBone *bone) {
+    shared_ptr<Bone> b(new Bone);
+    b->setName(typeCast(bone->mName));
+    for (int i=0; i<bone->mNumWeights; i++) {
+        aiVertexWeight vw = bone->mWeights[i];
+        VertexWeight vertexWeight(vw.mVertexId, vw.mWeight);
+        b->mWeights.push_back(vertexWeight);
+    }
+    return b;
 }
 
 shared_ptr<Node> AIAdapter::typeCast(aiNode *node) {
@@ -212,7 +310,7 @@ shared_ptr<Node> AIAdapter::typeCast(aiNode *node) {
     aiQuaternion rotation;
     node->mTransformation.Decompose(scale, rotation, translation);
     n->setLocalScale(typeCast(scale));
-    n->setLocalRotation(rotation.w, rotation.x, rotation.y, rotation.z);
+    n->setLocalRotation(typeCast(rotation));
     n->setLocalTranslation(typeCast(translation));
     return n;
 }
@@ -227,6 +325,10 @@ glm::vec3 AIAdapter::typeCast(const aiColor3D &color3d) {
 
 glm::vec4 AIAdapter::typeCast(const aiColor4D &color4d) {
     return glm::vec4(color4d.r, color4d.g, color4d.b, color4d.a);
+}
+
+glm::quat AIAdapter::typeCast(const aiQuaternion& quaternion) {
+    return glm::quat(quaternion.w, quaternion.x, quaternion.y, quaternion.z);
 }
 
 // assimp matrix has different memory layout with glm matrix
@@ -251,6 +353,7 @@ void AIAdapter::buildSceneGraph(shared_ptr<Scene> scene, aiNode *aroot) {
 
 void AIAdapter::postProcess(shared_ptr<Scene> scene) {
     shared_ptr<Node> rootNode(scene->mRootNode);
+    assert(rootNode != nullptr);
     // compute camera local transform
     for (int i=0; i<scene->getNumCameras(); i++) {
         shared_ptr<Camera> camera(scene->getCamera(i));
@@ -281,6 +384,21 @@ void AIAdapter::postProcess(shared_ptr<Scene> scene) {
 
         // TODO: remove light node from scene graph
         //lightNode->detachFromParent();
+    }
+    // Attach animation to Node
+    for (int i=0; i<scene->getNumAnimations(); i++) {
+        shared_ptr<Animation> animation(scene->getAnimation(i));
+        for (int j=0; j<animation->getNumNodeAnims(); j++) {
+            shared_ptr<NodeAnim> nodeAnim(animation->getNodeAnim(j));
+            shared_ptr<NodeObj> node(rootNode->getChild(nodeAnim->getName()));
+            if (!node) {
+                ALOGW("NodeAnim affected Node %s not found in scene graph",
+                    nodeAnim->getName().c_str());
+                continue;
+            } else {
+                node->setAnimation(nodeAnim);
+            }
+        }
     }
 }
 

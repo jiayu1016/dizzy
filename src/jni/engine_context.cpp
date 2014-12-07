@@ -14,6 +14,7 @@
 #include "engine_context.h"
 
 using namespace std;
+using namespace std::chrono;
 
 namespace dzy {
 
@@ -23,7 +24,8 @@ EngineContext::EngineContext()
     , mRender       (new Render)
     , mDisplay      (EGL_NO_DISPLAY)
     , mEglContext   (EGL_NO_CONTEXT)
-    , mSurface      (EGL_NO_SURFACE) {
+    , mSurface      (EGL_NO_SURFACE)
+    , mCreateTime   (steady_clock::now()) {
     TRACE("");
 }
 
@@ -247,6 +249,12 @@ bool EngineContext::listAssetFiles(const string &dir) {
     AAssetDir_close(assetDir);
 
     return true;
+}
+
+double EngineContext::lifetime() {
+    steady_clock::time_point now(steady_clock::now());
+    duration<double> life = duration_cast<duration<double> >(now - mCreateTime);
+    return life.count();
 }
 
 void EngineContext::requestQuit() {

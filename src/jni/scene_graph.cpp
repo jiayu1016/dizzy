@@ -11,6 +11,7 @@
 #include "render.h"
 #include "mesh.h"
 #include "material.h"
+#include "animation.h"
 #include "scene_graph.h"
 
 using namespace std;
@@ -117,6 +118,10 @@ NodeObj& NodeObj::translate(const glm::vec3& offset) {
 
 NodeObj& NodeObj::scale(float s) {
     return scale(s, s, s);
+}
+
+NodeObj& NodeObj::scale(const glm::vec3& v) {
+    return scale(v.x, v.y, v.z);
 }
 
 NodeObj& NodeObj::scale(float x, float y, float z) {
@@ -237,6 +242,33 @@ shared_ptr<Camera> NodeObj::getCamera() {
     return mCamera;
 }
 
+void NodeObj::setAnimation(std::shared_ptr<NodeAnim> nodeAnim) {
+    mAnimation = nodeAnim;
+}
+
+std::shared_ptr<NodeAnim> NodeObj::getAnimation() {
+    return mAnimation;
+}
+
+void NodeObj::updateAnimation(double timeStamp) {
+    shared_ptr<NodeAnim> nodeAnim(getAnimation());
+    if (nodeAnim) {
+        //glm::vec3 nodeLocalTranslation = node->getLocalTranslation();
+        //glm::quat nodeLocalRotation = node->getLocalRotation();
+        //glm::vec3 nodeLocalScale = node->getLocalScale();
+
+        // get current time stamp, interpolate TRS states in NodeAnim
+        glm::vec3 animTranslation = nodeAnim->getTranslation(timeStamp);
+        glm::quat animRotation = nodeAnim->getRotation(timeStamp);
+        glm::vec3 animScale = nodeAnim->getScale(timeStamp);
+        // do not use traslate, rotate & scale functions, because these are accumulative,
+        // we need to reset all and transform from scratch.
+        setLocalTranslation(animTranslation);
+        setLocalRotation(animRotation);
+        setLocalScale(animScale);
+    }
+}
+
 bool NodeObj::isInitialized() {
     return mInitialized;
 }
@@ -335,11 +367,13 @@ bool Node::initGpuData() {
     return true;
 }
 
-void Node::draw(Render &render, shared_ptr<Scene> scene) {
+void Node::draw(Render &render, shared_ptr<Scene> scene, double timeStamp) {
     if (!isInitialized()) initGpuData();
+
+    NodeObj::updateAnimation(timeStamp);
     render.drawNode(scene, dynamic_pointer_cast<Node>(shared_from_this()));
     std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<NodeObj> c) {
-        c->draw(render, scene);
+        c->draw(render, scene, timeStamp);
     });
 }
 
@@ -411,8 +445,9 @@ bool Geometry::initGpuData() {
     return true;
 }
 
-void Geometry::draw(Render &render, shared_ptr<Scene> scene) {
+void Geometry::draw(Render &render, shared_ptr<Scene> scene, double timeStamp) {
     if (!isInitialized()) initGpuData();
+    NodeObj::updateAnimation(timeStamp);
     if (render.drawGeometry(scene, dynamic_pointer_cast<Geometry>(shared_from_this())))
         // program attached to Geometry node only when drawGeometry returns true
         render.drawMesh(scene, mMesh, getProgram(), mVertexBO, mIndexBO);

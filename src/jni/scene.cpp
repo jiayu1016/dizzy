@@ -16,6 +16,7 @@
 #include "mesh.h"
 #include "material.h"
 #include "camera.h"
+#include "animation.h"
 #include "scene.h"
 
 using namespace std;
@@ -23,7 +24,7 @@ using namespace std;
 namespace dzy {
 
 Scene::Scene()
-    : mRootNode(new Node("root"))
+    : mRootNode(new Node("dzyroot"))
     , mActiveCamera(-1) {
 }
 
@@ -58,6 +59,12 @@ shared_ptr<Light> Scene::getLight(int idx) {
     if (idx < 0) return nullptr;
     if (idx < mLights.size())
         return mLights[idx];
+    return nullptr;
+}
+
+std::shared_ptr<Animation> Scene::getAnimation(int idx) {
+    if (idx >= 0 && idx < mAnimations.size())
+        return mAnimations[idx];
     return nullptr;
 }
 
@@ -100,9 +107,6 @@ shared_ptr<Scene> Scene::loadColladaFromFile(const string &file) {
         ALOGE("Partial read %d bytes", ifs.gcount());
         return nullptr;
     }
-
-    // process the buffer
-    buffer.get()[length - 1] = 0;
 
     return loadColladaFromMemory(buffer.get(), length, file);
 }
@@ -160,7 +164,7 @@ std::shared_ptr<Scene> Scene::loadColladaFromMemory(
     shared_ptr<Scene> s(new Scene);
     long long importTime = importDuration.getMilliSeconds();
 
-    DEBUG(Log::F_MODEL, "%s: %u meshes, %u materials, %u animations, %u textures, %u lights, %u cameras",
+    DUMP(Log::F_MODEL, "assimp load %s: %u meshes, %u materials, %u animations, %u textures, %u lights, %u cameras",
         fileName.c_str(), scene->mNumMeshes, scene->mNumMaterials, scene->mNumAnimations,
         scene->mNumTextures, scene->mNumLights, scene->mNumCameras);
 
@@ -188,6 +192,16 @@ std::shared_ptr<Scene> Scene::loadColladaFromMemory(
     for (int i=0; i<scene->mNumMeshes; i++) {
         shared_ptr<Mesh> mesh(AIAdapter::typeCast(scene->mMeshes[i]));
         s->mMeshes.push_back(mesh);
+        DUMP(Log::F_MODEL,
+            "%s: "
+            "vtx# %d, indices# %d, face#: %d, bone# %d, "
+            "color channel#: %d, tex coord channel#: %d, "
+            "normal: %s, {bi}tagent: %s",
+            mesh->getName().c_str(),
+            mesh->getNumVertices(), mesh->getNumIndices(), mesh->getNumFaces(), mesh->getNumBones(),
+            mesh->getNumColorChannels(), mesh->getNumTextureCoordChannels(),
+            mesh->hasVertexNormals() ? "true" : "false",
+            mesh->hasVertexTangentsAndBitangents() ? "true" : "false");
     }
 
     AIAdapter::buildSceneGraph(s, scene->mRootNode);
@@ -195,7 +209,12 @@ std::shared_ptr<Scene> Scene::loadColladaFromMemory(
 
     long long cvtTime = cvtDuration.getMicroSeconds();
 
-    DEBUG(Log::F_MODEL, "assimp load: %lld ms, conversion: %lld us", importTime, cvtTime);
+    DUMP(Log::F_MODEL, "after conversion %s: %u meshes, %u materials, %u animations, %u textures, %u lights, %u cameras",
+        fileName.c_str(),
+        s->getNumMeshes(), s->getNumMaterials(), s->getNumAnimations(),
+        s->getNumTextures(), s->getNumLights(), s->getNumCameras());
+    DUMP(Log::F_MODEL, "model load: %lld ms, conversion: %lld us", importTime, cvtTime);
+
     return s;
 }
 

@@ -27,6 +27,12 @@ Transform::Transform() {
     loadIdentity();
 }
 
+Transform::Transform(const Transform& other) {
+    mTranslation = other.mTranslation;
+    mRotation = other.mRotation;
+    mScale = other.mScale;
+}
+
 Transform& Transform::operator=(const Transform& rhs) {
     if (this != &rhs) {
         mTranslation = rhs.mTranslation;

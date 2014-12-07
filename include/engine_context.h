@@ -4,6 +4,7 @@
 #include <android_native_app_glue.h>
 #include <memory>
 #include <string>
+#include <chrono>
 #include <EGL/egl.h>
 #include "utils.h"
 
@@ -20,7 +21,7 @@ class EngineContext
     : public std::enable_shared_from_this<EngineContext>
     , private noncopyable {
 public:
-    explicit EngineContext();
+    EngineContext();
     ~EngineContext();
     // init non-trivial class members that cannot be put in ctor
     void                        init(std::shared_ptr<EngineCore> engineCore);
@@ -31,6 +32,10 @@ public:
     const std::string           getExternalDataDir();
     const std::string           getInternalDataDir();
     bool                        listAssetFiles(const std::string &dir);
+    /// return the lifetime  since creation
+    ///
+    ///     @return the lifetime in seconds
+    double                      lifetime();
 
     AAssetManager*              getAssetManager();
     std::shared_ptr<EngineCore> getNativeCore();
@@ -71,6 +76,7 @@ private:
 
     // OS specific
     std::string                 mInternalDataPath;
+    std::chrono::steady_clock::time_point   mCreateTime;
 };
 
 } // namespace dzy

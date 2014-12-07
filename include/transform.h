@@ -18,6 +18,7 @@ public:
     Transform(const glm::vec3& translation);
     Transform(const glm::quat& rotation);
     Transform();
+    Transform(const Transform& other);
     Transform& operator=(const Transform& rhs);
     void loadIdentity();
 

@@ -35,6 +35,8 @@ bool SViewer::create() {
     //Log::setFlag(Log::F_TRACE);
     //Log::setFlag(Log::F_GLES);
     //Log::setFlag(Log::F_EVENT);
+    Log::setFlag(Log::F_MODEL);
+    Log::setFlag(Log::F_ANIMATION);
     mSceneFileName = getIntentString("modelName");
     mIsAsset = getIntentBool("isAsset");
     return true;

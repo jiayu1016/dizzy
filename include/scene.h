@@ -13,9 +13,6 @@ namespace dzy {
 class Texture {
 };
 
-class Animation {
-};
-
 class SceneManager;
 class EngineContext;
 class Program;
@@ -24,6 +21,7 @@ class Mesh;
 class Material;
 class Camera;
 class Light;
+class Animation;
 typedef std::vector<std::shared_ptr<Camera> >      CameraContainer;
 typedef std::vector<std::shared_ptr<Light> >       LightContainer;
 typedef std::vector<std::shared_ptr<Animation> >   AnimationContainer;
@@ -41,9 +39,10 @@ public:
     inline unsigned int getNumAnimations() { return mAnimations.size(); }
     inline unsigned int getNumMaterials() { return mMaterials.size(); }
     inline unsigned int getNumMeshes() { return mMeshes.size(); }
-    std::shared_ptr<Camera> getActiveCamera();
-    std::shared_ptr<Camera> getCamera(int idx);
-    std::shared_ptr<Light> getLight(int idx);
+    std::shared_ptr<Camera>     getActiveCamera();
+    std::shared_ptr<Camera>     getCamera(int idx);
+    std::shared_ptr<Light>      getLight(int idx);
+    std::shared_ptr<Animation>  getAnimation(int idx);
 
     bool atLeastOneMeshHasVertexPosition();
     bool atLeastOneMeshHasVertexColor();

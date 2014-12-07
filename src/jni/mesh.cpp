@@ -5,6 +5,24 @@ using namespace std;
 
 namespace dzy {
 
+VertexWeight::VertexWeight() {
+}
+
+VertexWeight::VertexWeight(unsigned int index, float weight)
+    : mVertexIndex(index), mWeight(weight) {
+}
+
+Bone::Bone() {
+}
+
+Bone::Bone(const Bone& other)
+    : mTransform(other.mTransform)
+    , mWeights(other.mWeights) {
+}
+
+Bone::~Bone() {
+}
+
 unsigned int MeshData::append(void *buf, int size) {
     int bufSize = mBuffer.size();
     if (mBuffer.capacity() < bufSize + size) {
@@ -123,6 +141,10 @@ unsigned int Mesh::getNumIndices() const {
     if (mPrimitiveType == PRIMITIVE_TYPE_TRIANGLE)
         return mNumFaces * 3;
     else return 0;
+}
+
+unsigned int Mesh::getNumBones() const {
+    return (unsigned int)mBones.size();
 }
 
 unsigned int Mesh::getPositionNumComponent() const {

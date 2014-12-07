@@ -9,6 +9,7 @@
 #include "material.h"
 #include "camera.h"
 #include "light.h"
+#include "animation.h"
 #include "render.h"
 
 using namespace std;
@@ -60,13 +61,14 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
     }
 
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-    rootNode->draw(*this, scene);
+    rootNode->draw(*this, scene, engineContext->lifetime());
     eglSwapBuffers(engineContext->getEGLDisplay(), engineContext->getEGLSurface());
 
     return true;
 }
 
-void Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
+bool Render::drawNode(shared_ptr<Scene> scene, shared_ptr<Node> node) {
+    return true;
 }
 
 bool Render::drawGeometry(shared_ptr<Scene> scene, shared_ptr<Geometry> geometry) {

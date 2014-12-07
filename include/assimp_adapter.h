@@ -56,24 +56,31 @@ class Camera;
 class Light;
 class Texture;
 class Animation;
+class NodeAnim;
+class MeshAnim;
+class Bone;
 class Material;
 class Mesh;
 class Node;
 class NodeTree;
 class AIAdapter {
 public:
-    static std::shared_ptr<Camera>     typeCast(aiCamera *camera);
-    static std::shared_ptr<Light>      typeCast(aiLight *light);
-    static std::shared_ptr<Texture>    typeCast(aiTexture *texture);
-    static std::shared_ptr<Animation>  typeCast(aiAnimation *animation);
-    static std::shared_ptr<Material>   typeCast(aiMaterial *material);
-    static std::shared_ptr<Mesh>       typeCast(aiMesh *mesh);
-    static std::shared_ptr<Node>       typeCast(aiNode *node);
-    static glm::vec3                   typeCast(const aiVector3D &vec3d);
-    static glm::vec3                   typeCast(const aiColor3D &color3d);
-    static glm::vec4                   typeCast(const aiColor4D &color4d);
-    static glm::mat4                   typeCast(const aiMatrix4x4 &mat4);
-    static std::string                 typeCast(const aiString &str);
+    static std::shared_ptr<Camera>      typeCast(aiCamera *camera);
+    static std::shared_ptr<Light>       typeCast(aiLight *light);
+    static std::shared_ptr<Texture>     typeCast(aiTexture *texture);
+    static std::shared_ptr<Animation>   typeCast(aiAnimation *animation);
+    static std::shared_ptr<NodeAnim>    typeCast(aiNodeAnim *nodeAnim);
+    static std::shared_ptr<MeshAnim>    typeCast(aiMeshAnim *meshAnim);
+    static std::shared_ptr<Material>    typeCast(aiMaterial *material);
+    static std::shared_ptr<Mesh>        typeCast(aiMesh *mesh);
+    static std::shared_ptr<Bone>        typeCast(aiBone *bone);
+    static std::shared_ptr<Node>        typeCast(aiNode *node);
+    static glm::vec3                    typeCast(const aiVector3D &vec3d);
+    static glm::vec3                    typeCast(const aiColor3D &color3d);
+    static glm::vec4                    typeCast(const aiColor4D &color4d);
+    static glm::quat                    typeCast(const aiQuaternion& quaternion);
+    static glm::mat4                    typeCast(const aiMatrix4x4 &mat4);
+    static std::string                  typeCast(const aiString &str);
 
     /// build scene graph
     ///
