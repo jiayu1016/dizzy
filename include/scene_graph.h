@@ -179,7 +179,7 @@ public:
         std::shared_ptr<Scene> scene, double timeStamp);
 
     /// dump the scene graph hierarchy starting from the current node.
-    void dumpHierarchy(Log::Flag f = Log::F_ALWAYS);
+    void dumpHierarchy(Log::Flag f = Log::F_GENERIC);
 
 protected:
     virtual void setUpdateFlag();

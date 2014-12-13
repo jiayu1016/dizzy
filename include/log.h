@@ -9,8 +9,8 @@ namespace dzy {
 class Log {
 public:
     enum Flag {
-        F_TRACE         = (1 << 0),
-        F_GENERIC       = (1 << 1),
+        F_GENERIC       = (1 << 0),
+        F_TRACE         = (1 << 1),
         F_MODEL         = (1 << 2),
         F_ANIMATION     = (1 << 3),
         F_BONE          = (1 << 4),
@@ -20,7 +20,7 @@ public:
         F_SENSOR_EVENT  = (1 << 8),
         F_APP_CMD_EVENT = (1 << 9),
         F_EVENT         = F_KEY_EVENT | F_MOTION_EVENT | F_SENSOR_EVENT | F_APP_CMD_EVENT,
-        F_ALWAYS        = F_TRACE | F_GENERIC | F_MODEL | F_GLES | F_EVENT,
+        F_ALWAYS        = 0xffffffff,
         F_NEVER         = 0,
         F_SWITCH        = (1 << 31),
     };
