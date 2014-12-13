@@ -91,6 +91,7 @@ public:
     unsigned int    getNumFaces() const;
     unsigned int    getNumIndices() const;
     unsigned int    getNumBones() const;
+    std::shared_ptr<Bone>   getBone(int idx);
 
     virtual unsigned int    getPositionNumComponent() const;
     virtual unsigned int    getPositionBufStride() const;

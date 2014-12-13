@@ -142,6 +142,11 @@ NodeObj& NodeObj::rotate(float axisX, float axisY, float axisZ) {
     return rotate(quaternion);
 }
 
+Transform NodeObj::getBoneTransform(double timeStamp) {
+    updateBoneTransform(timeStamp);
+    return mBoneTransform;
+}
+
 void NodeObj::updateWorldTransform() {
     if ((mUpdateFlags & F_UPDATE_WORLD_TRANSFORM) == 0) {
         return;
@@ -174,6 +179,47 @@ void NodeObj::doUpdateWorldTransform() {
         mWorldTransform.combine(parent->mWorldTransform);
         mUpdateFlags &= ~F_UPDATE_WORLD_TRANSFORM;
     }
+}
+
+void NodeObj::updateBoneTransform(double timeStamp) {
+    if ((mUpdateFlags & F_UPDATE_BONE_TRANSFORM) == 0) {
+        return;
+    }
+
+    shared_ptr<NodeObj> parent(getParent());
+    shared_ptr<NodeObj> nodeObj = shared_from_this();
+    vector<shared_ptr<NodeObj> > path;
+    while (parent && (parent->mUpdateFlags & F_UPDATE_BONE_TRANSFORM) != 0) {
+        path.push_back(nodeObj);
+        nodeObj = parent;
+        parent = nodeObj->getParent();
+    }
+    path.push_back(nodeObj);
+
+    for (int i = path.size() - 1; i >= 0; i--) {
+        nodeObj = path[i];
+        nodeObj->doUpdateBoneTransform(timeStamp);
+    }
+}
+
+void NodeObj::doUpdateBoneTransform(double timeStamp) {
+    mBoneTransform = mLocalTransform;
+    // if node anim is attached to this node, use that transform instead
+    shared_ptr<NodeAnim> nodeAnim(getAnimation());
+    if (nodeAnim) {
+        // get current time stamp, interpolate TRS states in NodeAnim
+        glm::vec3 T = nodeAnim->getTranslation(timeStamp);
+        glm::quat R = nodeAnim->getRotation(timeStamp);
+        glm::vec3 S = nodeAnim->getScale(timeStamp);
+        mBoneTransform = T * R * S;
+    }
+
+    shared_ptr<Node> parent(getParent());
+    if (parent) {
+        assert ((parent->mUpdateFlags & F_UPDATE_BONE_TRANSFORM) == 0);
+        mBoneTransform.combine(parent->mBoneTransform);
+    }
+    mUpdateFlags &= ~F_UPDATE_BONE_TRANSFORM;
 }
 
 void NodeObj::setUpdateFlag(UpdateFlag f) {
@@ -430,6 +476,29 @@ void Geometry::draw(Render &render, shared_ptr<Scene> scene, double timeStamp) {
         mBOUpdated = true;
     }
     NodeObj::updateAnimation(timeStamp);
+
+    shared_ptr<Node> rootNode(scene->getRootNode());
+    assert(rootNode);
+    vector<Transform> boneTransforms;
+    // do vertex skinning
+    for (int i=0; i<mMesh->getNumBones(); i++) {
+        shared_ptr<Bone> bone(mMesh->getBone(i));
+        shared_ptr<NodeObj> boneNode(rootNode->getChild(bone->getName()));
+        if (boneNode) {
+            Transform transform = boneNode->getBoneTransform(timeStamp);
+            boneTransforms.push_back(transform);
+        } else {
+            ALOGW("%-10s bone has no node in scene graph", bone->getName().c_str());
+        }
+    }
+
+#if 1
+    int boneTransformSize = boneTransforms.size();
+    for (int i=0; i<boneTransformSize; i++) {
+        boneTransforms[i].dump(Log::F_BONE, "bone transform %d/%d", i, boneTransformSize);
+    }
+#endif
+
     if (render.drawGeometry(scene, dynamic_pointer_cast<Geometry>(shared_from_this())))
         // program attached to Geometry node only when drawGeometry returns true
         render.drawMesh(scene, mMesh, getProgram(), mVertexBO, mIndexBO);

@@ -106,4 +106,23 @@ glm::mat4 Transform::toMat4() {
         * glm::scale(glm::mat4(1.f), mScale);
 }
 
+void Transform::dump(Log::Flag f, const char *fmt, ...) {
+    char str[1024];
+    if (!Log::debugSwitchOn() || !Log::flagEnabled(f))
+        return;
+
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(str, 1024, fmt, args);
+    va_end(args);
+
+    float const * buf = glm::value_ptr(toMat4());
+    DUMP(f, "%s", str);
+    for (int i=0; i<16; i+=4) {
+        DUMP(f, "%+08.6f %+08.6f %+08.6f %+08.6f",
+            buf[i], buf[i+1], buf[i+2], buf[i+3]);
+    }
+
+}
+
 }

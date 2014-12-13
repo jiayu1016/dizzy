@@ -147,6 +147,12 @@ unsigned int Mesh::getNumBones() const {
     return (unsigned int)mBones.size();
 }
 
+shared_ptr<Bone> Mesh::getBone(int idx) {
+    if (idx >= 0 && idx < mBones.size())
+        return mBones[idx];
+    return nullptr;
+}
+
 unsigned int Mesh::getPositionNumComponent() const {
     return mPosNumComponents;
 }

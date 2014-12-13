@@ -31,7 +31,8 @@ class NodeAnim;
 class NodeObj : public NameObj, public std::enable_shared_from_this<NodeObj> {
 public:
     enum UpdateFlag {
-        F_UPDATE_WORLD_TRANSFORM = 0x1,
+        F_UPDATE_WORLD_TRANSFORM    = (1 << 0),
+        F_UPDATE_BONE_TRANSFORM     = (1 << 1),
     };
     NodeObj(const std::string& name);
     virtual ~NodeObj();
@@ -59,6 +60,8 @@ public:
     NodeObj& scale(const glm::vec3& v);
     NodeObj& rotate(const glm::quat& rotation);
     NodeObj& rotate(float axisX, float axisY, float axisZ);
+
+    Transform getBoneTransform(double timeStamp);
 
     /// get parent of this node
     ///
@@ -116,17 +119,21 @@ public:
     virtual void draw(Render &render,
         std::shared_ptr<Scene> scene, double timeStamp) = 0;
 
+    virtual void setUpdateFlag(UpdateFlag f);
+
     friend class AIAdapter;
     friend class Render;
     friend class Node;
 protected:
     void updateWorldTransform();
     void doUpdateWorldTransform();
-    virtual void setUpdateFlag(UpdateFlag f);
+    void updateBoneTransform(double timeStamp);
+    void doUpdateBoneTransform(double timeStamp);
 
 protected:
     Transform                               mLocalTransform;
     Transform                               mWorldTransform;
+    Transform                               mBoneTransform;
     int                                     mUpdateFlags;
     std::weak_ptr<Node>                     mParent;
     bool                                    mUseAutoProgram;
@@ -178,11 +185,10 @@ public:
     virtual void draw(Render &render,
         std::shared_ptr<Scene> scene, double timeStamp);
 
+    virtual void setUpdateFlag(UpdateFlag f);
+
     /// dump the scene graph hierarchy starting from the current node.
     void dumpHierarchy(Log::Flag f = Log::F_GENERIC);
-
-protected:
-    virtual void setUpdateFlag(UpdateFlag f);
 
 protected:
     std::vector<std::shared_ptr<NodeObj> >  mChildren;

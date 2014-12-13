@@ -8,6 +8,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "log.h"
 
 namespace dzy {
 
@@ -33,6 +34,7 @@ public:
     glm::vec3 getScale();
     Transform& combine(const Transform& parent);
     glm::mat4 toMat4();
+    void dump(Log::Flag f, const char* fmt, ...);
 
 private:
     glm::vec3 mScale;
