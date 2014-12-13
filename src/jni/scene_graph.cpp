@@ -54,7 +54,7 @@ glm::quat NodeObj::getLocalRotation() {
 
 void NodeObj::setLocalRotation(const glm::quat& quaternion) {
     mLocalTransform.setRotation(quaternion);
-    setUpdateFlag();
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
 }
 
 void NodeObj::setLocalRotation(float w, float x, float y, float z) {
@@ -68,17 +68,17 @@ glm::vec3 NodeObj::getLocalScale() {
 
 void NodeObj::setLocalScale(float scale) {
     mLocalTransform.setScale(scale);
-    setUpdateFlag();
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
 }
 
 void NodeObj::setLocalScale(float x, float y, float z) {
     mLocalTransform.setScale(x, y, z);
-    setUpdateFlag();
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
 }
 
 void NodeObj::setLocalScale(const glm::vec3& scale) {
     mLocalTransform.setScale(scale);
-    setUpdateFlag();
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
 }
 
 glm::vec3 NodeObj::getLocalTranslation() {
@@ -87,17 +87,17 @@ glm::vec3 NodeObj::getLocalTranslation() {
 
 void NodeObj::setLocalTranslation(const glm::vec3& translation) {
     mLocalTransform.setTranslation(translation);
-    setUpdateFlag();
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
 }
 
 void NodeObj::setLocalTranslation(float x, float y, float z) {
     mLocalTransform.setTranslation(x, y, z);
-    setUpdateFlag();
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
 }
 
 void NodeObj::setLocalTransform(const Transform& transform) {
     mLocalTransform = transform;
-    setUpdateFlag();
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
 }
 
 Transform NodeObj::getLocalTransform() {
@@ -111,7 +111,7 @@ NodeObj& NodeObj::translate(float x, float y, float z) {
 NodeObj& NodeObj::translate(const glm::vec3& offset) {
     glm::vec3 translate = mLocalTransform.getTranslation();
     mLocalTransform.setTranslation(translate + offset);
-    setUpdateFlag();
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
     return *this;
 }
 
@@ -126,14 +126,14 @@ NodeObj& NodeObj::scale(const glm::vec3& v) {
 NodeObj& NodeObj::scale(float x, float y, float z) {
     glm::vec3 scale = mLocalTransform.getScale();
     mLocalTransform.setScale(glm::vec3(x, y, z) * scale);
-    setUpdateFlag();
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
     return *this;
 }
 
 NodeObj& NodeObj::rotate(const glm::quat& rotation) {
     glm::quat rot = mLocalTransform.getRotation();
     mLocalTransform.setRotation(rotation * rot);
-    setUpdateFlag();
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
     return *this;
 }
 
@@ -143,14 +143,14 @@ NodeObj& NodeObj::rotate(float axisX, float axisY, float axisZ) {
 }
 
 void NodeObj::updateWorldTransform() {
-    if ((mUpdateFlags & F_UPDATE_TRANSFORM) == 0) {
+    if ((mUpdateFlags & F_UPDATE_WORLD_TRANSFORM) == 0) {
         return;
     }
 
     shared_ptr<NodeObj> parent(getParent());
     shared_ptr<NodeObj> nodeObj = shared_from_this();
     vector<shared_ptr<NodeObj> > path;
-    while (parent && (parent->mUpdateFlags & F_UPDATE_TRANSFORM) != 0) {
+    while (parent && (parent->mUpdateFlags & F_UPDATE_WORLD_TRANSFORM) != 0) {
         path.push_back(nodeObj);
         nodeObj = parent;
         parent = nodeObj->getParent();
@@ -167,17 +167,17 @@ void NodeObj::doUpdateWorldTransform() {
     shared_ptr<Node> parent(getParent());
     if (!parent) {
         mWorldTransform = mLocalTransform;
-        mUpdateFlags &= ~F_UPDATE_TRANSFORM;
+        mUpdateFlags &= ~F_UPDATE_WORLD_TRANSFORM;
     } else {
-        assert ((parent->mUpdateFlags & F_UPDATE_TRANSFORM) == 0);
+        assert ((parent->mUpdateFlags & F_UPDATE_WORLD_TRANSFORM) == 0);
         mWorldTransform = mLocalTransform;
         mWorldTransform.combine(parent->mWorldTransform);
-        mUpdateFlags &= ~F_UPDATE_TRANSFORM;
+        mUpdateFlags &= ~F_UPDATE_WORLD_TRANSFORM;
     }
 }
 
-void NodeObj::setUpdateFlag() {
-    mUpdateFlags |= F_UPDATE_TRANSFORM;
+void NodeObj::setUpdateFlag(UpdateFlag f) {
+    mUpdateFlags |= f;
 }
 
 shared_ptr<Node> NodeObj::getParent() {
@@ -381,11 +381,11 @@ void Node::dumpHierarchy(Log::Flag f) {
     }
 }
 
-void Node::setUpdateFlag() {
-    NodeObj::setUpdateFlag();
-    for_each(mChildren.begin(), mChildren.end(), [](shared_ptr<NodeObj> &nodeObj) {
-        if ((nodeObj->mUpdateFlags & F_UPDATE_TRANSFORM) == 0)
-            nodeObj->setUpdateFlag();
+void Node::setUpdateFlag(UpdateFlag f) {
+    NodeObj::setUpdateFlag(f);
+    for_each(mChildren.begin(), mChildren.end(), [=](shared_ptr<NodeObj> &nodeObj) {
+        if ((nodeObj->mUpdateFlags & f) == 0)
+            nodeObj->setUpdateFlag(f);
     });
 }
 

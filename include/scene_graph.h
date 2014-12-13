@@ -30,8 +30,8 @@ class NodeAnim;
 /// Base class for "element" in the scene graph
 class NodeObj : public NameObj, public std::enable_shared_from_this<NodeObj> {
 public:
-    enum Flags {
-        F_UPDATE_TRANSFORM = 0x1,
+    enum UpdateFlag {
+        F_UPDATE_WORLD_TRANSFORM = 0x1,
     };
     NodeObj(const std::string& name);
     virtual ~NodeObj();
@@ -122,7 +122,7 @@ public:
 protected:
     void updateWorldTransform();
     void doUpdateWorldTransform();
-    virtual void setUpdateFlag();
+    virtual void setUpdateFlag(UpdateFlag f);
 
 protected:
     Transform                               mLocalTransform;
@@ -182,7 +182,7 @@ public:
     void dumpHierarchy(Log::Flag f = Log::F_GENERIC);
 
 protected:
-    virtual void setUpdateFlag();
+    virtual void setUpdateFlag(UpdateFlag f);
 
 protected:
     std::vector<std::shared_ptr<NodeObj> >  mChildren;

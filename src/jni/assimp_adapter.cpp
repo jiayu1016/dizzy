@@ -417,7 +417,7 @@ void AIAdapter::linkNode(shared_ptr<Scene> scene,
         unsigned int meshIdx = anode->mMeshes[i];
         shared_ptr<Mesh> mesh(scene->mMeshes[meshIdx]);
         shared_ptr<Geometry> c(new Geometry(mesh));
-        c->setUpdateFlag();
+        c->setUpdateFlag(NodeObj::F_UPDATE_WORLD_TRANSFORM);
         c->setMaterial(scene->mMaterials[mesh->mMaterialIndex]);
         node->attachChild(c);
     }
