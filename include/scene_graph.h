@@ -120,8 +120,8 @@ public:
     friend class Render;
     friend class Node;
 protected:
-    void doUpdateTransform();
     void updateWorldTransform();
+    void doUpdateWorldTransform();
     virtual void setUpdateFlag();
 
 protected:

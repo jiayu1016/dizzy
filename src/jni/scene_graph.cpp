@@ -29,22 +29,22 @@ NodeObj::~NodeObj() {
 }
 
 glm::quat NodeObj::getWorldRotation() {
-    doUpdateTransform();
+    updateWorldTransform();
     return mWorldTransform.getRotation();
 }
 
 glm::vec3 NodeObj::getWorldTranslation() {
-    doUpdateTransform();
+    updateWorldTransform();
     return mWorldTransform.getTranslation();
 }
 
 glm::vec3 NodeObj::getWorldScale() {
-    doUpdateTransform();
+    updateWorldTransform();
     return mWorldTransform.getScale();
 }
 
 Transform NodeObj::getWorldTransform() {
-    doUpdateTransform();
+    updateWorldTransform();
     return mWorldTransform;
 }
 
@@ -142,7 +142,7 @@ NodeObj& NodeObj::rotate(float axisX, float axisY, float axisZ) {
     return rotate(quaternion);
 }
 
-void NodeObj::doUpdateTransform() {
+void NodeObj::updateWorldTransform() {
     if ((mUpdateFlags & F_UPDATE_TRANSFORM) == 0) {
         return;
     }
@@ -159,11 +159,11 @@ void NodeObj::doUpdateTransform() {
 
     for (int i = path.size() - 1; i >= 0; i--) {
         nodeObj = path[i];
-        nodeObj->updateWorldTransform();
+        nodeObj->doUpdateWorldTransform();
     }
 }
 
-void NodeObj::updateWorldTransform() {
+void NodeObj::doUpdateWorldTransform() {
     shared_ptr<Node> parent(getParent());
     if (!parent) {
         mWorldTransform = mLocalTransform;
