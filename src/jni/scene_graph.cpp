@@ -156,10 +156,6 @@ void NodeObj::doUpdateTransform() {
         parent = nodeObj->getParent();
     }
     path.push_back(nodeObj);
-    if (!parent) {
-        nodeObj->mWorldTransform = nodeObj->mLocalTransform;
-        nodeObj->mUpdateFlags &= ~F_UPDATE_TRANSFORM;
-    }
 
     for (int i = path.size() - 1; i >= 0; i--) {
         nodeObj = path[i];
