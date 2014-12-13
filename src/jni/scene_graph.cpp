@@ -54,7 +54,7 @@ glm::quat NodeObj::getLocalRotation() {
 
 void NodeObj::setLocalRotation(const glm::quat& quaternion) {
     mLocalTransform.setRotation(quaternion);
-    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM, true);
 }
 
 void NodeObj::setLocalRotation(float w, float x, float y, float z) {
@@ -68,17 +68,17 @@ glm::vec3 NodeObj::getLocalScale() {
 
 void NodeObj::setLocalScale(float scale) {
     mLocalTransform.setScale(scale);
-    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM, true);
 }
 
 void NodeObj::setLocalScale(float x, float y, float z) {
     mLocalTransform.setScale(x, y, z);
-    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM, true);
 }
 
 void NodeObj::setLocalScale(const glm::vec3& scale) {
     mLocalTransform.setScale(scale);
-    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM, true);
 }
 
 glm::vec3 NodeObj::getLocalTranslation() {
@@ -87,17 +87,17 @@ glm::vec3 NodeObj::getLocalTranslation() {
 
 void NodeObj::setLocalTranslation(const glm::vec3& translation) {
     mLocalTransform.setTranslation(translation);
-    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM, true);
 }
 
 void NodeObj::setLocalTranslation(float x, float y, float z) {
     mLocalTransform.setTranslation(x, y, z);
-    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM, true);
 }
 
 void NodeObj::setLocalTransform(const Transform& transform) {
     mLocalTransform = transform;
-    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM, true);
 }
 
 Transform NodeObj::getLocalTransform() {
@@ -111,7 +111,7 @@ NodeObj& NodeObj::translate(float x, float y, float z) {
 NodeObj& NodeObj::translate(const glm::vec3& offset) {
     glm::vec3 translate = mLocalTransform.getTranslation();
     mLocalTransform.setTranslation(translate + offset);
-    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM, true);
     return *this;
 }
 
@@ -126,14 +126,14 @@ NodeObj& NodeObj::scale(const glm::vec3& v) {
 NodeObj& NodeObj::scale(float x, float y, float z) {
     glm::vec3 scale = mLocalTransform.getScale();
     mLocalTransform.setScale(glm::vec3(x, y, z) * scale);
-    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM, true);
     return *this;
 }
 
 NodeObj& NodeObj::rotate(const glm::quat& rotation) {
     glm::quat rot = mLocalTransform.getRotation();
     mLocalTransform.setRotation(rotation * rot);
-    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM);
+    setUpdateFlag(F_UPDATE_WORLD_TRANSFORM, true);
     return *this;
 }
 
@@ -222,7 +222,8 @@ void NodeObj::doUpdateBoneTransform(double timeStamp) {
     mUpdateFlags &= ~F_UPDATE_BONE_TRANSFORM;
 }
 
-void NodeObj::setUpdateFlag(UpdateFlag f) {
+void NodeObj::setUpdateFlag(UpdateFlag f, bool recursive) {
+    recursive = recursive;
     mUpdateFlags |= f;
 }
 
@@ -395,6 +396,13 @@ void Node::depthFirstTraversal(VisitFunc visit) {
     }
 }
 
+void Node::update(double timeStamp) {
+    setUpdateFlag(NodeObj::F_UPDATE_BONE_TRANSFORM, false);
+    std::for_each(mChildren.begin(), mChildren.end(), [=] (shared_ptr<NodeObj> c) {
+        c->update(timeStamp);
+    });
+}
+
 void Node::draw(Render &render, shared_ptr<Scene> scene, double timeStamp) {
     NodeObj::updateAnimation(timeStamp);
     render.drawNode(scene, dynamic_pointer_cast<Node>(shared_from_this()));
@@ -427,12 +435,14 @@ void Node::dumpHierarchy(Log::Flag f) {
     }
 }
 
-void Node::setUpdateFlag(UpdateFlag f) {
-    NodeObj::setUpdateFlag(f);
-    for_each(mChildren.begin(), mChildren.end(), [=](shared_ptr<NodeObj> &nodeObj) {
-        if ((nodeObj->mUpdateFlags & f) == 0)
-            nodeObj->setUpdateFlag(f);
-    });
+void Node::setUpdateFlag(UpdateFlag f, bool recursive) {
+    NodeObj::setUpdateFlag(f, false);
+    if (recursive) {
+        for_each(mChildren.begin(), mChildren.end(), [=](shared_ptr<NodeObj> &nodeObj) {
+            if ((nodeObj->mUpdateFlags & f) == 0)
+                nodeObj->setUpdateFlag(f, true);
+        });
+    }
 }
 
 Geometry::Geometry(shared_ptr<Mesh> mesh)
@@ -468,6 +478,9 @@ bool Geometry::updateBufferObject() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     return true;
+}
+
+void Geometry::update(double timeStamp) {
 }
 
 void Geometry::draw(Render &render, shared_ptr<Scene> scene, double timeStamp) {

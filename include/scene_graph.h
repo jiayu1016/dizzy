@@ -115,11 +115,12 @@ public:
     std::shared_ptr<NodeAnim> getAnimation();
     void updateAnimation(double timeStamp);
 
+    virtual void update(double timeStamp) = 0;
     /// Recursively draw the node and it's children
     virtual void draw(Render &render,
         std::shared_ptr<Scene> scene, double timeStamp) = 0;
 
-    virtual void setUpdateFlag(UpdateFlag f);
+    virtual void setUpdateFlag(UpdateFlag f, bool recursive);
 
     friend class AIAdapter;
     friend class Render;
@@ -182,10 +183,11 @@ public:
     ///     @param visit the functor gets called whenever a node is visited
     void depthFirstTraversal(VisitFunc visit);
 
+    virtual void update(double timeStamp);
     virtual void draw(Render &render,
         std::shared_ptr<Scene> scene, double timeStamp);
 
-    virtual void setUpdateFlag(UpdateFlag f);
+    virtual void setUpdateFlag(UpdateFlag f, bool recursive);
 
     /// dump the scene graph hierarchy starting from the current node.
     void dumpHierarchy(Log::Flag f = Log::F_GENERIC);
@@ -200,6 +202,7 @@ public:
     Geometry(const std::string& name, std::shared_ptr<Mesh> mesh);
     ~Geometry();
 
+    virtual void update(double timeStamp);
     virtual void draw(Render &render,
         std::shared_ptr<Scene> scene, double timeStamp);
 

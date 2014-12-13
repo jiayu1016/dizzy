@@ -406,7 +406,7 @@ void AIAdapter::linkNode(shared_ptr<Scene> scene,
     shared_ptr<Node> node, aiNode *anode) {
     for (unsigned int i = 0; i < anode->mNumChildren; i++) {
         shared_ptr<Node> c = typeCast(anode->mChildren[i]);
-        c->setUpdateFlag(NodeObj::F_UPDATE_BONE_TRANSFORM);
+        c->setUpdateFlag(NodeObj::F_UPDATE_BONE_TRANSFORM, false);
         node->attachChild(c);
         linkNode(scene, c, anode->mChildren[i]);
     }
@@ -418,8 +418,8 @@ void AIAdapter::linkNode(shared_ptr<Scene> scene,
         unsigned int meshIdx = anode->mMeshes[i];
         shared_ptr<Mesh> mesh(scene->mMeshes[meshIdx]);
         shared_ptr<Geometry> c(new Geometry(mesh));
-        c->setUpdateFlag(NodeObj::F_UPDATE_WORLD_TRANSFORM);
-        c->setUpdateFlag(NodeObj::F_UPDATE_BONE_TRANSFORM);
+        c->setUpdateFlag(NodeObj::F_UPDATE_WORLD_TRANSFORM, false);
+        c->setUpdateFlag(NodeObj::F_UPDATE_BONE_TRANSFORM, false);
         c->setMaterial(scene->mMaterials[mesh->mMaterialIndex]);
         node->attachChild(c);
     }

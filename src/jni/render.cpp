@@ -60,8 +60,10 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
         return false;
     }
 
+    double timeStamp = engineContext->lifetime();
+    rootNode->update(timeStamp);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-    rootNode->draw(*this, scene, engineContext->lifetime());
+    rootNode->draw(*this, scene, timeStamp);
     eglSwapBuffers(engineContext->getEGLDisplay(), engineContext->getEGLSurface());
 
     return true;
