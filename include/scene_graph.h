@@ -112,8 +112,6 @@ public:
     std::shared_ptr<NodeAnim> getAnimation();
     void updateAnimation(double timeStamp);
 
-    bool isInitialized();
-
     /// Recursively draw the node and it's children
     virtual void draw(Render &render,
         std::shared_ptr<Scene> scene, double timeStamp) = 0;
@@ -122,7 +120,6 @@ public:
     friend class Render;
     friend class Node;
 protected:
-    void setInitialized();
     void doUpdateTransform();
     void updateWorldTransform();
     virtual void setUpdateFlag();
@@ -140,7 +137,6 @@ protected:
     std::shared_ptr<Light>                  mLight;
     std::shared_ptr<Camera>                 mCamera;
     std::shared_ptr<NodeAnim>               mAnimation;
-    bool                                    mInitialized;
 };
 
 class Node : public NodeObj {
@@ -186,7 +182,6 @@ public:
     void dumpHierarchy(Log::Flag f = Log::F_ALWAYS);
 
 protected:
-    bool initGpuData();
     virtual void setUpdateFlag();
 
 protected:
@@ -205,7 +200,7 @@ public:
     std::shared_ptr<Mesh> getMesh();
 
 protected:
-    bool initGpuData();
+    bool updateBufferObject();
 
 protected:
     // one on one mapping between Geometry and Mesh
@@ -215,6 +210,7 @@ protected:
     // but I prefer not to have Mesh class depend on gl
     GLuint                      mVertexBO;
     GLuint                      mIndexBO;
+    bool                        mBOUpdated;
 };
 
 }

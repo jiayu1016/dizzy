@@ -21,7 +21,6 @@ namespace dzy {
 NodeObj::NodeObj(const string& name)
     : NameObj(name)
     , mUseAutoProgram(true)
-    , mInitialized(false)
     , mUpdateFlags(0) {
 }
 
@@ -269,14 +268,6 @@ void NodeObj::updateAnimation(double timeStamp) {
     }
 }
 
-bool NodeObj::isInitialized() {
-    return mInitialized;
-}
-
-void NodeObj::setInitialized() {
-    mInitialized = true;
-}
-
 Node::Node(const string& name)
     : NodeObj(name) {
 }
@@ -362,14 +353,7 @@ void Node::depthFirstTraversal(VisitFunc visit) {
     }
 }
 
-bool Node::initGpuData() {
-    setInitialized();
-    return true;
-}
-
 void Node::draw(Render &render, shared_ptr<Scene> scene, double timeStamp) {
-    if (!isInitialized()) initGpuData();
-
     NodeObj::updateAnimation(timeStamp);
     render.drawNode(scene, dynamic_pointer_cast<Node>(shared_from_this()));
     std::for_each(mChildren.begin(), mChildren.end(), [&] (shared_ptr<NodeObj> c) {
@@ -410,28 +394,28 @@ void Node::setUpdateFlag() {
 }
 
 Geometry::Geometry(shared_ptr<Mesh> mesh)
-    : NodeObj(string("Geometry-") + mesh->getName())
-    , mMesh(mesh) {
+    : Geometry(string("Geometry-") + mesh->getName(), mesh) {
 }
 
 Geometry::Geometry(const string& name, shared_ptr<Mesh> mesh)
     : NodeObj(name)
-    , mMesh(mesh) {
+    , mMesh(mesh)
+    , mBOUpdated(false) {
+    glGenBuffers(1, &mVertexBO);
+    glGenBuffers(1, &mIndexBO);
 }
 
 Geometry::~Geometry() {
     TRACE(getName().c_str());
 }
 
-bool Geometry::initGpuData() {
+bool Geometry::updateBufferObject() {
     if (!mMesh) {
         ALOGE("One Geometry must attach one Mesh");
         return false;
     }
 
     // Load vertex and index data into buffer object
-    glGenBuffers(1, &mVertexBO);
-    glGenBuffers(1, &mIndexBO);
     glBindBuffer(GL_ARRAY_BUFFER, mVertexBO);
     glBufferData(GL_ARRAY_BUFFER, mMesh->getVertexBufSize(),
         mMesh->getVertexBuf(), GL_STATIC_DRAW);
@@ -441,12 +425,14 @@ bool Geometry::initGpuData() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    setInitialized();
     return true;
 }
 
 void Geometry::draw(Render &render, shared_ptr<Scene> scene, double timeStamp) {
-    if (!isInitialized()) initGpuData();
+    if (!mBOUpdated) {
+        updateBufferObject();
+        mBOUpdated = true;
+    }
     NodeObj::updateAnimation(timeStamp);
     if (render.drawGeometry(scene, dynamic_pointer_cast<Geometry>(shared_from_this())))
         // program attached to Geometry node only when drawGeometry returns true
