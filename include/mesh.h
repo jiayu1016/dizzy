@@ -15,29 +15,27 @@ public:
     unsigned int mIndices[3];
 };
 
-class VertexWeight
+struct VertexWeight
 {
-public:
-    VertexWeight();
-    VertexWeight(unsigned int index, float weight);
-private:
     unsigned int mVertexIndex;
     // the weight sum of all bones that have influcence to a vertex
     // is equal to 1, so this value ranges from 0 ~ 1
     float mWeight;
+
+    VertexWeight();
+    VertexWeight(unsigned int index, float weight);
 };
 
+class Mesh;
 /// Bones have a name to index a unique node in scene graph
-class Bone : public NameObj {
-public:
+struct Bone : public NameObj {
+    std::vector<VertexWeight> mWeights;
+    Transform mTransform;
+
     Bone();
     Bone(const Bone& other);
     ~Bone();
-
-    friend class AIAdapter;
-private:
-    std::vector<VertexWeight>   mWeights;
-    Transform                   mTransform;
+    void transform(std::shared_ptr<Mesh> mesh, Transform& nodeTransform);
 };
 
 
@@ -163,6 +161,7 @@ public:
         unsigned int numComponents,
         unsigned int bytesEachComponent);
     void buildIndexBuffer(void *buf, int numFaces);
+    void transform(unsigned int vertexIdx, float weight, Transform& transform);
 
     void            reserveDataStorage(int size);
 

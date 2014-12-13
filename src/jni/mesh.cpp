@@ -23,6 +23,21 @@ Bone::Bone(const Bone& other)
 Bone::~Bone() {
 }
 
+void Bone::transform(shared_ptr<Mesh> mesh, Transform& nodeTransform) {
+    for (int i=0; i<mWeights.size(); i++) {
+        VertexWeight vw = mWeights[i];
+        int vertexIdx = vw.mVertexIndex;
+        float weight = vw.mWeight;
+        Transform finalTransform = nodeTransform * mTransform;
+        //DUMP(Log::F_BONE, "%-10s bone VW(%d/%d), vtx %d, weight %f)",
+        //    getName().c_str(), i, mWeights.size(), vertexIdx, weight);
+        mTransform.dump(Log::F_BONE, "bone original transform");
+        nodeTransform.dump(Log::F_BONE, "bone node transform");
+        finalTransform.dump(Log::F_BONE, "bone final transform");
+        mesh->transform(vertexIdx, weight, finalTransform);
+    }
+}
+
 unsigned int MeshData::append(void *buf, int size) {
     int bufSize = mBuffer.size();
     if (mBuffer.capacity() < bufSize + size) {
@@ -374,6 +389,30 @@ void Mesh::buildIndexBuffer(void *buf, int numFaces) {
     if (mPrimitiveType == PRIMITIVE_TYPE_TRIANGLE)
         numIndices = mNumFaces * 3;
     memcpy(&mTriangleFaces[0].mIndices[0], buf, numIndices * sizeof(unsigned int));
+}
+
+void Mesh::transform(unsigned int vertexIdx,
+    float weight, Transform& transform) {
+    void * posBufAddr = getPositionBuf();
+    unsigned int stride = getPositionBufStride();
+    unsigned int component = getPositionNumComponent();
+    if (component == 3 && stride == 12) {
+        // use structure of arrays, not interleaved
+        float *vertexAddr = (float *)posBufAddr + component * vertexIdx;
+        float x = *vertexAddr;
+        float y = *(vertexAddr+1);
+        float z = *(vertexAddr+2);
+        glm::vec4 vertex(x, y, z, 1.f);
+        glm::vec3 newVertex(weight * transform.toMat4() * vertex);
+        *vertexAddr     = newVertex.x;
+        *(vertexAddr+1) = newVertex.y;
+        *(vertexAddr+2) = newVertex.z;
+        //DUMP(Log::F_BONE, "(%+f, %+f, %+f) => (%+f, %+f, %+f)",
+        //    x, y, z, newVertex.x, newVertex.y, newVertex.z);
+    } else {
+        ALOGW("mesh transform support only 3-component float vertex now");
+    }
+    // TODO: transform normals also
 }
 
 void Mesh::reserveDataStorage(int size) {

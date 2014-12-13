@@ -484,33 +484,37 @@ void Geometry::update(double timeStamp) {
 }
 
 void Geometry::draw(Render &render, shared_ptr<Scene> scene, double timeStamp) {
-    if (!mBOUpdated) {
-        updateBufferObject();
-        mBOUpdated = true;
-    }
     NodeObj::updateAnimation(timeStamp);
 
     shared_ptr<Node> rootNode(scene->getRootNode());
     assert(rootNode);
     vector<Transform> boneTransforms;
     // do vertex skinning
+    bool cpuBoneTransform = false;
     for (int i=0; i<mMesh->getNumBones(); i++) {
         shared_ptr<Bone> bone(mMesh->getBone(i));
         shared_ptr<NodeObj> boneNode(rootNode->getChild(bone->getName()));
         if (boneNode) {
-            Transform transform = boneNode->getBoneTransform(timeStamp);
-            boneTransforms.push_back(transform);
+            Transform nodeTransform = boneNode->getBoneTransform(timeStamp);
+            boneTransforms.push_back(nodeTransform);
+            bone->transform(mMesh, nodeTransform);
+            cpuBoneTransform = true;
         } else {
             ALOGW("%-10s bone has no node in scene graph", bone->getName().c_str());
         }
     }
 
-#if 1
+#if 0
     int boneTransformSize = boneTransforms.size();
     for (int i=0; i<boneTransformSize; i++) {
         boneTransforms[i].dump(Log::F_BONE, "bone transform %d/%d", i, boneTransformSize);
     }
 #endif
+
+    if (!mBOUpdated || cpuBoneTransform) {
+        updateBufferObject();
+        mBOUpdated = true;
+    }
 
     if (render.drawGeometry(scene, dynamic_pointer_cast<Geometry>(shared_from_this())))
         // program attached to Geometry node only when drawGeometry returns true

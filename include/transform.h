@@ -22,6 +22,7 @@ public:
     Transform(const Transform& other);
     Transform& operator=(const Transform& rhs);
     void loadIdentity();
+    friend Transform operator*(Transform& lhs, Transform& rhs);
 
     Transform& setRotation(const glm::quat& rotation);
     glm::quat getRotation();

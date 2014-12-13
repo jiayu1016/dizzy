@@ -125,4 +125,9 @@ void Transform::dump(Log::Flag f, const char *fmt, ...) {
 
 }
 
+Transform operator*(Transform& lhs, Transform& rhs) {
+    Transform result;
+    return lhs.combine(rhs);
+}
+
 }
