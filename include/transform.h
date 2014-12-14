@@ -18,9 +18,11 @@ public:
     Transform(const glm::vec3& translation, const glm::quat& rotation);
     Transform(const glm::vec3& translation);
     Transform(const glm::quat& rotation);
+    Transform(const glm::mat4& mat4);
     Transform();
     Transform(const Transform& other);
     Transform& operator=(const Transform& rhs);
+    Transform& operator=(const glm::mat4& mat4);
     void loadIdentity();
     friend Transform operator*(Transform& lhs, Transform& rhs);
 
@@ -35,6 +37,9 @@ public:
     glm::vec3 getScale();
     Transform& combine(const Transform& parent);
     glm::mat4 toMat4();
+    Transform& fromMat4(const glm::mat4& mat4);
+    static void decompose(const glm::mat4& mat4,
+        glm::vec3& T, glm::quat& R, glm::vec3& S);
     void dump(Log::Flag f, const char* fmt, ...);
 
 private:

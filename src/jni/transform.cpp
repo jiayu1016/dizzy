@@ -23,6 +23,11 @@ Transform::Transform(const glm::quat& rotation)
     : Transform(glm::vec3(0.f, 0.f, 0.f), rotation, glm::vec3(1.f, 1.f, 1.f)) {
 }
 
+Transform::Transform(const glm::mat4& mat4) {
+    // TODO:
+    ALOGW("not implemented yet");
+}
+
 Transform::Transform() {
     loadIdentity();
 }
@@ -39,6 +44,12 @@ Transform& Transform::operator=(const Transform& rhs) {
         mRotation = rhs.mRotation;
         mScale = rhs.mScale;
     }
+    return *this;
+}
+
+Transform& Transform::operator=(const glm::mat4& mat4) {
+    // TODO:
+    ALOGW("not implemented yet");
     return *this;
 }
 
@@ -104,6 +115,18 @@ glm::mat4 Transform::toMat4() {
     return glm::translate(glm::mat4(1.f), mTranslation)
         * glm::mat4_cast(mRotation)
         * glm::scale(glm::mat4(1.f), mScale);
+}
+
+Transform& Transform::fromMat4(const glm::mat4& mat4) {
+    // TODO:
+    ALOGW("not implemented yet");
+    return *this;
+}
+
+void Transform::decompose(const glm::mat4& mat4,
+    glm::vec3& T, glm::quat& R, glm::vec3& S) {
+    // TODO:
+    ALOGW("not implemented yet");
 }
 
 void Transform::dump(Log::Flag f, const char *fmt, ...) {
