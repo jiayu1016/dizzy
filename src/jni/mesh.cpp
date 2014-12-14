@@ -31,9 +31,9 @@ void Bone::transform(shared_ptr<Mesh> mesh, Transform& nodeTransform) {
         Transform finalTransform = nodeTransform * mTransform;
         //DUMP(Log::F_BONE, "%-10s bone VW(%d/%d), vtx %d, weight %f)",
         //    getName().c_str(), i, mWeights.size(), vertexIdx, weight);
-        mTransform.dump(Log::F_BONE, "bone original transform");
-        nodeTransform.dump(Log::F_BONE, "bone node transform");
-        finalTransform.dump(Log::F_BONE, "bone final transform");
+        //mTransform.dump(Log::F_BONE, "bone original transform");
+        //nodeTransform.dump(Log::F_BONE, "bone node transform");
+        //finalTransform.dump(Log::F_BONE, "bone final transform");
         mesh->transform(vertexIdx, weight, finalTransform);
     }
 }
@@ -412,7 +412,25 @@ void Mesh::transform(unsigned int vertexIdx,
     } else {
         ALOGW("mesh transform support only 3-component float vertex now");
     }
-    // TODO: transform normals also
+    void * normalBufAddr = getNormalBuf();
+    stride = getNormalBufStride();
+    component = getNormalNumComponent();
+    glm::mat4 invTrans = Transform::inverseTranpose(transform);
+    if (component == 3 && stride == 12) {
+        float *normalAddr = (float *)normalBufAddr + component * vertexIdx;
+        float x = *normalAddr;
+        float y = *(normalAddr+1);
+        float z = *(normalAddr+2);
+        glm::vec4 normal(x, y, z, 1.f);
+        glm::vec3 newNormal(weight * invTrans * normal);
+        *normalAddr     = newNormal.x;
+        *(normalAddr+1) = newNormal.y;
+        *(normalAddr+2) = newNormal.z;
+        //DUMP(Log::F_BONE, "(%+f, %+f, %+f) => (%+f, %+f, %+f)",
+        //    x, y, z, newNormal.x, newNormal.y, newNormal.z);
+    } else {
+        ALOGW("mesh transform support only 3-component float normal now");
+    }
 }
 
 void Mesh::reserveDataStorage(int size) {

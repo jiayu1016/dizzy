@@ -40,6 +40,7 @@ public:
     Transform& fromMat4(const glm::mat4& mat4);
     static void decompose(const glm::mat4& mat4,
         glm::vec3& T, glm::quat& R, glm::vec3& S);
+    static glm::mat4 inverseTranpose(Transform& transform);
     void dump(Log::Flag f, const char* fmt, ...);
 
 private:

@@ -1,3 +1,4 @@
+#include <glm/gtc/matrix_inverse.hpp>
 #include "transform.h"
 
 namespace dzy {
@@ -127,6 +128,11 @@ void Transform::decompose(const glm::mat4& mat4,
     glm::vec3& T, glm::quat& R, glm::vec3& S) {
     // TODO:
     ALOGW("not implemented yet");
+}
+
+glm::mat4 Transform::inverseTranpose(Transform& transform) {
+    glm::mat4 matrix = transform.toMat4();
+    return glm::inverseTranspose(matrix);
 }
 
 void Transform::dump(Log::Flag f, const char *fmt, ...) {
