@@ -122,7 +122,7 @@ shared_ptr<Animation> AIAdapter::typeCast(aiAnimation *animation) {
 }
 
 shared_ptr<NodeAnim> AIAdapter::typeCast(aiNodeAnim *nodeAnim) {
-    const char* name = typeCast(nodeAnim->mNodeName).c_str();
+    const char* name = nodeAnim->mNodeName.C_Str();
     shared_ptr<NodeAnim> na(new NodeAnim(name));
     for (int i=0; i<nodeAnim->mNumPositionKeys; i++) {
         aiVectorKey position = nodeAnim->mPositionKeys[i];
@@ -166,7 +166,7 @@ shared_ptr<NodeAnim> AIAdapter::typeCast(aiNodeAnim *nodeAnim) {
 
 shared_ptr<MeshAnim> AIAdapter::typeCast(aiMeshAnim *meshAnim) {
     shared_ptr<MeshAnim> ma(new MeshAnim);
-    const char* name = typeCast(meshAnim->mName).c_str();
+    const char* name = meshAnim->mName.C_Str();
     ma->setName(name);
     for (int i=0; i<meshAnim->mNumKeys; i++) {
         aiMeshKey mk = meshAnim->mKeys[i];
@@ -281,6 +281,7 @@ shared_ptr<Mesh> AIAdapter::typeCast(aiMesh *mesh) {
         }
     }
     if (mesh->HasBones()) {
+        me->allocateTransformDataArea();
         for (int i=0; i<mesh->mNumBones; i++) {
             aiBone* bone = mesh->mBones[i];
             shared_ptr<Bone> b(typeCast(bone));
@@ -294,8 +295,8 @@ shared_ptr<Mesh> AIAdapter::typeCast(aiMesh *mesh) {
 }
 
 shared_ptr<Bone> AIAdapter::typeCast(aiBone *bone) {
-    shared_ptr<Bone> b(new Bone);
-    b->setName(typeCast(bone->mName));
+    const char* name = bone->mName.C_Str();
+    shared_ptr<Bone> b(new Bone(name));
     for (int i=0; i<bone->mNumWeights; i++) {
         aiVertexWeight vw = bone->mWeights[i];
         VertexWeight vertexWeight(vw.mVertexId, vw.mWeight);
@@ -305,11 +306,13 @@ shared_ptr<Bone> AIAdapter::typeCast(aiBone *bone) {
     aiQuaternion rotation;
     bone->mOffsetMatrix.Decompose(scale, rotation, translation);
     b->mTransform = Transform(typeCast(translation), typeCast(rotation), typeCast(scale));
+    b->mTransform.dump(Log::F_BONE, "%-10s bone offset matrix", name);
+
     return b;
 }
 
 shared_ptr<Node> AIAdapter::typeCast(aiNode *node) {
-    shared_ptr<Node> n(new Node(typeCast(node->mName)));
+    shared_ptr<Node> n(new Node(node->mName.C_Str()));
     aiVector3D scale, translation;
     aiQuaternion rotation;
     node->mTransformation.Decompose(scale, rotation, translation);
@@ -401,6 +404,8 @@ void AIAdapter::postProcess(shared_ptr<Scene> scene) {
                 continue;
             } else {
                 node->setAnimation(nodeAnim);
+                DUMP(Log::F_ANIMATION, "%-10s NA attached to %-10s Node",
+                    nodeAnim->getName().c_str(), node->getName().c_str());
             }
         }
     }

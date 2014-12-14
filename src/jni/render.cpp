@@ -61,7 +61,11 @@ bool Render::drawScene(shared_ptr<Scene> scene) {
     }
 
     double timeStamp = engineContext->lifetime();
-    rootNode->update(timeStamp);
+    //rootNode->update(timeStamp);
+    shared_ptr<NodeObj> skeletonRoot = rootNode->getChild("astroBoy_walkbake");
+    if (skeletonRoot) {
+        skeletonRoot->setUpdateFlag(NodeObj::F_UPDATE_BONE_TRANSFORM, true);
+    }
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     rootNode->draw(*this, scene, timeStamp);
     eglSwapBuffers(engineContext->getEGLDisplay(), engineContext->getEGLSurface());

@@ -12,28 +12,30 @@ VertexWeight::VertexWeight(unsigned int index, float weight)
     : mVertexIndex(index), mWeight(weight) {
 }
 
-Bone::Bone() {
+Bone::Bone(const std::string& name)
+    : NameObj(name) {
 }
 
 Bone::Bone(const Bone& other)
-    : mTransform(other.mTransform)
+    : NameObj(other.mName)
+    , mTransform(other.mTransform)
     , mWeights(other.mWeights) {
 }
 
 Bone::~Bone() {
 }
 
-void Bone::transform(shared_ptr<Mesh> mesh, Transform& nodeTransform) {
+void Bone::transform(shared_ptr<Mesh> mesh, const Transform& nodeTransform) {
     for (int i=0; i<mWeights.size(); i++) {
         VertexWeight vw = mWeights[i];
         int vertexIdx = vw.mVertexIndex;
         float weight = vw.mWeight;
-        Transform finalTransform = nodeTransform * mTransform;
+        Transform finalTransform(mTransform);
+        finalTransform.combine(nodeTransform);
         //DUMP(Log::F_BONE, "%-10s bone VW(%d/%d), vtx %d, weight %f)",
         //    getName().c_str(), i, mWeights.size(), vertexIdx, weight);
-        //mTransform.dump(Log::F_BONE, "bone original transform");
-        //nodeTransform.dump(Log::F_BONE, "bone node transform");
-        //finalTransform.dump(Log::F_BONE, "bone final transform");
+        //nodeTransform.dump(Log::F_BONE, "%-10s bone node transform", getName().c_str());
+        //finalTransform.dump(Log::F_BONE, "%-10s bone final transform", getName().c_str());
         mesh->transform(vertexIdx, weight, finalTransform);
     }
 }
@@ -52,6 +54,22 @@ unsigned int MeshData::append(void *buf, int size) {
 
     mBuffer.resize(bufSize + size);
     memcpy(&mBuffer[bufSize], buf, size);
+    return bufSize;
+}
+
+unsigned int MeshData::append(int size) {
+    int bufSize = mBuffer.size();
+    if (mBuffer.capacity() < bufSize + size) {
+        ALOGD("insufficent MeshData capacity, enlarge, %d => %d",
+            mBuffer.capacity(), bufSize + size);
+        mBuffer.reserve(bufSize + size);
+        if (mBuffer.capacity() < bufSize + size) {
+            ALOGE("failed to enlarge MeshData storage, data unchanged");
+            return -1;
+        }
+    }
+
+    mBuffer.resize(bufSize + size);
     return bufSize;
 }
 
@@ -82,7 +100,9 @@ Mesh::Mesh(PrimitiveType type, unsigned int numVertices, const string &name)
     , mBitangentOffset          (0)
     , mBitangentNumComponents   (0)
     , mBitangentBytesComponent  (0)
-    , mHasBitangent             (false) {
+    , mHasBitangent             (false)
+    , mTransformedPosOffset     (-1)
+    , mTransformedNormalOffset  (-1) {
     memset(&mColorOffset[0], 0, MAX_COLOR_SETS * sizeof(unsigned int));
     memset(&mColorNumComponents[0], 0, MAX_COLOR_SETS * sizeof(unsigned int));
     memset(&mColorBytesComponent[0], 0, MAX_COLOR_SETS * sizeof(unsigned int));
@@ -135,6 +155,10 @@ bool Mesh::hasFaces() const {
     return !mTriangleFaces.empty() && mNumFaces > 0;
 }
 
+bool Mesh::hasBones() const {
+    return !mBones.empty();
+}
+
 unsigned int Mesh::getNumVertices() const {
     return mNumVertices;
 }
@@ -180,12 +204,34 @@ unsigned int Mesh::getPositionBufSize() const {
     return getPositionBufStride() * mNumVertices;
 }
 
-unsigned int Mesh::getPositionOffset() const {
+unsigned int Mesh::getOriginalPositionOffset() const {
     return mPosOffset;
 }
 
-void * Mesh::getPositionBuf() {
+void* Mesh::getOriginalPositionBuf() {
     return mMeshData.getBuf(mPosOffset);
+}
+
+unsigned int Mesh::getTransformedPositionOffset() const {
+    return mTransformedPosOffset;
+}
+
+void* Mesh::getTransformedPositionBuf() {
+    if (mTransformedPosOffset != -1)
+        return mMeshData.getBuf(mTransformedPosOffset);
+    return NULL;
+}
+
+unsigned int Mesh::getPositionOffset() const {
+    if (hasBones())
+        return getTransformedPositionOffset();
+    return getOriginalPositionOffset();
+}
+
+void* Mesh::getPositionBuf() {
+    if (hasBones())
+        return getTransformedPositionBuf();
+    return getOriginalPositionBuf();
 }
 
 unsigned int Mesh::getColorNumComponent(int channel) const {
@@ -240,12 +286,34 @@ unsigned int Mesh::getNormalBufSize() const {
     return getNormalBufStride() * mNumVertices;
 }
 
-unsigned int Mesh::getNormalOffset() const {
+unsigned int Mesh::getOriginalNormalOffset() const {
     return mNormalOffset;
 }
 
-void * Mesh::getNormalBuf() {
+void* Mesh::getOriginalNormalBuf() {
     return mMeshData.getBuf(mNormalOffset);
+}
+
+unsigned int Mesh::getTransformedNormalOffset() const {
+    return mTransformedNormalOffset;
+}
+
+void* Mesh::getTransformedNormalBuf() {
+    if (mTransformedNormalOffset != -1)
+        return mMeshData.getBuf(mTransformedNormalOffset);
+    return NULL;
+}
+
+unsigned int Mesh::getNormalOffset() const {
+    if (hasBones())
+        return getTransformedNormalOffset();
+    return getOriginalNormalOffset();
+}
+
+void* Mesh::getNormalBuf() {
+    if (hasBones())
+        return getTransformedNormalBuf();
+    return getOriginalNormalBuf();
 }
 
 unsigned int Mesh::getTangentNumComponent() const {
@@ -264,7 +332,7 @@ unsigned int Mesh::getTangentOffset() const {
     return mTangentOffset;
 }
 
-void * Mesh::getTangentBuf() {
+void* Mesh::getTangentBuf() {
     return mMeshData.getBuf(mTangentOffset);
 }
 
@@ -284,7 +352,7 @@ unsigned int Mesh::getBitangentOffset() const {
     return mBitangentOffset;
 }
 
-void * Mesh::getBitangentBuf() {
+void* Mesh::getBitangentBuf() {
     return mMeshData.getBuf(mBitangentOffset);
 }
 
@@ -298,10 +366,14 @@ unsigned int Mesh::getVertexBufSize() const {
         totalSize += getTangentBufSize();
         totalSize += getBitangentBufSize();
     }
+    if (hasBones()) {
+        totalSize += getPositionBufSize();
+        totalSize += getNormalBufSize();
+    }
     return totalSize;
 }
 
-void * Mesh::getVertexBuf() {
+void* Mesh::getVertexBuf() {
     return mMeshData.getBuf();
 }
 
@@ -309,7 +381,7 @@ unsigned int Mesh::getIndexBufSize() const {
     return getNumIndices() * sizeof(unsigned int);
 }
 
-void * Mesh::getIndexBuf() {
+void* Mesh::getIndexBuf() {
     if (mTriangleFaces.empty()) return NULL;
     return &mTriangleFaces[0];
 }
@@ -382,6 +454,19 @@ void Mesh::appendVertexBitangents(
     mHasBitangent++;
 }
 
+void Mesh::allocateTransformDataArea() {
+    if (hasVertexPositions()) {
+        int totalSize = getPositionBufStride() * getNumVertices();
+        mTransformedPosOffset = mMeshData.append(totalSize);
+        DUMP(Log::F_BONE, "mTransformedPosOffset: %d", mTransformedPosOffset);
+    }
+    if (hasVertexNormals()) {
+        int totalSize = getNormalBufStride() * getNumVertices();
+        mTransformedNormalOffset = mMeshData.append(totalSize);
+        DUMP(Log::F_BONE, "mTransformedNormalOffset: %d", mTransformedNormalOffset);
+    }
+}
+
 void Mesh::buildIndexBuffer(void *buf, int numFaces) {
     mNumFaces = numFaces;
     mTriangleFaces.resize(mNumFaces);
@@ -393,39 +478,44 @@ void Mesh::buildIndexBuffer(void *buf, int numFaces) {
 
 void Mesh::transform(unsigned int vertexIdx,
     float weight, Transform& transform) {
-    void * posBufAddr = getPositionBuf();
+    assert(hasBones());
+    void* origPosAddr = getOriginalPositionBuf();
+    void* newPosAddr = getTransformedPositionBuf();
     unsigned int stride = getPositionBufStride();
     unsigned int component = getPositionNumComponent();
     if (component == 3 && stride == 12) {
         // use structure of arrays, not interleaved
-        float *vertexAddr = (float *)posBufAddr + component * vertexIdx;
-        float x = *vertexAddr;
-        float y = *(vertexAddr+1);
-        float z = *(vertexAddr+2);
-        glm::vec4 vertex(x, y, z, 1.f);
-        glm::vec3 newVertex(weight * transform.toMat4() * vertex);
-        *vertexAddr     = newVertex.x;
-        *(vertexAddr+1) = newVertex.y;
-        *(vertexAddr+2) = newVertex.z;
+        float* apos = (float*)origPosAddr + component * vertexIdx;
+        float x = *apos;
+        float y = *(apos+1);
+        float z = *(apos+2);
+        glm::vec4 bpos(x, y, z, 1.f);
+        glm::vec3 newPos(weight * transform.toMat4() * bpos);
+        float *cpos = (float*)newPosAddr + component * vertexIdx;
+        *cpos     = newPos.x;
+        *(cpos+1) = newPos.y;
+        *(cpos+2) = newPos.z;
         //DUMP(Log::F_BONE, "(%+f, %+f, %+f) => (%+f, %+f, %+f)",
-        //    x, y, z, newVertex.x, newVertex.y, newVertex.z);
+        //    x, y, z, newPos.x, newPos.y, newPos.z);
     } else {
-        ALOGW("mesh transform support only 3-component float vertex now");
+        ALOGW("mesh transform support only 3-component float position now");
     }
-    void * normalBufAddr = getNormalBuf();
+    void* origNormalAddr = getOriginalNormalBuf();
+    void* newNormalAddr = getTransformedNormalBuf();
     stride = getNormalBufStride();
     component = getNormalNumComponent();
     glm::mat4 invTrans = Transform::inverseTranpose(transform);
     if (component == 3 && stride == 12) {
-        float *normalAddr = (float *)normalBufAddr + component * vertexIdx;
-        float x = *normalAddr;
-        float y = *(normalAddr+1);
-        float z = *(normalAddr+2);
-        glm::vec4 normal(x, y, z, 1.f);
-        glm::vec3 newNormal(weight * invTrans * normal);
-        *normalAddr     = newNormal.x;
-        *(normalAddr+1) = newNormal.y;
-        *(normalAddr+2) = newNormal.z;
+        float* anormal = (float*)origNormalAddr + component * vertexIdx;
+        float x = *anormal;
+        float y = *(anormal+1);
+        float z = *(anormal+2);
+        glm::vec4 bnormal(x, y, z, 1.f);
+        glm::vec3 newNormal(weight * invTrans * bnormal);
+        float *cnormal = (float*)newNormalAddr + component * vertexIdx;
+        *cnormal     = newNormal.x;
+        *(cnormal+1) = newNormal.y;
+        *(cnormal+2) = newNormal.z;
         //DUMP(Log::F_BONE, "(%+f, %+f, %+f) => (%+f, %+f, %+f)",
         //    x, y, z, newNormal.x, newNormal.y, newNormal.z);
     } else {

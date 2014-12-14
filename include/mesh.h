@@ -32,10 +32,10 @@ struct Bone : public NameObj {
     std::vector<VertexWeight> mWeights;
     Transform mTransform;
 
-    Bone();
+    Bone(const std::string& name);
     Bone(const Bone& other);
     ~Bone();
-    void transform(std::shared_ptr<Mesh> mesh, Transform& nodeTransform);
+    void transform(std::shared_ptr<Mesh> mesh, const Transform& nodeTransform);
 };
 
 
@@ -43,11 +43,30 @@ struct Bone : public NameObj {
 class MeshData {
 public:
     void reserve(int size) { mBuffer.reserve(size); };
+    /// append size-length buffer to current data store
+    ///
+    ///     @param buf the buffer to copy
+    ///     @param size the size of the buffer in bytes
+    ///     @return the offset of the buf in the data store
     unsigned int append(void *buf, int size);
+
+    /// enlarge size to current data store, no data copied
+    ///
+    ///     @param size the size of the buffer in bytes
+    ///     @return the offset of the buf in the data store
+    unsigned int append(int size);
+
+    /// tell if the data store is empty
     inline bool empty() const { return mBuffer.empty(); }
+
+    /// return the size of the data store in bytes
     inline unsigned int getBufSize() { return mBuffer.size(); };
 
-    void * getBuf(int offset = 0);
+    /// get the raw buffer pointer
+    ///
+    ///     @param offset the offset pointer to the data store
+    ///     @return the raw buffer pointer
+    void* getBuf(int offset = 0);
 
 private:
     std::vector<unsigned char>      mBuffer;
@@ -82,6 +101,7 @@ public:
     bool            hasVertexNormals() const;
     bool            hasVertexTangentsAndBitangents() const;
     bool            hasFaces() const;
+    bool            hasBones() const;
 
     unsigned int    getNumVertices() const;
     unsigned int    getNumColorChannels() const;
@@ -94,15 +114,20 @@ public:
     virtual unsigned int    getPositionNumComponent() const;
     virtual unsigned int    getPositionBufStride() const;
     unsigned int    getPositionBufSize() const;
+    unsigned int    getOriginalPositionOffset() const;
+    void*           getOriginalPositionBuf();
+    unsigned int    getTransformedPositionOffset() const;
+    void*           getTransformedPositionBuf();
     unsigned int    getPositionOffset() const;
-    void *          getPositionBuf();
+    void*           getPositionBuf();
+
 
     unsigned int    getColorNumComponent(int channel) const;
     unsigned int    getColorBufStride(int channel) const;
     unsigned int    getColorBufSize(int channel) const;
     unsigned int    getColorBufSize() const;
     unsigned int    getColorOffset(int channel) const;
-    void *          getColorBuf(int channel);
+    void*           getColorBuf(int channel);
 
     unsigned int    getTextureCoordBufSize(int channel) const;
     unsigned int    getTextureCoordBufSize() const;
@@ -110,26 +135,30 @@ public:
     unsigned int    getNormalNumComponent() const;
     unsigned int    getNormalBufStride() const;
     unsigned int    getNormalBufSize() const;
+    unsigned int    getOriginalNormalOffset() const;
+    void*           getOriginalNormalBuf();
+    unsigned int    getTransformedNormalOffset() const;
+    void*           getTransformedNormalBuf();
     unsigned int    getNormalOffset() const;
-    void *          getNormalBuf();
+    void*           getNormalBuf();
 
     virtual unsigned int    getTangentNumComponent() const;
     virtual unsigned int    getTangentBufStride() const;
     unsigned int    getTangentBufSize() const;
     unsigned int    getTangentOffset() const;
-    void *          getTangentBuf();
+    void*           getTangentBuf();
 
     unsigned int    getBitangentNumComponent() const;
     unsigned int    getBitangentBufStride() const;
     unsigned int    getBitangentBufSize() const;
     unsigned int    getBitangentOffset() const;
-    void *          getBitangentBuf();
+    void*           getBitangentBuf();
 
     unsigned int    getVertexBufSize() const;
-    void *          getVertexBuf();
+    void*           getVertexBuf();
 
     unsigned int    getIndexBufSize() const;
-    void *          getIndexBuf();
+    void*           getIndexBuf();
 
     // these appendVertexXXX functions are used to build MeshData's raw
     // buffer into "structure of arrays", the order is not important, internal
@@ -160,13 +189,13 @@ public:
         void *buf,
         unsigned int numComponents,
         unsigned int bytesEachComponent);
+    void allocateTransformDataArea();
     void buildIndexBuffer(void *buf, int numFaces);
     void transform(unsigned int vertexIdx, float weight, Transform& transform);
 
-    void            reserveDataStorage(int size);
-
-    void            dumpBuf(Log::Flag f, void *buff, unsigned int bufSize, int groupSize = 3);
-    void            dumpIndexBuf (Log::Flag f, int groupSize = 3);
+    void reserveDataStorage(int size);
+    void dumpBuf(Log::Flag f, void *buff, unsigned int bufSize, int groupSize = 3);
+    void dumpIndexBuf (Log::Flag f, int groupSize = 3);
 
     friend class AIAdapter;
     friend class Render;
@@ -180,6 +209,8 @@ protected:
     std::vector<std::shared_ptr<Bone> > mBones;
 
     MeshData                            mMeshData;
+    int                                 mTransformedPosOffset;
+    int                                 mTransformedNormalOffset;
 
     unsigned int                        mPosOffset;
     unsigned int                        mPosNumComponents;

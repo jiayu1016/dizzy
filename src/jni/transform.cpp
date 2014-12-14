@@ -112,7 +112,7 @@ Transform& Transform::combine(const Transform& parent) {
     return *this;
 }
 
-glm::mat4 Transform::toMat4() {
+glm::mat4 Transform::toMat4() const {
     return glm::translate(glm::mat4(1.f), mTranslation)
         * glm::mat4_cast(mRotation)
         * glm::scale(glm::mat4(1.f), mScale);
@@ -135,7 +135,7 @@ glm::mat4 Transform::inverseTranpose(Transform& transform) {
     return glm::inverseTranspose(matrix);
 }
 
-void Transform::dump(Log::Flag f, const char *fmt, ...) {
+void Transform::dump(Log::Flag f, const char *fmt, ...) const {
     char str[1024];
     if (!Log::debugSwitchOn() || !Log::flagEnabled(f))
         return;
@@ -154,9 +154,18 @@ void Transform::dump(Log::Flag f, const char *fmt, ...) {
 
 }
 
-Transform operator*(Transform& lhs, Transform& rhs) {
+Transform operator*(const Transform& second, const Transform& first) {
+    // result = second * first
     Transform result;
-    return lhs.combine(rhs);
+
+    result.mScale = second.mScale * first.mScale;
+    result.mRotation = second.mRotation * first.mRotation;
+
+    result.mTranslation  = second.mScale * first.mTranslation;
+    result.mTranslation  = second.mRotation * result.mTranslation;
+    result.mTranslation += second.mTranslation;
+
+    return result;
 }
 
 }

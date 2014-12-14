@@ -211,11 +211,11 @@ void NodeObj::doUpdateBoneTransform(double timeStamp) {
         glm::vec3 T = nodeAnim->getTranslation(timeStamp);
         glm::quat R = nodeAnim->getRotation(timeStamp);
         glm::vec3 S = nodeAnim->getScale(timeStamp);
-        mBoneTransform = T * R * S;
+        mBoneTransform = Transform(T, R, S);
     }
 
     shared_ptr<Node> parent(getParent());
-    if (parent) {
+    if (parent && parent->getName() != "dzyroot") {
         assert ((parent->mUpdateFlags & F_UPDATE_BONE_TRANSFORM) == 0);
         mBoneTransform.combine(parent->mBoneTransform);
     }
@@ -481,6 +481,17 @@ bool Geometry::updateBufferObject() {
 }
 
 void Geometry::update(double timeStamp) {
+    // find the skeleton root
+/* from assimp doc:
+a) Create a map or a similar container to store which nodes are necessary for the skeleton. Pre-initialise it for all nodes with a "no".
+b) For each bone in the mesh:
+b1) Find the corresponding node in the scene's hierarchy by comparing their names.
+b2) Mark this node as "yes" in the necessityMap.
+b3) Mark all of its parents the same way until you 1) find the mesh's node or 2) the parent of the mesh's node.
+c) Recursively iterate over the node hierarchy
+c1) If the node is marked as necessary, copy it into the skeleton and check its children
+c2) If the node is marked as not necessary, skip it and do not iterate over its children.
+*/
 }
 
 void Geometry::draw(Render &render, shared_ptr<Scene> scene, double timeStamp) {
