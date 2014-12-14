@@ -301,6 +301,10 @@ shared_ptr<Bone> AIAdapter::typeCast(aiBone *bone) {
         VertexWeight vertexWeight(vw.mVertexId, vw.mWeight);
         b->mWeights.push_back(vertexWeight);
     }
+    aiVector3D scale, translation;
+    aiQuaternion rotation;
+    bone->mOffsetMatrix.Decompose(scale, rotation, translation);
+    b->mTransform = Transform(typeCast(translation), typeCast(rotation), typeCast(scale));
     return b;
 }
 
